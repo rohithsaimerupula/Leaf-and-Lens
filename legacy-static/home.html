@@ -171,10 +171,10 @@
       <div class="eyebrow center">Competition Timeline</div>
     </div>
     <div class="card tl-row-h">
-      <div class="tl-item reveal d1"><div class="tl-dot-h active"></div><div class="tl-date-h">May 20, 2026</div><div class="tl-event-h">Registration Opens</div></div>
-      <div class="tl-item reveal d2"><div class="tl-dot-h"></div><div class="tl-date-h">Active Period</div><div class="tl-event-h">Submission Deadline</div></div>
+      <div class="tl-item reveal d1"><div class="tl-dot-h"></div><div class="tl-date-h" id="tl-start-date">May 20, 2026</div><div class="tl-event-h">Registration Opens</div></div>
+      <div class="tl-item reveal d2"><div class="tl-dot-h"></div><div class="tl-date-h" id="tl-end-date">Active Period</div><div class="tl-event-h">Submission Deadline</div></div>
       <div class="tl-item reveal d3"><div class="tl-dot-h"></div><div class="tl-date-h">Judging Phase</div><div class="tl-event-h">Evaluation Period</div></div>
-      <div class="tl-item reveal d4"><div class="tl-dot-h active" style="background:var(--gold-lt)"></div><div class="tl-date-h">June 5, 2026</div><div class="tl-event-h">Winners Announced</div></div>
+      <div class="tl-item reveal d4"><div class="tl-dot-h" style="background:var(--gold-lt)"></div><div class="tl-date-h" id="tl-result-date">June 5, 2026</div><div class="tl-event-h">Winners Announced</div></div>
     </div>
   </div>
 </section>
@@ -260,6 +260,85 @@ document.addEventListener('DOMContentLoaded',()=>{
   const cEl=document.getElementById('pledgeCount'),bEl=document.getElementById('pledgeBarFill');
   if(cEl)cEl.textContent=count;
   if(bEl)setTimeout(()=>bEl.style.width=Math.min(100,(count/500)*100)+'%',300);
+
+  // Load and apply dynamic settings for the timeline
+  try {
+    const settings = JSON.parse(localStorage.getItem('ll_settings')) || {
+      regStartDate: "2026-05-20",
+      regEndDate: "2026-05-26",
+      resultsPublic: false,
+      resultDate: "2026-06-05"
+    };
+
+    const formatDateStr = (str) => {
+      try {
+        const d = new Date(str + 'T00:00:00');
+        if (isNaN(d.getTime())) return str;
+        const day = d.getDate();
+        const monthsFull = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        return `${monthsFull[d.getMonth()]} ${day < 10 ? '0' + day : day}, ${d.getFullYear()}`;
+      } catch (e) {
+        return str;
+      }
+    };
+
+    const now = new Date();
+    const start = new Date(settings.regStartDate + 'T00:00:00');
+    const end = new Date(settings.regEndDate + 'T23:59:59');
+
+    // Update Dates
+    const startEl = document.getElementById('tl-start-date');
+    const endEl = document.getElementById('tl-end-date');
+    const resultEl = document.getElementById('tl-result-date');
+
+    if (startEl) {
+      if (now < start) {
+        startEl.innerHTML = `Registrations Open Soon<br><small style="font-size: 0.72em; opacity: 0.65; font-family: sans-serif; font-weight: 400; display: block; margin-top: 0.3rem;">(${formatDateStr(settings.regStartDate)})</small>`;
+      } else {
+        startEl.textContent = formatDateStr(settings.regStartDate);
+      }
+    }
+
+    if (endEl) {
+      if (now >= start && now <= end) {
+        endEl.innerHTML = `${formatDateStr(settings.regEndDate)}<br><small style="font-size: 0.72em; color: var(--gold-lt); font-family: sans-serif; font-weight: 500; display: block; margin-top: 0.3rem;">[Active Now]</small>`;
+      } else if (now < start) {
+        endEl.innerHTML = `Submission Deadline<br><small style="font-size: 0.72em; opacity: 0.65; font-family: sans-serif; font-weight: 400; display: block; margin-top: 0.3rem;">(Will update soon)</small>`;
+      } else {
+        endEl.textContent = formatDateStr(settings.regEndDate);
+      }
+    }
+
+    if (resultEl) {
+      resultEl.textContent = formatDateStr(settings.resultDate);
+    }
+
+    // Dynamic dot active classes depending on phase
+    const dots = document.querySelectorAll('.tl-dot-h');
+    dots.forEach(dot => dot.classList.remove('active'));
+    
+    if (now < start) {
+      // Opening soon
+      if (dots[0]) dots[0].classList.add('active');
+    } else if (now >= start && now <= end) {
+      // Live
+      if (dots[0]) dots[0].style.opacity = '0.6';
+      if (dots[1]) dots[1].classList.add('active');
+    } else if (now > end && now <= new Date(settings.resultDate + 'T23:59:59')) {
+      // Judging
+      if (dots[0]) dots[0].style.opacity = '0.4';
+      if (dots[1]) dots[1].style.opacity = '0.4';
+      if (dots[2]) dots[2].classList.add('active');
+    } else {
+      // Winners public
+      if (dots[0]) dots[0].style.opacity = '0.4';
+      if (dots[1]) dots[1].style.opacity = '0.4';
+      if (dots[2]) dots[2].style.opacity = '0.4';
+      if (dots[3]) dots[3].classList.add('active');
+    }
+  } catch (e) {
+    console.error("Error loading dynamic settings", e);
+  }
 });
 </script>
 </body>
