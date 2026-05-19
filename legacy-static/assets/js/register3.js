@@ -9,15 +9,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Check if registration is open
   try {
     const settings = await TURSO.getSettings();
-    if (!settings.competitionActive) {
+    const now = new Date();
+    let isActive = !!settings.competitionActive;
+
+    // Check dates if active
+    if (isActive && settings.regStartDate && settings.regEndDate) {
+      const start = new Date(settings.regStartDate + 'T00:00:00');
+      const end = new Date(settings.regEndDate + 'T23:59:59');
+      if (now < start || now > end) isActive = false;
+    }
+
+    if (!isActive) {
       document.getElementById('closedBanner').style.display = 'flex';
       document.getElementById('regWrap').style.display = 'none';
       return;
+    } else {
+      document.getElementById('regWrap').style.display = 'block';
     }
     // Load QR code
     loadQR(settings);
   } catch (e) {
     console.warn('Could not load settings:', e);
+    document.getElementById('regWrap').style.display = 'block'; // Fallback
   }
 
   // Category card click updates highlight
