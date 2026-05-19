@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Registrations — Leaf & Lens 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <link rel="stylesheet" href="../assets/css/admin.css" />
+  <script src="../assets/js/turso.js"></script>
+</head>
+<body class="admin-body">
+
+<!-- SIDEBAR -->
+<aside class="admin-sidebar" id="adminSidebar">
+  <div class="sidebar-logo">
+    <span style="font-size:1.6rem;">🌿</span>
+    <div>
+      <div class="sidebar-logo-text">Leaf &amp; Lens</div>
+      <span class="sidebar-admin-badge">Admin Panel</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Main</div>
+    <a href="dashboard.html" class="sidebar-link">
+      <i data-lucide="layout-dashboard" style="width:16px;height:16px;"></i> Dashboard
+    </a>
+    <a href="submissions.html" class="sidebar-link">
+      <i data-lucide="image" style="width:16px;height:16px;"></i> Submissions
+      <span class="badge-count" id="sbPendingBadge">0</span>
+    </a>
+    <a href="participants.html" class="sidebar-link">
+      <i data-lucide="users" style="width:16px;height:16px;"></i> Participants
+    </a>
+    <a href="results.html" class="sidebar-link">
+      <i data-lucide="trophy" style="width:16px;height:16px;"></i> Results
+    </a>
+    <a href="registrations.html" class="sidebar-link active">
+      <i data-lucide="settings" style="width:16px;height:16px;"></i> Registrations
+    </a>
+    <div class="sidebar-section-label">Site</div>
+    <a href="../home.html" class="sidebar-link" target="_blank">
+      <i data-lucide="external-link" style="width:16px;height:16px;"></i> View Site
+    </a>
+    <a href="../register.html" class="sidebar-link" target="_blank">
+      <i data-lucide="clipboard-list" style="width:16px;height:16px;"></i> Registration Form
+    </a>
+  </nav>
+  <div class="sidebar-bottom">
+    <button class="sidebar-logout" id="logoutBtn">
+      <i data-lucide="log-out" style="width:15px;height:15px;"></i> Sign Out
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="admin-main">
+  <div class="admin-topbar">
+    <h1 class="topbar-title">Registration Settings</h1>
+    <div class="topbar-right">
+      <div class="topbar-wed">
+        <i data-lucide="globe-2" style="width:14px;height:14px;"></i>
+        World Environment Day — June 5, 2026
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-content">
+
+    <!-- REGISTRATION CONTROL PANEL -->
+    <div class="admin-table-wrap" style="padding:1.75rem;max-width:800px;">
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--text-primary);margin-bottom:1.5rem;">🚀 Registration Control Panel</h3>
+      <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:2rem;">Configure the payment QR code and timeline for the competition. You must set both before activating registrations.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+
+        <!-- QR Upload -->
+        <div>
+          <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.5rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Payment QR Code <span style="color:#e63946">*</span></div>
+          <div id="qrPreviewWrap" style="margin-bottom:0.75rem;display:none;">
+            <img id="qrPreviewImg" src="" alt="QR" style="width:140px;height:140px;object-fit:contain;border:2px solid var(--primary-light);border-radius:8px;"/>
+          </div>
+          <label style="display:block;background:rgba(82,183,136,0.06);border:2px dashed var(--border);border-radius:8px;padding:1.5rem 1rem;text-align:center;cursor:pointer;font-size:0.82rem;color:var(--text-muted);transition:all 0.2s;">
+            <input type="file" id="qrFileInput" accept="image/*" style="display:none" onchange="handleQRUpload(this)"/>
+            📤 Click to upload QR image
+          </label>
+          <div id="qrStatus" style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;"></div>
+        </div>
+
+        <!-- Timer -->
+        <div>
+          <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.5rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Registration Window <span style="color:#e63946">*</span></div>
+          <div style="display:flex;flex-direction:column;gap:1rem;">
+            <div>
+              <label style="font-size:0.75rem;color:var(--text-muted);">Opens On</label>
+              <input type="date" id="regStartDate" class="table-search" style="width:100%;margin-top:0.25rem;background:rgba(5,15,8,0.5);"/>
+            </div>
+            <div>
+              <label style="font-size:0.75rem;color:var(--text-muted);">Closes On</label>
+              <input type="date" id="regEndDate" class="table-search" style="width:100%;margin-top:0.25rem;background:rgba(5,15,8,0.5);"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toggles Row -->
+      <div style="display:flex;gap:1.5rem;margin-top:2rem;flex-wrap:wrap;align-items:center;border-top:1px solid var(--border);padding-top:1.5rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <span style="font-size:0.88rem;color:var(--text-secondary);">Registration Active</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggleActive" onchange="toggleRegistration(this)" />
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <button class="btn btn-primary" style="margin-left:auto;padding:0.75rem 1.5rem;" onclick="saveRegSettings()">
+          <i data-lucide="save" style="width:16px;height:16px;"></i> Save Settings
+        </button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div id="toast-container"></div>
+
+<style>
+  .toggle-switch { position: relative; display: inline-block; width: 40px; height: 22px; cursor: pointer; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-track {
+    position: absolute; inset: 0; background: rgba(255,255,255,0.1);
+    border-radius: 999px; transition: var(--transition-base);
+    border: 1px solid var(--border);
+  }
+  .toggle-track::after {
+    content: ''; position: absolute;
+    left: 3px; top: 50%; transform: translateY(-50%);
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--text-muted); transition: var(--transition-base);
+  }
+  .toggle-switch input:checked + .toggle-track { background: rgba(82,183,136,0.3); border-color: var(--primary-light); }
+  .toggle-switch input:checked + .toggle-track::after { left: calc(100% - 17px); background: var(--primary-light); }
+</style>
+
+<script src="../assets/js/main.js"></script>
+<script>
+let currentSettings = {};
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!LL.isAdminLoggedIn()) { window.location.href = 'login.html'; return; }
+  if (window.lucide) lucide.createIcons();
+
+  await loadBadge();
+  await loadSettings();
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    LL.adminLogout(); window.location.href = 'login.html';
+  });
+});
+
+async function loadBadge() {
+  const subs = await TURSO.getSubmissions();
+  const pending = subs.filter(s => s.status === 'pending').length;
+  document.getElementById('sbPendingBadge').textContent = pending;
+}
+
+async function loadSettings() {
+  currentSettings = await TURSO.getSettings();
+  document.getElementById('toggleActive').checked = !!currentSettings.competitionActive;
+  if (currentSettings.regStartDate) document.getElementById('regStartDate').value = currentSettings.regStartDate;
+  if (currentSettings.regEndDate)   document.getElementById('regEndDate').value   = currentSettings.regEndDate;
+  if (currentSettings.qrImage) {
+    document.getElementById('qrPreviewImg').src = currentSettings.qrImage;
+    document.getElementById('qrPreviewWrap').style.display = 'block';
+    document.getElementById('qrStatus').textContent = '✅ QR loaded from cloud';
+  }
+}
+
+function handleQRUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const b64 = e.target.result;
+    document.getElementById('qrPreviewImg').src = b64;
+    document.getElementById('qrPreviewWrap').style.display = 'block';
+    document.getElementById('qrStatus').textContent = '✅ QR ready — click Save Settings to push to cloud';
+    window._pendingQR = b64;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function toggleRegistration(checkbox) {
+  const startDate = document.getElementById('regStartDate').value;
+  const endDate = document.getElementById('regEndDate').value;
+  const hasQR = currentSettings.qrImage || window._pendingQR;
+
+  if (checkbox.checked) {
+    if (!startDate || !endDate || !hasQR) {
+      checkbox.checked = false; // Revert
+      showToast('❌ Cannot activate: Please set QR Code and both dates first.', 'error');
+      return;
+    }
+  }
+
+  currentSettings.competitionActive = checkbox.checked;
+  await TURSO.saveSettings(currentSettings);
+  showToast(checkbox.checked ? '✅ Registrations Activated!' : '🔒 Registrations Paused', 'success');
+}
+
+async function saveRegSettings() {
+  currentSettings.regStartDate      = document.getElementById('regStartDate').value || currentSettings.regStartDate;
+  currentSettings.regEndDate        = document.getElementById('regEndDate').value   || currentSettings.regEndDate;
+  if (window._pendingQR) { currentSettings.qrImage = window._pendingQR; window._pendingQR = null; }
+  
+  await TURSO.saveSettings(currentSettings);
+  showToast('🚀 Settings saved to cloud!', 'success');
+}
+</script>
+</body>
+</html>

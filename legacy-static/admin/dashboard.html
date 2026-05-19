@@ -36,6 +36,9 @@
     <a href="results.html" class="sidebar-link">
       <i data-lucide="trophy" style="width:16px;height:16px;"></i> Results
     </a>
+    <a href="registrations.html" class="sidebar-link">
+      <i data-lucide="settings" style="width:16px;height:16px;"></i> Registrations
+    </a>
     <div class="sidebar-section-label">Site</div>
     <a href="../home.html" class="sidebar-link" target="_blank">
       <i data-lucide="external-link" style="width:16px;height:16px;"></i> View Site
@@ -134,60 +137,32 @@
     </div>
 
 
-    <!-- REGISTRATION CONTROL PANEL -->
-    <div class="admin-table-wrap" style="padding:1.75rem;margin-top:1.5rem;">
-      <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--text-primary);margin-bottom:1.5rem;">🚀 Registration Control Panel</h3>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
-
-        <!-- QR Upload -->
-        <div>
-          <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.5rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Payment QR Code</div>
-          <div id="qrPreviewWrap" style="margin-bottom:0.75rem;display:none;">
-            <img id="qrPreviewImg" src="" alt="QR" style="width:140px;height:140px;object-fit:contain;border:2px solid var(--primary-light);border-radius:8px;"/>
-          </div>
-          <label style="display:block;background:rgba(82,183,136,0.06);border:2px dashed var(--border);border-radius:8px;padding:1rem;text-align:center;cursor:pointer;font-size:0.82rem;color:var(--text-muted);">
-            <input type="file" id="qrFileInput" accept="image/*" style="display:none" onchange="handleQRUpload(this)"/>
-            📤 Click to upload QR image
-          </label>
-          <div id="qrStatus" style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;"></div>
+    <!-- PLEDGE + SETTINGS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem;">
+      <div class="admin-table-wrap" style="padding:1.5rem;">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1rem;color:var(--text-primary);margin-bottom:1rem;">🌱 Climate Pledge Stats</h3>
+        <div style="font-family:'Outfit',sans-serif;font-size:2.5rem;font-weight:900;color:var(--primary-light);" id="pledgeStatNum">0</div>
+        <div style="font-size:0.82rem;color:var(--text-muted);margin-top:0.25rem;">participants pledged</div>
+        <div style="margin-top:1rem;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;">
+          <div id="pledgeStatBar" style="height:100%;background:var(--grad-primary);border-radius:3px;width:0%;transition:width 1s ease;"></div>
         </div>
-
-        <!-- Timer -->
-        <div>
-          <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.5rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Registration Window</div>
-          <div style="display:flex;flex-direction:column;gap:0.75rem;">
-            <div>
-              <label style="font-size:0.75rem;color:var(--text-muted);">Opens On</label>
-              <input type="date" id="regStartDate" class="table-search" style="width:100%;margin-top:0.25rem;"/>
-            </div>
-            <div>
-              <label style="font-size:0.75rem;color:var(--text-muted);">Closes On</label>
-              <input type="date" id="regEndDate" class="table-search" style="width:100%;margin-top:0.25rem;"/>
-            </div>
-          </div>
-        </div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;">Goal: 500 pledges</div>
       </div>
 
-      <!-- Toggles Row -->
-      <div style="display:flex;gap:1.5rem;margin-top:1.5rem;flex-wrap:wrap;align-items:center;border-top:1px solid var(--border);padding-top:1.25rem;">
-        <div style="display:flex;align-items:center;gap:0.75rem;">
-          <span style="font-size:0.88rem;color:var(--text-secondary);">Registration Active</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="toggleActive" onchange="updateSetting('competitionActive', this.checked)" />
-            <span class="toggle-track"></span>
-          </label>
+      <div class="admin-table-wrap" style="padding:1.5rem;">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1rem;color:var(--text-primary);margin-bottom:1rem;">⚙️ System Settings</h3>
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:0.88rem;color:var(--text-secondary);">Results Public</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleResults" onchange="updateSetting('resultsPublic', this.checked)" />
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+          <button class="btn btn-outline" style="font-size:0.82rem;padding:0.5rem 1rem;margin-top:0.5rem;" onclick="changeAdminPassword()">
+            <i data-lucide="key" style="width:14px;height:14px;"></i> Change Password
+          </button>
         </div>
-        <div style="display:flex;align-items:center;gap:0.75rem;">
-          <span style="font-size:0.88rem;color:var(--text-secondary);">Results Public</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="toggleResults" onchange="updateSetting('resultsPublic', this.checked)" />
-            <span class="toggle-track"></span>
-          </label>
-        </div>
-        <button class="btn btn-primary" style="margin-left:auto;" onclick="saveRegSettings()">
-          <i data-lucide="save" style="width:14px;height:14px;"></i> Save &amp; Activate
-        </button>
       </div>
     </div>
 
@@ -278,15 +253,7 @@ async function quickAction(id, status) {
 
 async function loadSettings() {
   const s = await TURSO.getSettings();
-  document.getElementById('toggleActive').checked  = !!s.competitionActive;
   document.getElementById('toggleResults').checked = !!s.resultsPublic;
-  if (s.regStartDate) document.getElementById('regStartDate').value = s.regStartDate;
-  if (s.regEndDate)   document.getElementById('regEndDate').value   = s.regEndDate;
-  if (s.qrImage) {
-    document.getElementById('qrPreviewImg').src = s.qrImage;
-    document.getElementById('qrPreviewWrap').style.display = 'block';
-    document.getElementById('qrStatus').textContent = '✅ QR loaded from cloud';
-  }
 }
 
 async function updateSetting(key, val) {
@@ -294,32 +261,6 @@ async function updateSetting(key, val) {
   s[key] = val;
   await TURSO.saveSettings(s);
   showToast('✅ Settings saved to cloud!', 'success');
-}
-
-function handleQRUpload(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const b64 = e.target.result;
-    document.getElementById('qrPreviewImg').src = b64;
-    document.getElementById('qrPreviewWrap').style.display = 'block';
-    document.getElementById('qrStatus').textContent = '✅ QR ready — click Save & Activate to push to cloud';
-    window._pendingQR = b64;
-  };
-  reader.readAsDataURL(file);
-}
-
-async function saveRegSettings() {
-  const s = await TURSO.getSettings();
-  s.regStartDate      = document.getElementById('regStartDate').value || s.regStartDate;
-  s.regEndDate        = document.getElementById('regEndDate').value   || s.regEndDate;
-  s.competitionActive = document.getElementById('toggleActive').checked;
-  s.resultsPublic     = document.getElementById('toggleResults').checked;
-  if (window._pendingQR) { s.qrImage = window._pendingQR; window._pendingQR = null; }
-  await TURSO.saveSettings(s);
-  showToast('🚀 Registration settings saved & activated!', 'success');
-  if (window.lucide) lucide.createIcons();
 }
 
 async function exportAllCSV() {
