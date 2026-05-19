@@ -1,7 +1,8 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, updateDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { createClient } from '@libsql/client/web';
 
 // Default mock Firebase config (users can replace this via .env or directly)
 const firebaseConfig = {
@@ -20,10 +21,10 @@ const isFirebaseConfigured = !!(
   firebaseConfig.storageBucket
 );
 
-let app: any;
-let auth: any;
-let firestore: any;
-let storage: any;
+let app: any = null;
+let auth: any = null;
+let firestore: any = null;
+let storage: any = null;
 
 if (isFirebaseConfigured) {
   try {
@@ -32,8 +33,24 @@ if (isFirebaseConfigured) {
     firestore = getFirestore(app);
     storage = getStorage(app);
   } catch (error) {
-    console.warn("Firebase failed to initialize, falling back to LocalStorage engine:", error);
-    app = null;
+    console.warn("Firebase failed to initialize:", error);
+  }
+}
+
+// Turso Connection configuration
+const tursoUrl = process.env.NEXT_PUBLIC_TURSO_DATABASE_URL || "";
+const tursoToken = process.env.NEXT_PUBLIC_TURSO_AUTH_TOKEN || "";
+const isTursoConfigured = !!(tursoUrl && tursoToken);
+
+let tursoClient: any = null;
+if (isTursoConfigured) {
+  try {
+    tursoClient = createClient({
+      url: tursoUrl,
+      authToken: tursoToken
+    });
+  } catch (e) {
+    console.warn("Turso client failed to initialize:", e);
   }
 }
 
@@ -60,7 +77,7 @@ export interface Submission {
 }
 
 export interface Winner {
-  key: string; // e.g. photo_1st, reel_1st
+  key: string;
   label: string;
   submissionId: string;
   name: string;
@@ -90,7 +107,6 @@ class LocalDb {
     localStorage.setItem(key, JSON.stringify(value));
   }
 
-  // Submissions
   async getSubmissions(): Promise<Submission[]> {
     return this.getStorageItem<Submission[]>('ll_submissions', []);
   }
@@ -112,7 +128,6 @@ class LocalDb {
     this.setStorageItem('ll_submissions', filtered);
   }
 
-  // Winners
   async getWinners(): Promise<Winner[]> {
     return this.getStorageItem<Winner[]>('ll_winners', []);
   }
@@ -121,7 +136,6 @@ class LocalDb {
     this.setStorageItem('ll_winners', winners);
   }
 
-  // Settings
   async getSettings(): Promise<DynamicSettings> {
     return this.getStorageItem<DynamicSettings>('ll_settings', {
       regStartDate: "2026-05-20",
@@ -138,16 +152,94 @@ class LocalDb {
 
 const localDb = new LocalDb();
 
-// Unified API Wrapper (Automatically routes to Firebase if active, else LocalStorage)
+// Lazy database tables migration execution
+let schemaInitialized = false;
+async function initTursoSchema() {
+  if (!tursoClient || schemaInitialized) return;
+  try {
+    await tursoClient.execute(`
+      CREATE TABLE IF NOT EXISTS submissions (
+        id TEXT PRIMARY KEY,
+        teamName TEXT NOT NULL,
+        participationType TEXT NOT NULL,
+        member1Name TEXT NOT NULL,
+        member1Roll TEXT NOT NULL,
+        member1Email TEXT NOT NULL,
+        member1Phone TEXT NOT NULL,
+        member2Name TEXT,
+        member2Roll TEXT,
+        member2Email TEXT,
+        member2Phone TEXT,
+        photoUrl TEXT,
+        reelUrl TEXT,
+        paymentScreenshotUrl TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        submittedAt TEXT NOT NULL
+      )
+    `);
+    await tursoClient.execute(`
+      CREATE TABLE IF NOT EXISTS winners (
+        key TEXT PRIMARY KEY,
+        label TEXT NOT NULL,
+        submissionId TEXT NOT NULL,
+        name TEXT NOT NULL,
+        branch TEXT NOT NULL,
+        category TEXT NOT NULL,
+        fileUrl TEXT,
+        caption TEXT
+      )
+    `);
+    await tursoClient.execute(`
+      CREATE TABLE IF NOT EXISTS config (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    `);
+    schemaInitialized = true;
+  } catch (e) {
+    console.error("Failed to run Turso migrations:", e);
+  }
+}
+
+// Unified API Wrapper (Automatically routes to Turso, Firebase, or LocalStorage)
 export const db = {
-  // Check engine
   isFirebaseActive(): boolean {
     return !!(isFirebaseConfigured && app && firestore);
   },
 
+  isTursoActive(): boolean {
+    return !!(isTursoConfigured && tursoClient);
+  },
+
   // Submissions APIS
   async getSubmissions(): Promise<Submission[]> {
-    if (db.isFirebaseActive()) {
+    if (db.isTursoActive()) {
+      try {
+        await initTursoSchema();
+        const res = await tursoClient.execute("SELECT * FROM submissions ORDER BY submittedAt DESC");
+        return res.rows.map((row: any) => ({
+          id: row.id,
+          teamName: row.teamName,
+          participationType: row.participationType,
+          member1Name: row.member1Name,
+          member1Roll: row.member1Roll,
+          member1Email: row.member1Email,
+          member1Phone: row.member1Phone,
+          member2Name: row.member2Name || undefined,
+          member2Roll: row.member2Roll || undefined,
+          member2Email: row.member2Email || undefined,
+          member2Phone: row.member2Phone || undefined,
+          photoUrl: row.photoUrl || undefined,
+          reelUrl: row.reelUrl || undefined,
+          paymentScreenshotUrl: row.paymentScreenshotUrl,
+          status: row.status,
+          submittedAt: row.submittedAt
+        } as Submission));
+      } catch (e) {
+        console.error("Turso getSubmissions failed, using LocalStorage fallback:", e);
+        return localDb.getSubmissions();
+      }
+    } else if (db.isFirebaseActive()) {
       try {
         const querySnapshot = await getDocs(collection(firestore, "submissions"));
         const subs: Submission[] = [];
@@ -165,7 +257,25 @@ export const db = {
   },
 
   async saveSubmission(sub: Submission): Promise<void> {
-    if (db.isFirebaseActive()) {
+    if (db.isTursoActive()) {
+      try {
+        await initTursoSchema();
+        await tursoClient.execute({
+          sql: `INSERT OR REPLACE INTO submissions (
+            id, teamName, participationType, member1Name, member1Roll, member1Email, member1Phone,
+            member2Name, member2Roll, member2Email, member2Phone, photoUrl, reelUrl, paymentScreenshotUrl, status, submittedAt
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [
+            sub.id, sub.teamName, sub.participationType, sub.member1Name, sub.member1Roll, sub.member1Email, sub.member1Phone,
+            sub.member2Name || null, sub.member2Roll || null, sub.member2Email || null, sub.member2Phone || null,
+            sub.photoUrl || null, sub.reelUrl || null, sub.paymentScreenshotUrl, sub.status, sub.submittedAt
+          ]
+        });
+      } catch (e) {
+        console.error("Turso saveSubmission failed, using LocalStorage fallback:", e);
+        await localDb.saveSubmission(sub);
+      }
+    } else if (db.isFirebaseActive()) {
       try {
         await setDoc(doc(firestore, "submissions", sub.id), sub);
       } catch (e) {
@@ -178,8 +288,17 @@ export const db = {
   },
 
   async deleteSubmission(id: string): Promise<void> {
-    if (db.isFirebaseActive()) {
-      // Firebase delete is not heavily required for clients but can be standard
+    if (db.isTursoActive()) {
+      try {
+        await initTursoSchema();
+        await tursoClient.execute({
+          sql: "DELETE FROM submissions WHERE id = ?",
+          args: [id]
+        });
+      } catch (e) {
+        await localDb.deleteSubmission(id);
+      }
+    } else if (db.isFirebaseActive()) {
       try {
         const { deleteDoc } = await import('firebase/firestore');
         await deleteDoc(doc(firestore, "submissions", id));
@@ -193,7 +312,24 @@ export const db = {
 
   // Winners APIS
   async getWinners(): Promise<Winner[]> {
-    if (db.isFirebaseActive()) {
+    if (db.isTursoActive()) {
+      try {
+        await initTursoSchema();
+        const res = await tursoClient.execute("SELECT * FROM winners");
+        return res.rows.map((row: any) => ({
+          key: row.key,
+          label: row.label,
+          submissionId: row.submissionId,
+          name: row.name,
+          branch: row.branch,
+          category: row.category,
+          fileUrl: row.fileUrl || undefined,
+          caption: row.caption || undefined
+        } as Winner));
+      } catch (e) {
+        return localDb.getWinners();
+      }
+    } else if (db.isFirebaseActive()) {
       try {
         const docRef = doc(firestore, "results", "winners");
         const docSnap = await getDoc(docRef);
@@ -210,7 +346,20 @@ export const db = {
   },
 
   async saveWinners(winners: Winner[]): Promise<void> {
-    if (db.isFirebaseActive()) {
+    if (db.isTursoActive()) {
+      try {
+        await initTursoSchema();
+        await tursoClient.execute("DELETE FROM winners");
+        for (const w of winners) {
+          await tursoClient.execute({
+            sql: "INSERT OR REPLACE INTO winners (key, label, submissionId, name, branch, category, fileUrl, caption) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            args: [w.key, w.label, w.submissionId, w.name, w.branch, w.category, w.fileUrl || null, w.caption || null]
+          });
+        }
+      } catch (e) {
+        await localDb.saveWinners(winners);
+      }
+    } else if (db.isFirebaseActive()) {
       try {
         await setDoc(doc(firestore, "results", "winners"), { list: winners });
       } catch (e) {
@@ -223,7 +372,26 @@ export const db = {
 
   // Settings APIS
   async getSettings(): Promise<DynamicSettings> {
-    if (db.isFirebaseActive()) {
+    if (db.isTursoActive()) {
+      try {
+        await initTursoSchema();
+        const res = await tursoClient.execute({
+          sql: "SELECT value FROM config WHERE key = ?",
+          args: ["settings"]
+        });
+        if (res.rows.length > 0) {
+          return JSON.parse(res.rows[0].value as string) as DynamicSettings;
+        }
+        return {
+          regStartDate: "2026-05-20",
+          regEndDate: "2026-05-26",
+          resultsPublic: false,
+          resultDate: "2026-06-05"
+        };
+      } catch (e) {
+        return localDb.getSettings();
+      }
+    } else if (db.isFirebaseActive()) {
       try {
         const docRef = doc(firestore, "config", "settings");
         const docSnap = await getDoc(docRef);
@@ -245,7 +413,17 @@ export const db = {
   },
 
   async saveSettings(settings: DynamicSettings): Promise<void> {
-    if (db.isFirebaseActive()) {
+    if (db.isTursoActive()) {
+      try {
+        await initTursoSchema();
+        await tursoClient.execute({
+          sql: "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
+          args: ["settings", JSON.stringify(settings)]
+        });
+      } catch (e) {
+        await localDb.saveSettings(settings);
+      }
+    } else if (db.isFirebaseActive()) {
       try {
         await setDoc(doc(firestore, "config", "settings"), settings);
       } catch (e) {
@@ -259,6 +437,7 @@ export const db = {
   // Unified Direct Upload API
   async uploadFile(file: File, path: string, onProgress?: (pct: number) => void): Promise<string> {
     if (db.isFirebaseActive() && storage) {
+      // Use premium Firebase storage if active
       return new Promise((resolve, reject) => {
         const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
         const uploadTask = uploadBytesResumable(storageRef, file);
@@ -280,7 +459,7 @@ export const db = {
         );
       });
     } else {
-      // Offline fallback: Convert file to Base64 dataURL (instant client-side offline mock simulation)
+      // If using Turso or offline LocalDb: Fallback to direct Base64 string storage
       return db.fallbackBase64(file);
     }
   },
