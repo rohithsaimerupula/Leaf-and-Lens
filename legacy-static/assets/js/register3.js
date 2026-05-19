@@ -90,7 +90,7 @@ function goStep(n) {
 }
 
 // ── STEP 1 VALIDATE & NEXT ───────────────────────────
-function step1Next() {
+async function step1Next() {
   let valid = true;
 
   const req = (id, errId, check) => {
@@ -104,16 +104,18 @@ function step1Next() {
 
   formData.teamName   = req('teamName', 'e-teamName');
   formData.s1Name     = req('s1Name', 'e-s1Name');
-  formData.s1Reg      = req('s1Reg', 'e-s1Reg');
+  formData.s1Reg      = req('s1Reg', 'e-s1Reg').toUpperCase();
   formData.s1Phone    = req('s1Phone', 'e-s1Phone', v => /^\d{10}$/.test(v.replace(/\s/g,'')));
   formData.s1Email    = req('s1Email', 'e-s1Email', v => /^[^\s@]+@gmail\.com$/i.test(v));
   formData.branch     = req('branch', 'e-branch');
   formData.section    = req('section', 'e-section');
 
   // Student 2 (optional but if name given, reg/phone required)
-  formData.s2Name  = document.getElementById('s2Name').value.trim();
-  formData.s2Reg   = document.getElementById('s2Reg').value.trim();
-  formData.s2Phone = document.getElementById('s2Phone').value.trim();
+  formData.s2Name     = document.getElementById('s2Name').value.trim();
+  formData.s2Reg      = document.getElementById('s2Reg').value.trim().toUpperCase();
+  formData.s2Phone    = document.getElementById('s2Phone').value.trim();
+  formData.s2Branch   = document.getElementById('branch2') ? document.getElementById('branch2').value : null;
+  formData.s2Section  = document.getElementById('section2') ? document.getElementById('section2').value.trim() : null;
 
   // Category
   const catSel = document.querySelector('input[name="cat"]:checked');
@@ -128,6 +130,44 @@ function step1Next() {
   else rulesErr.classList.remove('show');
 
   if (!valid) { showToast('Please fill all required fields', 'error'); return; }
+
+  // Strict Uniqueness Checks
+  if (formData.s2Reg && formData.s1Reg === formData.s2Reg) {
+    showToast('Student 1 and Student 2 cannot have the same Registration Number', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn1Next');
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Checking Registry...';
+
+  try {
+    const allSubs = await TURSO.getSubmissions();
+    const existingRegs = new Set();
+    allSubs.forEach(s => {
+      if (s.member1Roll) existingRegs.add(s.member1Roll.toUpperCase());
+      if (s.member2Roll) existingRegs.add(s.member2Roll.toUpperCase());
+    });
+
+    if (existingRegs.has(formData.s1Reg)) {
+      showToast(`Registration Number ${formData.s1Reg} has already registered in another team.`, 'error');
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      return;
+    }
+    if (formData.s2Reg && existingRegs.has(formData.s2Reg)) {
+      showToast(`Registration Number ${formData.s2Reg} has already registered in another team.`, 'error');
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      return;
+    }
+  } catch(e) {
+    console.error("Could not fetch submissions for uniqueness check, proceeding anyway...", e);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = originalText;
 
   // Setup step 2
   setupUploadStep();
@@ -294,6 +334,8 @@ async function submitForm() {
       member2Phone: formData.s2Phone || null,
       branch:       formData.branch,
       section:      formData.section,
+      member2Branch: formData.s2Branch || null,
+      member2Section: formData.s2Section || null,
       photoUrl:     photoB64,
       reelUrl:      reelB64,
       paymentScreenshotUrl: paymentB64,
