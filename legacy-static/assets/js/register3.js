@@ -66,10 +66,19 @@ function loadQR(settings) {
     qrLoading.style.display = 'none';
     qrImg.src = qrSrc;
     qrImg.classList.remove('hidden');
+    const hint = document.getElementById('qrClickHint');
+    if (hint) hint.classList.remove('hidden');
   } else {
     qrLoading.style.display = 'none';
     qrNoImg.classList.remove('hidden');
   }
+}
+
+function enlargeQR(img) {
+  const lb = document.getElementById('qrLightbox');
+  const lbImg = document.getElementById('qrLightboxImg');
+  lbImg.src = img.src;
+  lb.style.display = 'flex';
 }
 
 // ── STEP NAVIGATION ──────────────────────────────────
