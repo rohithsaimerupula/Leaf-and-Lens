@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Register — Leaf &amp; Lens 2026</title>
+<meta name="description" content="Register for Leaf &amp; Lens photo and reel competition. World Environment Day 2026."/>
+<link rel="stylesheet" href="assets/css/register.css"/>
+</head>
+<body>
+<div class="reg-bg-img"></div>
+<div class="reg-bg-overlay"></div>
+<div class="reg-bg-grid"></div>
+
+<header class="reg-header">
+  <div class="reg-header-inner">
+    <a href="home.html" class="reg-back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      Back to Home
+    </a>
+    <a href="index.html" class="reg-logo" style="text-decoration:none">
+      <svg class="reg-logo-leaf" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+      Leaf &amp; Lens
+    </a>
+    <span class="reg-pill">June 5, 2026</span>
+  </div>
+</header>
+
+<div class="reg-page">
+
+  <!-- FORM -->
+  <div class="glass-card">
+
+    <!-- Success -->
+    <div class="success-screen" id="successScreen">
+      <img class="success-img" src="https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=600&q=75" alt="Nature celebration"/>
+      <h2 class="success-title">Submission Received</h2>
+      <p style="color:var(--cream3);font-size:.9rem">Your entry has been securely stored.</p>
+      <div class="success-id" id="successId">LL-2026-0001</div>
+      <p class="success-desc">Your contribution to <strong style="color:var(--cream2)">Green Leaf Pockets</strong> is pending review.<br/>Winners announced live on <strong style="color:var(--cream2)">World Environment Day — June 5, 2026</strong>.</p>
+      <div class="success-actions">
+        <a href="home.html" class="submit-btn" style="text-decoration:none;width:auto;padding:.85rem 2rem">Return Home</a>
+        <button class="btn-ghost" onclick="resetForm()">Submit Another</button>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <form id="regForm" novalidate>
+
+      <div class="elig-banner">
+        <div class="elig-icon">
+          <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=80&q=70" alt="Student"/>
+        </div>
+        <div>
+          <div class="elig-title">Open to 1st Year Students Only</div>
+          <div class="elig-sub">This competition is exclusively for first-year students. Entries from other years will be disqualified.</div>
+        </div>
+      </div>
+
+      <div class="sec-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21v-2a7 7 0 0 1 14 0v2"/></svg>
+        Participant Details
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fullName">Full Name <span class="req">*</span></label>
+          <input type="text" id="fullName" class="fi" placeholder="Your full name" required/>
+          <span class="ferr" id="err-fullName">Please enter your name</span>
+        </div>
+        <div class="form-group">
+          <label for="email">Email Address <span class="req">*</span></label>
+          <input type="email" id="email" class="fi" placeholder="you@example.com" required/>
+          <span class="ferr" id="err-email">Please enter a valid email</span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="phone">Phone Number <span class="req">*</span></label>
+          <input type="tel" id="phone" class="fi" placeholder="+91 9876543210" required/>
+          <span class="ferr" id="err-phone">Please enter your phone number</span>
+        </div>
+        <div class="form-group">
+          <label for="branch">Department / Branch <span class="req">*</span></label>
+          <select id="branch" class="fi" required>
+            <option value="">Select Branch</option>
+            <option value="CSE">CSE / IT</option>
+            <option value="ECE">ECE / EEE</option>
+            <option value="MECH">Mechanical</option>
+            <option value="CIVIL">Civil</option>
+            <option value="OTHER">Other</option>
+          </select>
+          <span class="ferr" id="err-branch">Please select your branch</span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="rollNum">Roll / Registration No. <span class="req">*</span></label>
+          <input type="text" id="rollNum" class="fi" placeholder="e.g. 21X01A0501" required/>
+          <span class="ferr" id="err-rollNum">Please enter your roll number</span>
+        </div>
+        <div class="form-group">
+          <label>Year of Study</label>
+          <div class="year-locked">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            1st Year
+            <input type="hidden" id="yearOfStudy" value="1"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="instagram">Instagram Handle <span style="color:var(--cream3);font-weight:400;text-transform:none;letter-spacing:0">(Required for Reels)</span></label>
+        <input type="text" id="instagram" class="fi" placeholder="@handle"/>
+      </div>
+
+      <!-- Category -->
+      <div class="sec-title" style="margin-top:.5rem">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/></svg>
+        Category Selection <span class="req" style="margin-left:.3rem">*</span>
+      </div>
+
+      <div class="cat-grid">
+        <div class="cat-opt">
+          <input type="radio" name="category" id="catPhoto" value="Photo"/>
+          <label class="cat-lbl" for="catPhoto">
+            <img class="cat-img" src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=400&q=70" alt="Photography"/>
+            <div class="cat-overlay">
+              <svg class="cat-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+              <span class="cat-txt">Photo Only</span>
+            </div>
+          </label>
+        </div>
+        <div class="cat-opt">
+          <input type="radio" name="category" id="catReel" value="Reel"/>
+          <label class="cat-lbl" for="catReel">
+            <img class="cat-img" src="https://images.unsplash.com/photo-1440688807730-73e4e2169fb8?w=400&q=70" alt="Videography"/>
+            <div class="cat-overlay">
+              <svg class="cat-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect width="15" height="14" x="1" y="5" rx="2"/></svg>
+              <span class="cat-txt">Reel Only</span>
+            </div>
+          </label>
+        </div>
+        <div class="cat-opt">
+          <input type="radio" name="category" id="catBoth" value="Both"/>
+          <label class="cat-lbl" for="catBoth">
+            <img class="cat-img" src="https://images.unsplash.com/photo-1448375240586-882707db888b?w=400&q=70" alt="Both"/>
+            <div class="cat-overlay">
+              <svg class="cat-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              <span class="cat-txt">Photo + Reel</span>
+            </div>
+          </label>
+        </div>
+      </div>
+      <span class="ferr" id="err-category" style="margin-bottom:1rem">Please select a category</span>
+
+      <!-- Upload -->
+      <div class="sec-title" style="margin-top:1.2rem">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload Assets <span class="req" style="margin-left:.3rem">*</span>
+      </div>
+
+      <div class="no-cat-hint" id="noCatHint">Select a category above to reveal upload options.</div>
+
+      <div class="upload-box" id="photoBox">
+        <div>
+          <label style="margin-bottom:.5rem;display:block">Photo File <span class="req">*</span></label>
+          <div class="drop-zone" id="photoZone">
+            <input type="file" id="filePhoto" accept=".jpg,.jpeg,.png,image/jpeg,image/jpg,image/png"/>
+            <div class="drop-inner">
+              <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+              <div class="drop-title">Choose or Drop Your Photo</div>
+              <div class="drop-sub">JPG &nbsp;·&nbsp; JPEG &nbsp;·&nbsp; PNG &nbsp;|&nbsp; Max 10 MB &nbsp;|&nbsp; 1 file only</div>
+            </div>
+          </div>
+          <div class="file-preview" id="prevPhoto">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--gold);flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="f-name" id="prevPhotoName"></span>
+            <span class="f-size" id="prevPhotoSize"></span>
+            <button type="button" class="file-clear" onclick="clearUpload('Photo')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <span class="ferr" id="err-filePhoto">Please upload a photo (JPG/JPEG/PNG)</span>
+        </div>
+      </div>
+
+      <div class="upload-box" id="reelBox">
+        <div>
+          <label style="margin-bottom:.5rem;display:block">Video File <span class="req">*</span></label>
+          <div class="drop-zone video-zone" id="reelZone">
+            <input type="file" id="fileReel" accept=".mp4,.mkv,video/mp4,video/x-matroska"/>
+            <div class="drop-inner">
+              <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect width="15" height="14" x="1" y="5" rx="2"/></svg>
+              <div class="drop-title">Choose or Drop Your Video</div>
+              <div class="drop-sub">MP4 &nbsp;·&nbsp; MKV &nbsp;|&nbsp; Max 50 MB &nbsp;|&nbsp; 1 file only</div>
+            </div>
+          </div>
+          <div class="file-preview" id="prevReel">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--gold);flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="f-name" id="prevReelName"></span>
+            <span class="f-size" id="prevReelSize"></span>
+            <button type="button" class="file-clear" onclick="clearUpload('Reel')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <span class="ferr" id="err-fileReel">Please upload a video (MP4/MKV)</span>
+        </div>
+      </div>
+
+      <!-- Caption -->
+      <div class="sec-title" style="margin-top:1.5rem">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Story &amp; Caption <span class="req" style="margin-left:.3rem">*</span>
+      </div>
+      <div class="form-group">
+        <textarea id="caption" class="fi" placeholder="Share the story behind your entry. How does it represent 'Green Leaf Pockets'?" maxlength="1000" oninput="updateWordCount(this)" required></textarea>
+        <div class="word-ct"><span id="wordCount">0</span> / 150 Words</div>
+        <span class="ferr" id="err-caption">Please provide a description (min 5 words)</span>
+      </div>
+
+      <!-- Agreements -->
+      <div class="sec-title" style="margin-top:1.5rem">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Agreement
+      </div>
+      <div class="check-group">
+        <input type="checkbox" id="pledge"/>
+        <label for="pledge">[Optional] I pledge to take action in my daily life to protect our environment and preserve nature's "Green Leaf Pockets".</label>
+      </div>
+
+      <button type="button" class="submit-btn" id="preSubmitBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+        Continue to Submit
+      </button>
+    </form>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside class="reg-sidebar">
+
+    <!-- Nature hero image -->
+    <div class="side-nature-card">
+      <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=75" alt="Forest nature photography"/>
+      <div class="side-nature-overlay">
+        <p class="side-quote">"Look deep into nature, and then you will understand everything better."</p>
+        <span class="side-quote-auth">— Albert Einstein</span>
+      </div>
+    </div>
+
+    <!-- Prize Pool -->
+    <div class="side-card">
+      <h4>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+        Prize Pool
+      </h4>
+      <div class="side-img-pair">
+        <img src="https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?w=300&q=60" alt="Nature"/>
+        <img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=300&q=60" alt="Landscape"/>
+      </div>
+      <ul class="side-list">
+        <li><span class="side-dot"></span><span><strong>Photo 1st:</strong> ₹5,000 + Certificate</span></li>
+        <li><span class="side-dot"></span><span><strong>Photo 2nd:</strong> ₹3,000 + Certificate</span></li>
+        <li><span class="side-dot"></span><span><strong>Reel 1st:</strong> ₹5,000 + Certificate</span></li>
+        <li><span class="side-dot"></span><span><strong>Reel 2nd:</strong> ₹3,000 + Certificate</span></li>
+        <li><span class="side-dot"></span><span>E-Certificates for all valid participants</span></li>
+      </ul>
+    </div>
+
+    <!-- Timeline -->
+    <div class="side-card">
+      <h4>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Timeline
+      </h4>
+      <div>
+        <div class="tl-row">
+          <div class="tl-dot-wrap"><div class="tl-dot active"></div></div>
+          <div class="tl-info"><div class="tl-date">May 20, 2026</div><div class="tl-event">Registrations &amp; submissions open</div></div>
+        </div>
+        <div class="tl-row">
+          <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+          <div class="tl-info"><div class="tl-date">June 3, 2026</div><div class="tl-event">Submission deadline — 11:59 PM IST</div></div>
+        </div>
+        <div class="tl-row">
+          <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+          <div class="tl-info"><div class="tl-date">June 5, 2026</div><div class="tl-event">Winners announced — World Environment Day</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Guidelines -->
+    <div class="side-card guide-card">
+      <h4>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        Upload Guidelines
+      </h4>
+      <ul class="side-list">
+        <li><span class="side-dot"></span><span><strong>Photo:</strong> JPG / JPEG / PNG · Max 10 MB · 1 file</span></li>
+        <li><span class="side-dot"></span><span><strong>Video:</strong> MP4 / MKV · Max 50 MB · 1 file</span></li>
+        <li><span class="side-dot"></span><span><strong>Caption:</strong> 5 – 150 words required</span></li>
+        <li><span class="side-dot"></span><span>No watermarks or AI-generated content</span></li>
+      </ul>
+    </div>
+
+  </aside>
+</div>
+
+<!-- RULES MODAL -->
+<div class="modal-overlay" id="rulesModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-box">
+    <img class="modal-photo" src="https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=65" alt="Forest"/>
+    <div class="modal-head">
+      <div class="modal-head-title" id="modalTitle">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Competition Rules &amp; Terms
+      </div>
+      <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <p>Welcome to <strong>Leaf &amp; Lens 2026</strong>. Please read the following rules carefully before confirming your submission.</p>
+      <h4>1. Eligibility</h4>
+      <ul>
+        <li>Open exclusively to <strong>1st year students</strong> of our college.</li>
+        <li>Individual entries only — no group submissions.</li>
+        <li>One entry per category maximum.</li>
+      </ul>
+      <h4>2. Originality &amp; Ownership</h4>
+      <ul>
+        <li>All submitted photos and reels must be original work created by the participant.</li>
+        <li>Plagiarism, heavy digital manipulation, or AI-generated content is strictly prohibited and leads to immediate disqualification.</li>
+        <li>No stock images or previously published material.</li>
+      </ul>
+      <h4>3. File Specifications</h4>
+      <ul>
+        <li><strong>Photos:</strong> Only JPG, JPEG, and PNG formats accepted. Maximum file size: 10 MB. One photo per submission.</li>
+        <li><strong>Videos (Reels):</strong> Only MP4 and MKV formats accepted. Maximum file size: 50 MB. One video per submission. Duration: 15–60 seconds.</li>
+        <li><strong>Both category:</strong> Exactly 1 photo + 1 video. No more, no less.</li>
+      </ul>
+      <h4>4. Theme Adherence</h4>
+      <ul>
+        <li>Entries must strongly reflect the theme <strong>"Green Leaf Pockets"</strong> — featuring mountains, waterfalls, plants, forests, or hidden nature pockets.</li>
+        <li>Generic landscape photography with no clear thematic connection will be disqualified.</li>
+      </ul>
+      <h4>5. Usage Rights</h4>
+      <ul>
+        <li>By submitting, you grant Leaf &amp; Lens the non-exclusive right to display and promote your work in connection with the World Environment Day 2026 campaign.</li>
+        <li>You retain full copyright over your original work.</li>
+      </ul>
+      <h4>6. Submission Deadline</h4>
+      <ul>
+        <li>All entries must be submitted by <strong>11:59 PM on June 3, 2026</strong>. Late entries will not be evaluated.</li>
+      </ul>
+      <h4>7. Code of Conduct</h4>
+      <ul>
+        <li>Respect all living beings. Do not harm plants or animals to capture your shot.</li>
+        <li>No watermarks, logos, or personal information embedded in the file.</li>
+        <li>The organiser's decisions are final and binding.</li>
+      </ul>
+      <p style="margin-top:1.5rem;color:var(--gold-lt);font-style:italic">Scroll to the bottom to enable the Submit button.</p>
+    </div>
+    <div class="modal-foot">
+      <span class="modal-hint" id="modalScrollHint">Scroll down to accept</span>
+      <button class="modal-confirm-btn" id="modalConfirmBtn" onclick="executeFinalSubmit()">Confirm &amp; Submit</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/register2.js"></script>
+</body>
+</html>

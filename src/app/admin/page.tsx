@@ -1,0 +1,705 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { db, Submission, Winner, DynamicSettings } from '@/lib/db';
+import CursorTrail from '@/components/CursorTrail';
+import AmbientMusic from '@/components/AmbientMusic';
+import { 
+  Users, CheckCircle2, XCircle, Clock, Calendar, Globe, Save, Trash2, 
+  Download, Eye, KeyRound, LogOut, ArrowLeft, RefreshCw, BarChart2, ShieldAlert
+} from 'lucide-react';
+import confetti from 'canvas-confetti';
+
+export default function Admin() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+
+  // Admin Data states
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [settings, setSettings] = useState<DynamicSettings>({
+    regStartDate: "2026-05-20",
+    regEndDate: "2026-05-26",
+    resultsPublic: false,
+    resultDate: "2026-06-05"
+  });
+  const [winners, setWinners] = useState<Winner[]>([]);
+
+  // Timer inputs
+  const [regStartDate, setRegStartDate] = useState('');
+  const [regEndDate, setRegEndDate] = useState('');
+  const [resultDate, setResultDate] = useState('');
+  const [resultsPublic, setResultsPublic] = useState(false);
+
+  // Active sub tab
+  const [activeTab, setActiveTab] = useState<'submissions' | 'winners' | 'timers'>('submissions');
+  const [selectedSub, setSelectedSub] = useState<Submission | null>(null);
+
+  // Stats Counters
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    photos: 0,
+    reels: 0,
+    both: 0,
+    revenue: 0
+  });
+
+  useEffect(() => {
+    // Check if previously logged in this session
+    if (typeof window !== 'undefined') {
+      const logged = sessionStorage.getItem('ll_admin_logged');
+      if (logged === 'true') {
+        setIsLoggedIn(true);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    loadAllData();
+  }, [isLoggedIn]);
+
+  const loadAllData = async () => {
+    const subs = await db.getSubmissions();
+    setSubmissions(subs);
+
+    const s = await db.getSettings();
+    setSettings(s);
+    setRegStartDate(s.regStartDate);
+    setRegEndDate(s.regEndDate);
+    setResultDate(s.resultDate);
+    setResultsPublic(s.resultsPublic);
+
+    const w = await db.getWinners();
+    setWinners(w);
+
+    // Calculate Analytics
+    const pending = subs.filter(x => x.status === 'pending').length;
+    const approved = subs.filter(x => x.status === 'approved').length;
+    const rejected = subs.filter(x => x.status === 'rejected').length;
+    const photos = subs.filter(x => x.participationType === 'Photo').length;
+    const reels = subs.filter(x => x.participationType === 'Reel').length;
+    const both = subs.filter(x => x.participationType === 'Both').length;
+
+    // Calculate total collection
+    let revenue = 0;
+    subs.forEach(x => {
+      if (x.status === 'approved') {
+        revenue += x.participationType === 'Both' ? 50 : 30;
+      }
+    });
+
+    setStats({
+      total: subs.length,
+      pending,
+      approved,
+      rejected,
+      photos,
+      reels,
+      both,
+      revenue
+    });
+  };
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Premium, secure credential gate (credentials match custom defaults requested)
+    if (username === 'admin' && password === 'leaflens2026') {
+      setIsLoggedIn(true);
+      sessionStorage.setItem('ll_admin_logged', 'true');
+    } else {
+      setLoginError('Invalid Administrator credentials.');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    sessionStorage.removeItem('ll_admin_logged');
+  };
+
+  const handleApprove = async (sub: Submission) => {
+    const updated = { ...sub, status: 'approved' as const };
+    await db.saveSubmission(updated);
+    if (selectedSub?.id === sub.id) {
+      setSelectedSub(updated);
+    }
+    loadAllData();
+  };
+
+  const handleReject = async (sub: Submission) => {
+    const updated = { ...sub, status: 'rejected' as const };
+    await db.saveSubmission(updated);
+    if (selectedSub?.id === sub.id) {
+      setSelectedSub(updated);
+    }
+    loadAllData();
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Permanently delete this entry? This action cannot be undone.')) {
+      await db.deleteSubmission(id);
+      setSelectedSub(null);
+      loadAllData();
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    const updated: DynamicSettings = {
+      regStartDate,
+      regEndDate,
+      resultDate,
+      resultsPublic
+    };
+    await db.saveSettings(updated);
+    setSettings(updated);
+    alert('Dynamic Timers and visibility rules saved successfully!');
+    loadAllData();
+  };
+
+  // Winner Configuration
+  const handleAssignWinner = async (key: string, label: string, submissionId: string) => {
+    const matchedSub = submissions.find(x => x.id === submissionId);
+    if (!matchedSub) return;
+
+    const list = [...winners];
+    const existingIdx = list.findIndex(x => x.key === key);
+    
+    const newWinner: Winner = {
+      key,
+      label,
+      submissionId,
+      name: matchedSub.member1Name,
+      branch: matchedSub.member1Roll,
+      category: matchedSub.participationType,
+      fileUrl: matchedSub.photoUrl || matchedSub.reelUrl,
+    };
+
+    if (existingIdx > -1) {
+      list[existingIdx] = newWinner;
+    } else {
+      list.push(newWinner);
+    }
+
+    await db.saveWinners(list);
+    setWinners(list);
+    confetti({ particleCount: 50, spread: 60 });
+  };
+
+  const handleClearWinners = async () => {
+    if (confirm('Reset and clear all announced winners?')) {
+      await db.saveWinners([]);
+      setWinners([]);
+    }
+  };
+
+  // Export Roster Roster to Excel/CSV structure
+  const handleExportCSV = () => {
+    if (!submissions.length) return;
+    const headers = 'ID,Team Name,Category,Member 1,Roll 1,Phone,Member 2,Roll 2,Status\n';
+    const rows = submissions.map(s => 
+      `"${s.id}","${s.teamName}","${s.participationType}","${s.member1Name}","${s.member1Roll}","${s.member1Phone}","${s.member2Name || ''}","${s.member2Roll || ''}","${s.status}"`
+    ).join('\n');
+
+    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'leaf_lens_participant_roster.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="relative min-h-screen bg-bg-dark text-slate-100 flex flex-col items-center justify-center py-16 px-6 font-sans">
+        <CursorTrail />
+        <AmbientMusic />
+
+        <div className="w-full max-w-md relative z-10">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors duration-300 font-outfit text-sm font-semibold mb-8 group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Public Portal Home
+          </Link>
+
+          <div className="glass-panel border-neon/10 rounded-3xl p-8 shadow-2xl flex flex-col items-center">
+            <div className="w-16 h-16 rounded-2xl bg-neon/10 border border-neon/30 flex items-center justify-center text-neon mb-6">
+              <KeyRound className="w-8 h-8" />
+            </div>
+
+            <h1 className="text-3xl font-black font-outfit uppercase tracking-tight text-white mb-1">
+              Jury Control
+            </h1>
+            <p className="text-xs font-mono text-emerald-400/60 uppercase tracking-widest mb-8">
+              Department of BS&H · VIIT
+            </p>
+
+            {loginError && (
+              <div className="w-full p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl mb-6 text-xs text-center font-light flex items-center justify-center gap-2">
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                <span>{loginError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleLogin} className="w-full space-y-4">
+              <div>
+                <label className="block text-[10px] uppercase font-mono tracking-widest text-emerald-400/50 mb-1.5">Username</label>
+                <input
+                  type="text"
+                  required
+                  className="w-full px-4 py-3 rounded-xl bg-black/40 border border-slate-800 focus:border-neon focus:outline-none text-white text-sm"
+                  placeholder="admin"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-mono tracking-widest text-emerald-400/50 mb-1.5">Password</label>
+                <input
+                  type="password"
+                  required
+                  className="w-full px-4 py-3 rounded-xl bg-black/40 border border-slate-800 focus:border-neon focus:outline-none text-white text-sm"
+                  placeholder="••••••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 mt-4 bg-neon text-black rounded-xl font-outfit font-bold uppercase tracking-wider text-xs transition-all hover:bg-transparent hover:text-neon border border-neon hover:shadow-[0_0_20px_rgba(74,222,128,0.25)] cursor-pointer"
+              >
+                Access Dashboard
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative min-h-screen bg-bg-dark text-slate-100 flex flex-col font-sans">
+      <CursorTrail />
+      <AmbientMusic />
+
+      {/* TOP HEADER */}
+      <header className="border-b border-slate-900 bg-black/40 backdrop-blur-md sticky top-0 z-40 py-4 px-8">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">⚙️</span>
+            <div>
+              <h1 className="font-outfit font-black text-lg text-white uppercase leading-none">Leaf & Lens Admin</h1>
+              <span className="text-[10px] font-mono tracking-widest text-neon uppercase mt-0.5 block">BS&H DEPT · VIIT</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-black font-outfit text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" /> Sign Out
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* BODY CONTENT */}
+      <main className="max-w-7xl mx-auto px-8 py-10 w-full flex-1 grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* STATS OVERVIEW HEADER COLUMN */}
+        <div className="lg:col-span-1 flex flex-col gap-6">
+          <div className="glass-panel border-neon/10 rounded-2xl p-6">
+            <h3 className="font-outfit font-black text-sm uppercase tracking-wider text-white mb-4 flex items-center gap-2 border-b border-slate-900 pb-2">
+              <BarChart2 className="w-4 h-4 text-neon" /> Analytics Snapshot
+            </h3>
+            
+            <div className="space-y-4">
+              {[
+                { label: 'Total Submissions', count: stats.total, color: 'text-white' },
+                { label: 'Awaiting Review', count: stats.pending, color: 'text-amber-400' },
+                { label: 'Approved Entries', count: stats.approved, color: 'text-emerald-400' },
+                { label: 'Rejected Entries', count: stats.rejected, color: 'text-rose-400' },
+                { label: 'Photo Categories', count: stats.photos + stats.both, color: 'text-emerald-300' },
+                { label: 'Reel Categories', count: stats.reels + stats.both, color: 'text-purple-300' }
+              ].map((stat) => (
+                <div key={stat.label} className="flex justify-between items-center text-xs">
+                  <span className="text-slate-400">{stat.label}</span>
+                  <span className={`font-mono font-bold text-sm ${stat.color}`}>{stat.count}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-900">
+              <span className="text-[10px] uppercase font-mono tracking-widest text-slate-500 block">Estimated Fees Collected</span>
+              <span className="text-3xl font-black font-outfit text-neon neon-text-glow">₹{stats.revenue}</span>
+            </div>
+          </div>
+
+          {/* QUICK LINKS SECTION */}
+          <div className="glass-panel border-neon/10 rounded-2xl p-6 flex flex-col gap-3">
+            <button
+              onClick={() => setActiveTab('submissions')}
+              className={`w-full py-2.5 rounded-xl font-outfit text-xs font-bold uppercase tracking-wider transition-all border text-left px-4 flex items-center justify-between cursor-pointer ${
+                activeTab === 'submissions'
+                  ? 'bg-neon/10 border-neon text-white shadow-[0_0_10px_rgba(74,222,128,0.05)]'
+                  : 'bg-black/10 border-slate-800 text-slate-400 hover:border-slate-700'
+              }`}
+            >
+              <span>Submissions Portal</span>
+              <Clock className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setActiveTab('winners')}
+              className={`w-full py-2.5 rounded-xl font-outfit text-xs font-bold uppercase tracking-wider transition-all border text-left px-4 flex items-center justify-between cursor-pointer ${
+                activeTab === 'winners'
+                  ? 'bg-neon/10 border-neon text-white'
+                  : 'bg-black/10 border-slate-800 text-slate-400 hover:border-slate-700'
+              }`}
+            >
+              <span>Manage Winners</span>
+              <Globe className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setActiveTab('timers')}
+              className={`w-full py-2.5 rounded-xl font-outfit text-xs font-bold uppercase tracking-wider transition-all border text-left px-4 flex items-center justify-between cursor-pointer ${
+                activeTab === 'timers'
+                  ? 'bg-neon/10 border-neon text-white'
+                  : 'bg-black/10 border-slate-800 text-slate-400 hover:border-slate-700'
+              }`}
+            >
+              <span>Timer Gating Settings</span>
+              <Calendar className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* DETAILS PANEL CONTROLLER */}
+        <div className="lg:col-span-3">
+          {/* TAB 1: SUBMISSIONS MANAGEMENT */}
+          {activeTab === 'submissions' && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-black font-outfit uppercase tracking-tight text-white">Submissions</h2>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleExportCSV}
+                    className="px-4 py-2 rounded-xl bg-black/40 border border-slate-800 hover:border-white text-xs font-bold font-outfit uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Export Roster
+                  </button>
+                  <button
+                    onClick={loadAllData}
+                    className="px-4 py-2 rounded-xl bg-black/40 border border-slate-800 hover:border-white text-xs font-bold font-outfit uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" /> Refresh
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* LIST */}
+                <div className="glass-panel border-neon/10 rounded-2xl overflow-hidden max-h-[500px] overflow-y-auto">
+                  <div className="p-4 border-b border-slate-900 bg-black/20 text-xs font-mono tracking-widest text-emerald-400/50 uppercase">
+                    Inbox ({submissions.length})
+                  </div>
+                  
+                  {submissions.length === 0 ? (
+                    <div className="p-8 text-center text-slate-500 text-sm">No registrations found.</div>
+                  ) : (
+                    <div className="divide-y divide-slate-900">
+                      {submissions.map((sub) => (
+                        <div
+                          key={sub.id}
+                          onClick={() => setSelectedSub(sub)}
+                          className={`p-4 hover:bg-emerald-500/5 transition-all cursor-pointer ${
+                            selectedSub?.id === sub.id ? 'bg-emerald-500/5 border-l-2 border-neon' : ''
+                          }`}
+                        >
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="font-outfit font-black text-white text-sm uppercase">{sub.teamName}</span>
+                            <span className={`px-2 py-0.5 text-[8px] font-mono tracking-widest uppercase rounded ${
+                              sub.status === 'approved' 
+                                ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' 
+                                : sub.status === 'rejected'
+                                  ? 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
+                                  : 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
+                            }`}>
+                              {sub.status}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-[10px] font-mono text-slate-500">
+                            <span>{sub.member1Roll}</span>
+                            <span>{sub.participationType}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* DETAIL */}
+                <div className="glass-panel border-neon/10 rounded-2xl p-6 relative">
+                  {selectedSub ? (
+                    <div className="space-y-6">
+                      <div className="border-b border-slate-900 pb-4">
+                        <span className="text-[10px] font-mono tracking-widest text-neon/60 uppercase">{selectedSub.id}</span>
+                        <h3 className="text-2xl font-black font-outfit text-white uppercase mt-0.5">{selectedSub.teamName}</h3>
+                        <p className="text-xs font-mono text-slate-500">Submitted at: {new Date(selectedSub.submittedAt).toLocaleString()}</p>
+                      </div>
+
+                      <div className="space-y-3 text-xs">
+                        <h4 className="font-outfit font-black text-slate-400 uppercase tracking-wide">Roster Details</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-black/30 p-3 rounded-xl border border-slate-900">
+                            <span className="text-[9px] uppercase font-mono text-emerald-400/50">Lead Member</span>
+                            <span className="block font-outfit font-bold text-white text-sm mt-0.5">{selectedSub.member1Name}</span>
+                            <span className="block font-mono text-[10px] text-slate-500 mt-1">{selectedSub.member1Roll} · {selectedSub.member1Phone}</span>
+                          </div>
+
+                          {selectedSub.member2Name && (
+                            <div className="bg-black/30 p-3 rounded-xl border border-slate-900">
+                              <span className="text-[9px] uppercase font-mono text-purple-400/50">Member 2</span>
+                              <span className="block font-outfit font-bold text-white text-sm mt-0.5">{selectedSub.member2Name}</span>
+                              <span className="block font-mono text-[10px] text-slate-500 mt-1">{selectedSub.member2Roll} · {selectedSub.member2Phone}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-4 border-t border-slate-900">
+                        <h4 className="font-outfit font-black text-slate-400 uppercase tracking-wide">File Submissions</h4>
+                        
+                        <div className="flex flex-wrap gap-3">
+                          {selectedSub.photoUrl && (
+                            <a
+                              href={selectedSub.photoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-4 py-2 bg-black/40 border border-slate-800 hover:border-white text-xs font-bold font-outfit uppercase tracking-wider rounded-xl flex items-center gap-1.5"
+                            >
+                              <Eye className="w-3.5 h-3.5" /> View Photo
+                            </a>
+                          )}
+                          {selectedSub.reelUrl && (
+                            <a
+                              href={selectedSub.reelUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-4 py-2 bg-black/40 border border-slate-800 hover:border-white text-xs font-bold font-outfit uppercase tracking-wider rounded-xl flex items-center gap-1.5"
+                            >
+                              <Eye className="w-3.5 h-3.5" /> View Reel
+                            </a>
+                          )}
+                          {selectedSub.paymentScreenshotUrl && (
+                            <a
+                              href={selectedSub.paymentScreenshotUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-4 py-2 bg-neon/10 border border-neon/30 hover:bg-neon hover:text-black text-xs font-bold font-outfit uppercase tracking-wider rounded-xl flex items-center gap-1.5 transition-all"
+                            >
+                              <Eye className="w-3.5 h-3.5" /> Verify Receipt
+                            </a>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3 pt-6 border-t border-slate-900">
+                        <button
+                          onClick={() => handleApprove(selectedSub)}
+                          disabled={selectedSub.status === 'approved'}
+                          className="flex-1 py-3 bg-neon text-black disabled:opacity-30 disabled:pointer-events-none rounded-xl font-outfit font-bold uppercase tracking-wider text-xs border border-neon hover:bg-transparent hover:text-neon transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(74,222,128,0.15)]"
+                        >
+                          <CheckCircle2 className="w-4 h-4" /> Approve Entry
+                        </button>
+                        <button
+                          onClick={() => handleReject(selectedSub)}
+                          disabled={selectedSub.status === 'rejected'}
+                          className="flex-1 py-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 disabled:opacity-30 disabled:pointer-events-none rounded-xl font-outfit font-bold uppercase tracking-wider text-xs hover:bg-rose-500 hover:text-black transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <XCircle className="w-4 h-4" /> Reject Entry
+                        </button>
+                        <button
+                          onClick={() => handleDelete(selectedSub.id)}
+                          className="px-4 py-3 bg-transparent border border-slate-800 text-slate-500 hover:text-rose-500 hover:border-rose-500/30 rounded-xl transition-all flex items-center justify-center cursor-pointer"
+                          title="Delete submission permanently"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-slate-500 font-outfit text-sm">
+                      Select a submission in the inbox to view details.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: WINNERS ANNOUNCEMENT CONTROLS */}
+          {activeTab === 'winners' && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-black font-outfit uppercase tracking-tight text-white">Declare Winners</h2>
+                <button
+                  onClick={handleClearWinners}
+                  className="px-4 py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-black text-xs font-bold font-outfit uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Clear Winners
+                </button>
+              </div>
+
+              <div className="bg-amber-500/10 border border-amber-500/20 text-amber-300 p-4 rounded-xl text-xs font-light">
+                ⚠️ Only <strong>Approved submissions</strong> can be selected as winners in the dropdown menus below.
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* PHOTOGRAPHY */}
+                <div className="glass-panel border-neon/10 rounded-2xl p-6 space-y-6">
+                  <h3 className="font-outfit font-black text-lg text-white uppercase border-b border-slate-900 pb-2">
+                    📸 Photo Category
+                  </h3>
+
+                  {[
+                    { key: 'photo_1st', label: '🥇 1st Place' },
+                    { key: 'photo_2nd', label: '🥈 2nd Place' },
+                    { key: 'photo_3rd', label: '🥉 3rd Place' }
+                  ].map((rank) => {
+                    const current = winners.find(x => x.key === rank.key);
+                    return (
+                      <div key={rank.key} className="space-y-2">
+                        <label className="block text-[10px] uppercase font-mono tracking-widest text-emerald-400/50">{rank.label}</label>
+                        <select
+                          className="w-full px-4 py-3 rounded-xl bg-black/40 border border-slate-800 focus:border-neon focus:outline-none text-white text-sm"
+                          value={current?.submissionId || ''}
+                          onChange={(e) => handleAssignWinner(rank.key, rank.label, e.target.value)}
+                        >
+                          <option value="">— Select Winner —</option>
+                          {submissions.filter(x => x.status === 'approved' && (x.participationType === 'Photo' || x.participationType === 'Both')).map((sub) => (
+                            <option key={sub.id} value={sub.id}>
+                              {sub.member1Name} ({sub.id}) · {sub.member1Roll}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* REELS */}
+                <div className="glass-panel border-neon/10 rounded-2xl p-6 space-y-6">
+                  <h3 className="font-outfit font-black text-lg text-white uppercase border-b border-slate-900 pb-2">
+                    🎬 Reel Category
+                  </h3>
+
+                  {[
+                    { key: 'reel_1st', label: '🥇 1st Place' },
+                    { key: 'reel_2nd', label: '🥈 2nd Place' },
+                    { key: 'reel_3rd', label: '🥉 3rd Place' }
+                  ].map((rank) => {
+                    const current = winners.find(x => x.key === rank.key);
+                    return (
+                      <div key={rank.key} className="space-y-2">
+                        <label className="block text-[10px] uppercase font-mono tracking-widest text-purple-400/50">{rank.label}</label>
+                        <select
+                          className="w-full px-4 py-3 rounded-xl bg-black/40 border border-slate-800 focus:border-neon focus:outline-none text-white text-sm"
+                          value={current?.submissionId || ''}
+                          onChange={(e) => handleAssignWinner(rank.key, rank.label, e.target.value)}
+                        >
+                          <option value="">— Select Winner —</option>
+                          {submissions.filter(x => x.status === 'approved' && (x.participationType === 'Reel' || x.participationType === 'Both')).map((sub) => (
+                            <option key={sub.id} value={sub.id}>
+                              {sub.member1Name} ({sub.id}) · {sub.member1Roll}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: TIMER GATING & VISIBILITY */}
+          {activeTab === 'timers' && (
+            <div className="glass-panel border-neon/10 rounded-2xl p-8 space-y-8">
+              <div>
+                <h2 className="text-2xl font-black font-outfit uppercase tracking-tight text-white">Timer Controls</h2>
+                <p className="text-xs text-slate-500 font-light mt-1">Set registration dates and results public accessibility live gates.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[10px] uppercase font-mono tracking-widest text-emerald-400/50 mb-2">Registration Open Date</label>
+                  <input
+                    type="date"
+                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-slate-800 focus:border-neon focus:outline-none text-white font-mono text-sm"
+                    value={regStartDate}
+                    onChange={(e) => setRegStartDate(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-mono tracking-widest text-emerald-400/50 mb-2">Registration Deadline</label>
+                  <input
+                    type="date"
+                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-slate-800 focus:border-neon focus:outline-none text-white font-mono text-sm"
+                    value={regEndDate}
+                    onChange={(e) => setRegEndDate(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-mono tracking-widest text-emerald-400/50 mb-2">Result Declaration Date</label>
+                  <input
+                    type="date"
+                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-slate-800 focus:border-neon focus:outline-none text-white font-mono text-sm"
+                    value={resultDate}
+                    onChange={(e) => setResultDate(e.target.value)}
+                  />
+                </div>
+
+                <div className="bg-black/30 border border-slate-900 rounded-xl p-5 flex items-center justify-between">
+                  <div>
+                    <h4 className="font-outfit font-bold text-white text-sm">Announce Results Publicly</h4>
+                    <p className="text-[10px] text-slate-500 mt-1">Show declared winners on the live home page gallery.</p>
+                  </div>
+                  
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={resultsPublic}
+                      onChange={(e) => setResultsPublic(e.target.checked)}
+                    />
+                    <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-neon peer-checked:after:bg-black" />
+                  </label>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-slate-900 flex justify-end">
+                <button
+                  onClick={handleSaveSettings}
+                  className="px-6 py-3.5 bg-neon text-black rounded-xl font-outfit font-bold uppercase tracking-wider text-xs border border-neon hover:bg-transparent hover:text-neon transition-all flex items-center gap-1.5 cursor-pointer shadow-[0_0_20px_rgba(74,222,128,0.25)]"
+                >
+                  <Save className="w-4 h-4" /> Save Configuration
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}

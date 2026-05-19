@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — Leaf & Lens 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <link rel="stylesheet" href="../assets/css/admin.css" />
+</head>
+<body class="admin-body">
+
+<!-- SIDEBAR -->
+<aside class="admin-sidebar" id="adminSidebar">
+  <div class="sidebar-logo">
+    <span style="font-size:1.6rem;">🌿</span>
+    <div>
+      <div class="sidebar-logo-text">Leaf &amp; Lens</div>
+      <span class="sidebar-admin-badge">Admin Panel</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Main</div>
+    <a href="dashboard.html" class="sidebar-link active">
+      <i data-lucide="layout-dashboard" style="width:16px;height:16px;"></i> Dashboard
+    </a>
+    <a href="submissions.html" class="sidebar-link">
+      <i data-lucide="image" style="width:16px;height:16px;"></i> Submissions
+      <span class="badge-count" id="sbPendingBadge">0</span>
+    </a>
+    <a href="participants.html" class="sidebar-link">
+      <i data-lucide="users" style="width:16px;height:16px;"></i> Participants
+    </a>
+    <a href="results.html" class="sidebar-link">
+      <i data-lucide="trophy" style="width:16px;height:16px;"></i> Results
+    </a>
+    <div class="sidebar-section-label">Site</div>
+    <a href="../home.html" class="sidebar-link" target="_blank">
+      <i data-lucide="external-link" style="width:16px;height:16px;"></i> View Site
+    </a>
+    <a href="../register.html" class="sidebar-link" target="_blank">
+      <i data-lucide="clipboard-list" style="width:16px;height:16px;"></i> Registration Form
+    </a>
+  </nav>
+  <div class="sidebar-bottom">
+    <button class="sidebar-logout" id="logoutBtn">
+      <i data-lucide="log-out" style="width:15px;height:15px;"></i> Sign Out
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="admin-main">
+  <div class="admin-topbar">
+    <h1 class="topbar-title">Dashboard</h1>
+    <div class="topbar-right">
+      <div class="topbar-wed">
+        <i data-lucide="globe-2" style="width:14px;height:14px;"></i>
+        World Environment Day — June 5, 2026
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-content">
+
+    <!-- STATS CARDS -->
+    <div class="stat-cards-grid" id="statsGrid">
+      <div class="stat-card-admin">
+        <div class="sca-icon">📋</div>
+        <div class="sca-value" id="sc-total">0</div>
+        <div class="sca-label">Total Registrations</div>
+        <div class="sca-delta delta-up" id="sc-total-delta"></div>
+      </div>
+      <div class="stat-card-admin">
+        <div class="sca-icon">⏳</div>
+        <div class="sca-value" id="sc-pending">0</div>
+        <div class="sca-label">Pending Review</div>
+        <div class="sca-delta delta-pend">Awaiting action</div>
+      </div>
+      <div class="stat-card-admin">
+        <div class="sca-icon">✅</div>
+        <div class="sca-value" id="sc-approved">0</div>
+        <div class="sca-label">Approved</div>
+      </div>
+      <div class="stat-card-admin">
+        <div class="sca-icon">❌</div>
+        <div class="sca-value" id="sc-rejected">0</div>
+        <div class="sca-label">Rejected</div>
+      </div>
+      <div class="stat-card-admin">
+        <div class="sca-icon">📷</div>
+        <div class="sca-value" id="sc-photos">0</div>
+        <div class="sca-label">Photo Entries</div>
+      </div>
+      <div class="stat-card-admin">
+        <div class="sca-icon">🎬</div>
+        <div class="sca-value" id="sc-reels">0</div>
+        <div class="sca-label">Reel Entries</div>
+      </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="quick-actions">
+      <a href="submissions.html" class="btn btn-primary">
+        <i data-lucide="eye" style="width:16px;height:16px;"></i> Review Submissions
+      </a>
+      <button class="btn btn-outline" onclick="exportAllCSV()">
+        <i data-lucide="download" style="width:16px;height:16px;"></i> Export CSV
+      </button>
+      <a href="results.html" class="btn btn-gold">
+        <i data-lucide="trophy" style="width:16px;height:16px;"></i> Declare Winners
+      </a>
+    </div>
+
+    <!-- RECENT SUBMISSIONS TABLE -->
+    <div class="admin-table-wrap">
+      <div class="table-head">
+        <span class="table-head-title">Recent Submissions</span>
+        <a href="submissions.html" style="margin-left:auto;font-size:0.82rem;color:var(--primary-light);">View All →</a>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Name</th><th>Category</th>
+            <th>Submitted</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="recentTable">
+          <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📭</div><p>No submissions yet</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PLEDGE + SETTINGS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem;">
+      <div class="admin-table-wrap" style="padding:1.5rem;">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1rem;color:var(--text-primary);margin-bottom:1rem;">🌱 Climate Pledge Stats</h3>
+        <div style="font-family:'Outfit',sans-serif;font-size:2.5rem;font-weight:900;color:var(--primary-light);" id="pledgeStatNum">0</div>
+        <div style="font-size:0.82rem;color:var(--text-muted);margin-top:0.25rem;">participants pledged</div>
+        <div style="margin-top:1rem;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;">
+          <div id="pledgeStatBar" style="height:100%;background:var(--grad-primary);border-radius:3px;width:0%;transition:width 1s ease;"></div>
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;">Goal: 500 pledges</div>
+      </div>
+
+      <div class="admin-table-wrap" style="padding:1.5rem;">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1rem;color:var(--text-primary);margin-bottom:1rem;">⚙️ Competition Settings</h3>
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:0.88rem;color:var(--text-secondary);">Competition Active</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleActive" onchange="updateSetting('competitionActive', this.checked)" />
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:0.88rem;color:var(--text-secondary);">Results Public</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleResults" onchange="updateSetting('resultsPublic', this.checked)" />
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+          <button class="btn btn-outline" style="font-size:0.82rem;padding:0.5rem 1rem;" onclick="changeAdminPassword()">
+            <i data-lucide="key" style="width:14px;height:14px;"></i> Change Password
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div id="toast-container"></div>
+
+<style>
+  .toggle-switch { position: relative; display: inline-block; width: 40px; height: 22px; cursor: pointer; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-track {
+    position: absolute; inset: 0; background: rgba(255,255,255,0.1);
+    border-radius: 999px; transition: var(--transition-base);
+    border: 1px solid var(--border);
+  }
+  .toggle-track::after {
+    content: ''; position: absolute;
+    left: 3px; top: 50%; transform: translateY(-50%);
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--text-muted); transition: var(--transition-base);
+  }
+  .toggle-switch input:checked + .toggle-track { background: rgba(82,183,136,0.3); border-color: var(--primary-light); }
+  .toggle-switch input:checked + .toggle-track::after { left: calc(100% - 17px); background: var(--primary-light); }
+</style>
+
+<script src="../assets/js/main.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!LL.isAdminLoggedIn()) { window.location.href = 'login.html'; return; }
+  if (window.lucide) lucide.createIcons();
+
+  loadStats();
+  loadRecentTable();
+  loadSettings();
+  loadPledgeStat();
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    LL.adminLogout(); window.location.href = 'login.html';
+  });
+});
+
+function loadStats() {
+  const subs = LL.getSubmissions();
+  const pending  = subs.filter(s => s.status === 'pending').length;
+  const approved = subs.filter(s => s.status === 'approved').length;
+  const rejected = subs.filter(s => s.status === 'rejected').length;
+  const photos   = subs.filter(s => s.category === 'Photo' || s.category === 'Both').length;
+  const reels    = subs.filter(s => s.category === 'Reel'  || s.category === 'Both').length;
+
+  document.getElementById('sc-total').textContent    = subs.length;
+  document.getElementById('sc-pending').textContent  = pending;
+  document.getElementById('sc-approved').textContent = approved;
+  document.getElementById('sc-rejected').textContent = rejected;
+  document.getElementById('sc-photos').textContent   = photos;
+  document.getElementById('sc-reels').textContent    = reels;
+  document.getElementById('sbPendingBadge').textContent = pending;
+  if (subs.length) document.getElementById('sc-total-delta').textContent = subs.length + ' total entries received';
+}
+
+function loadRecentTable() {
+  const subs = [...LL.getSubmissions()].reverse().slice(0, 8);
+  const tbody = document.getElementById('recentTable');
+  if (!subs.length) return;
+  tbody.innerHTML = subs.map(s => `
+    <tr>
+      <td class="td-id">${s.id}</td>
+      <td class="td-name">${s.name}</td>
+      <td>${s.category}</td>
+      <td>${formatDate(s.submittedAt)}</td>
+      <td><span class="status-${s.status}">${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span></td>
+      <td class="td-actions">
+        ${s.status === 'pending' ? `
+          <button class="action-btn action-approve" onclick="quickAction('${s.id}','approved')">✓ Approve</button>
+          <button class="action-btn action-reject"  onclick="quickAction('${s.id}','rejected')">✕ Reject</button>
+        ` : ''}
+        <a href="submissions.html" class="action-btn action-view">View All</a>
+      </td>
+    </tr>`).join('');
+  if (window.lucide) lucide.createIcons();
+}
+
+function quickAction(id, status) {
+  const subs = LL.getSubmissions();
+  const idx = subs.findIndex(s => s.id === id);
+  if (idx > -1) { subs[idx].status = status; LL.saveSubmissions(subs); }
+  showToast(status === 'approved' ? '✅ Approved!' : '❌ Rejected', status === 'approved' ? 'success' : 'error');
+  loadStats(); loadRecentTable();
+}
+
+function loadSettings() {
+  const s = LL.getSettings();
+  document.getElementById('toggleActive').checked  = s.competitionActive !== false;
+  document.getElementById('toggleResults').checked = !!s.resultsPublic;
+}
+
+function updateSetting(key, val) {
+  const s = LL.getSettings(); s[key] = val; LL.saveSettings(s);
+  showToast('Settings updated', 'success');
+}
+
+function loadPledgeStat() {
+  const count = LL.getPledgeCount();
+  document.getElementById('pledgeStatNum').textContent = count;
+  document.getElementById('pledgeStatBar').style.width = Math.min((count/500)*100,100) + '%';
+}
+
+function exportAllCSV() { exportCSV(LL.getSubmissions(), 'leaf_lens_all_participants.csv'); }
+
+function changeAdminPassword() {
+  const newPass = prompt('Enter new password (min 6 characters):');
+  if (!newPass || newPass.length < 6) { showToast('Password too short', 'error'); return; }
+  const creds = LL.get('ll_admin_creds') || { username: 'admin', password: 'leaflens2026' };
+  creds.password = newPass;
+  LL.set('ll_admin_creds', creds);
+  showToast('Password updated successfully!', 'success');
+}
+</script>
+</body>
+</html>

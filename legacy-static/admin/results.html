@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Results — Leaf & Lens Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <link rel="stylesheet" href="../assets/css/admin.css" />
+  <style>
+    .winner-slot {
+      background: var(--bg-card); border: 2px solid var(--border);
+      border-radius: var(--radius-lg); padding: 1.5rem;
+      transition: var(--transition-base);
+    }
+    .winner-slot.filled { border-color: rgba(244,162,97,0.4); background: rgba(244,162,97,0.04); }
+    .slot-rank {
+      font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 900;
+      color: var(--text-muted); margin-bottom: 0.75rem;
+    }
+    .slot-rank.gold   { color: #FFD700; }
+    .slot-rank.silver { color: #C0C0C0; }
+    .slot-rank.bronze { color: #CD7F32; }
+    .slot-rank.special{ color: var(--primary-light); font-size:1.2rem; }
+    .slot-select {
+      width: 100%; padding: 0.6rem 1rem;
+      background: var(--bg-deep); border: 1px solid var(--border);
+      border-radius: var(--radius-md); color: var(--text-primary);
+      font-size: 0.88rem; outline: none; cursor: pointer;
+      transition: var(--transition-base); margin-bottom: 0.6rem;
+    }
+    .slot-select:focus { border-color: var(--primary-light); }
+    .slot-select option { background: var(--bg-card); }
+    .slot-preview {
+      font-size: 0.82rem; color: var(--text-muted);
+      display: none; margin-top: 0.5rem;
+    }
+    .slot-preview.show { display: block; }
+    .results-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.25rem; margin-bottom: 1.5rem;
+    }
+    .cat-section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem; color: var(--text-primary);
+      margin: 2rem 0 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .publish-bar {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 1.5rem 2rem;
+      display: flex; align-items: center; gap: 1.5rem;
+      flex-wrap: wrap; margin-top: 2rem;
+    }
+    .publish-bar-text h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem; color: var(--text-primary); margin-bottom: 0.2rem;
+    }
+    .publish-bar-text p { font-size: 0.82rem; color: var(--text-muted); }
+    .toggle-switch { position: relative; display: inline-block; width: 48px; height: 26px; cursor: pointer; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute; inset: 0; background: rgba(255,255,255,0.1);
+      border-radius: 999px; transition: 0.3s;
+      border: 1px solid var(--border);
+    }
+    .toggle-track::after {
+      content: ''; position: absolute;
+      left: 4px; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--text-muted); transition: 0.3s;
+    }
+    .toggle-switch input:checked + .toggle-track { background: rgba(82,183,136,0.3); border-color: var(--primary-light); }
+    .toggle-switch input:checked + .toggle-track::after { left: calc(100% - 20px); background: var(--primary-light); }
+  </style>
+</head>
+<body class="admin-body">
+
+<aside class="admin-sidebar">
+  <div class="sidebar-logo">
+    <span style="font-size:1.6rem;">🌿</span>
+    <div><div class="sidebar-logo-text">Leaf &amp; Lens</div><span class="sidebar-admin-badge">Admin Panel</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Main</div>
+    <a href="dashboard.html" class="sidebar-link"><i data-lucide="layout-dashboard" style="width:16px;height:16px;"></i> Dashboard</a>
+    <a href="submissions.html" class="sidebar-link"><i data-lucide="image" style="width:16px;height:16px;"></i> Submissions</a>
+    <a href="participants.html" class="sidebar-link"><i data-lucide="users" style="width:16px;height:16px;"></i> Participants</a>
+    <a href="results.html" class="sidebar-link active"><i data-lucide="trophy" style="width:16px;height:16px;"></i> Results</a>
+    <div class="sidebar-section-label">Site</div>
+    <a href="../home.html" class="sidebar-link" target="_blank"><i data-lucide="external-link" style="width:16px;height:16px;"></i> View Site</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <button class="sidebar-logout" id="logoutBtn"><i data-lucide="log-out" style="width:15px;height:15px;"></i> Sign Out</button>
+  </div>
+</aside>
+
+<main class="admin-main">
+  <div class="admin-topbar">
+    <h1 class="topbar-title">🏆 Results Panel</h1>
+    <div class="topbar-right">
+      <div id="resultsPublicStatus" style="font-size:0.82rem;"></div>
+    </div>
+  </div>
+  <div class="admin-content">
+
+    <div style="background:rgba(244,162,97,0.07);border:1px solid rgba(244,162,97,0.2);border-radius:var(--radius-md);padding:1rem 1.5rem;margin-bottom:1.5rem;font-size:0.88rem;color:var(--text-secondary);">
+      ⚠️ Only <strong style="color:var(--text-primary);">approved submissions</strong> appear in winner dropdowns.
+      Go to <a href="submissions.html" style="color:var(--primary-light);">Submissions</a> to approve entries first.
+    </div>
+
+    <!-- PHOTO CATEGORY -->
+    <div class="cat-section-title">📷 Photo Category Winners</div>
+    <div class="results-grid" id="photoWinnersGrid"></div>
+
+    <!-- REEL CATEGORY -->
+    <div class="cat-section-title">🎬 Reel Category Winners</div>
+    <div class="results-grid" id="reelWinnersGrid"></div>
+
+    <!-- SPECIAL MENTIONS -->
+    <div class="cat-section-title">🌟 Special Mentions</div>
+    <div class="results-grid" id="specialGrid"></div>
+
+    <!-- SAVE & PUBLISH -->
+    <div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap;">
+      <button class="btn btn-gold btn-lg" onclick="saveResults()">
+        <i data-lucide="save" style="width:18px;height:18px;"></i> Save Results
+      </button>
+      <button class="btn btn-outline" onclick="clearResults()">
+        <i data-lucide="trash-2" style="width:16px;height:16px;"></i> Clear All
+      </button>
+    </div>
+
+    <!-- PUBLISH BAR -->
+    <div class="publish-bar">
+      <div class="publish-bar-text">
+        <h3>Public Visibility</h3>
+        <p>Toggle to show/hide results on the public website</p>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="togglePublic" onchange="togglePublic(this.checked)" />
+        <span class="toggle-track"></span>
+      </label>
+      <span id="publicLabel" style="font-size:0.88rem;color:var(--text-muted);">Results Hidden</span>
+    </div>
+
+  </div>
+</main>
+
+<div id="toast-container"></div>
+<script src="../assets/js/main.js"></script>
+<script>
+const PHOTO_RANKS = [
+  { key:'photo_1st',  label:'🥇 1st Place',   cls:'gold'   },
+  { key:'photo_2nd',  label:'🥈 2nd Place',   cls:'silver' },
+  { key:'photo_3rd',  label:'🥉 3rd Place',   cls:'bronze' },
+];
+const REEL_RANKS = [
+  { key:'reel_1st',   label:'🥇 1st Place',   cls:'gold'   },
+  { key:'reel_2nd',   label:'🥈 2nd Place',   cls:'silver' },
+  { key:'reel_3rd',   label:'🥉 3rd Place',   cls:'bronze' },
+];
+const SPECIAL_RANKS = [
+  { key:'special_1',  label:'Special Mention 1', cls:'special' },
+  { key:'special_2',  label:'Special Mention 2', cls:'special' },
+  { key:'special_3',  label:'Special Mention 3', cls:'special' },
+];
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!LL.isAdminLoggedIn()) { window.location.href = 'login.html'; return; }
+  if (window.lucide) lucide.createIcons();
+  buildGrids();
+  loadSavedResults();
+  loadPublicSetting();
+  document.getElementById('logoutBtn').addEventListener('click', () => { LL.adminLogout(); window.location.href = 'login.html'; });
+});
+
+function getApproved(catFilter) {
+  return LL.getSubmissions().filter(s => {
+    if (s.status !== 'approved') return false;
+    if (!catFilter) return true;
+    return s.category === catFilter || s.category === 'Both';
+  });
+}
+
+function buildSlot(rank, options) {
+  const saved = (LL.getResults() || []).find(r => r.key === rank.key);
+  const sel = `
+    <div class="winner-slot ${saved ? 'filled' : ''}" id="slot-${rank.key}">
+      <div class="slot-rank ${rank.cls}">${rank.label}</div>
+      <select class="slot-select" id="sel-${rank.key}" onchange="onSelect('${rank.key}')">
+        <option value="">— Select Winner —</option>
+        ${options.map(s => `<option value="${s.id}" ${saved && saved.submissionId===s.id?'selected':''}>${s.name} (${s.id}) — ${s.city}</option>`).join('')}
+      </select>
+      <div class="slot-preview ${saved?'show':''}" id="prev-${rank.key}">
+        ${saved ? `<strong style="color:var(--text-primary);">${saved.name}</strong> · ${saved.city} · ${saved.category}` : ''}
+      </div>
+    </div>`;
+  return sel;
+}
+
+function buildGrids() {
+  const photoSubs   = getApproved('Photo');
+  const reelSubs    = getApproved('Reel');
+  const allApproved = getApproved(null);
+
+  document.getElementById('photoWinnersGrid').innerHTML =
+    PHOTO_RANKS.map(r => buildSlot(r, photoSubs)).join('');
+  document.getElementById('reelWinnersGrid').innerHTML =
+    REEL_RANKS.map(r => buildSlot(r, reelSubs)).join('');
+  document.getElementById('specialGrid').innerHTML =
+    SPECIAL_RANKS.map(r => buildSlot(r, allApproved)).join('');
+}
+
+function onSelect(key) {
+  const sel  = document.getElementById('sel-'+key);
+  const prev = document.getElementById('prev-'+key);
+  const slot = document.getElementById('slot-'+key);
+  const id   = sel.value;
+  if (!id) { prev.classList.remove('show'); slot.classList.remove('filled'); return; }
+  const s = LL.getSubmissions().find(x => x.id === id);
+  if (s) {
+    prev.innerHTML = `<strong style="color:var(--text-primary);">${s.name}</strong> · ${s.city} · ${s.category}`;
+    prev.classList.add('show');
+    slot.classList.add('filled');
+  }
+}
+
+function saveResults() {
+  const allRanks = [...PHOTO_RANKS, ...REEL_RANKS, ...SPECIAL_RANKS];
+  const results  = [];
+  allRanks.forEach(r => {
+    const sel = document.getElementById('sel-'+r.key);
+    if (!sel || !sel.value) return;
+    const s = LL.getSubmissions().find(x => x.id === sel.value);
+    if (s) results.push({ key: r.key, label: r.label, submissionId: s.id, name: s.name, city: s.city, category: s.category, caption: s.caption });
+  });
+  LL.set('ll_results', results);
+  showToast('Results saved! 🏆', 'success');
+}
+
+function clearResults() {
+  if (!confirm('Clear all winners?')) return;
+  LL.set('ll_results', []);
+  buildGrids();
+  showToast('Results cleared', 'info');
+}
+
+function loadSavedResults() { /* handled in buildSlot via LL.getResults() */ }
+
+function loadPublicSetting() {
+  const s = LL.getSettings();
+  document.getElementById('togglePublic').checked = !!s.resultsPublic;
+  updatePublicLabel(!!s.resultsPublic);
+}
+
+function togglePublic(val) {
+  const s = LL.getSettings(); s.resultsPublic = val; LL.saveSettings(s);
+  updatePublicLabel(val);
+  showToast(val ? '🌍 Results are now PUBLIC' : '🔒 Results hidden', val ? 'success' : 'info');
+}
+
+function updatePublicLabel(val) {
+  const el = document.getElementById('publicLabel');
+  const st = document.getElementById('resultsPublicStatus');
+  if (val) {
+    el.textContent = 'Results are LIVE 🌍'; el.style.color = 'var(--primary-light)';
+    if (st) { st.textContent = '🟢 Results Public'; st.style.color = 'var(--primary-light)'; }
+  } else {
+    el.textContent = 'Results Hidden'; el.style.color = 'var(--text-muted)';
+    if (st) { st.textContent = '🔒 Results Hidden'; st.style.color = 'var(--text-muted)'; }
+  }
+}
+</script>
+</body>
+</html>

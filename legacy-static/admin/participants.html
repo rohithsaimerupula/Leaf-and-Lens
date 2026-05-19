@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Participants — Leaf & Lens Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <link rel="stylesheet" href="../assets/css/admin.css" />
+</head>
+<body class="admin-body">
+
+<aside class="admin-sidebar">
+  <div class="sidebar-logo">
+    <span style="font-size:1.6rem;">🌿</span>
+    <div><div class="sidebar-logo-text">Leaf &amp; Lens</div><span class="sidebar-admin-badge">Admin Panel</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Main</div>
+    <a href="dashboard.html" class="sidebar-link"><i data-lucide="layout-dashboard" style="width:16px;height:16px;"></i> Dashboard</a>
+    <a href="submissions.html" class="sidebar-link"><i data-lucide="image" style="width:16px;height:16px;"></i> Submissions</a>
+    <a href="participants.html" class="sidebar-link active"><i data-lucide="users" style="width:16px;height:16px;"></i> Participants</a>
+    <a href="results.html" class="sidebar-link"><i data-lucide="trophy" style="width:16px;height:16px;"></i> Results</a>
+    <div class="sidebar-section-label">Site</div>
+    <a href="../home.html" class="sidebar-link" target="_blank"><i data-lucide="external-link" style="width:16px;height:16px;"></i> View Site</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <button class="sidebar-logout" id="logoutBtn"><i data-lucide="log-out" style="width:15px;height:15px;"></i> Sign Out</button>
+  </div>
+</aside>
+
+<main class="admin-main">
+  <div class="admin-topbar">
+    <h1 class="topbar-title">Participants</h1>
+    <div class="topbar-right">
+      <span id="partCountLabel" style="font-size:0.82rem;color:var(--text-muted);"></span>
+    </div>
+  </div>
+  <div class="admin-content">
+
+    <!-- FILTER BAR -->
+    <div class="admin-table-wrap" style="margin-bottom:1.25rem;padding:1rem 1.5rem;">
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
+        <div class="search-wrap">
+          <i data-lucide="search" class="search-icon" style="width:14px;height:14px;"></i>
+          <input type="text" class="table-search" id="searchInput" placeholder="Search name, email, ID, roll no..." oninput="renderTable()" />
+        </div>
+        <select class="table-filter" id="filterCat" onchange="renderTable()">
+          <option value="all">All Categories</option>
+          <option value="Photo">Photo</option>
+          <option value="Reel">Reel</option>
+          <option value="Both">Both</option>
+        </select>
+        <select class="table-filter" id="filterYear" onchange="renderTable()">
+          <option value="all">All Years</option>
+          <option value="1">1st Year</option>
+          <option value="2">2nd Year</option>
+          <option value="3">3rd Year</option>
+          <option value="4">4th Year</option>
+        </select>
+        <select class="table-filter" id="filterBranch" onchange="renderTable()">
+          <option value="all">All Branches</option>
+          <option value="CSE">CSE / IT</option>
+          <option value="ECE">ECE / EEE</option>
+          <option value="MECH">Mechanical</option>
+          <option value="CIVIL">Civil</option>
+          <option value="OTHER">Other</option>
+        </select>
+        <button class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;margin-left:auto;" onclick="exportCSV(LL.getSubmissions(),'leaf_lens_participants.csv')">
+          <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="admin-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>ID</th><th>Name</th><th>Contact</th>
+            <th>Roll No</th><th>Branch</th><th>Year</th><th>Category</th><th>Pledge</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="participantsTable"></tbody>
+      </table>
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+  </div>
+</main>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="detailTitle">Participant Detail</span>
+      <button class="modal-close" onclick="document.getElementById('detailModal').classList.remove('open')">
+        <i data-lucide="x" style="width:18px;height:18px;"></i>
+      </button>
+    </div>
+    <div class="modal-detail" id="detailBody"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../assets/js/main.js"></script>
+<script>
+const PER_PAGE = 12;
+let currentPage = 1;
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!LL.isAdminLoggedIn()) { window.location.href = 'login.html'; return; }
+  if (window.lucide) lucide.createIcons();
+  renderTable();
+  document.getElementById('logoutBtn').addEventListener('click', () => { LL.adminLogout(); window.location.href = 'login.html'; });
+});
+
+function getFiltered() {
+  const q      = document.getElementById('searchInput').value.toLowerCase();
+  const cat    = document.getElementById('filterCat').value;
+  const year   = document.getElementById('filterYear').value;
+  const branch = document.getElementById('filterBranch').value;
+  return LL.getSubmissions().filter(s => {
+    const matchQ = !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q)
+                     || s.id.toLowerCase().includes(q) || (s.rollNum||'').toLowerCase().includes(q);
+    const matchC = cat    === 'all' || s.category    === cat;
+    const matchY = year   === 'all' || s.yearOfStudy === year;
+    const matchB = branch === 'all' || s.branch      === branch;
+    return matchQ && matchC && matchY && matchB;
+  });
+}
+
+function renderTable() {
+  const filtered = getFiltered();
+  const total    = filtered.length;
+  const pages    = Math.max(1, Math.ceil(total / PER_PAGE));
+  currentPage    = Math.min(currentPage, pages);
+  const slice    = filtered.slice((currentPage-1)*PER_PAGE, currentPage*PER_PAGE);
+
+  document.getElementById('partCountLabel').textContent = `${total} participant${total !== 1 ? 's' : ''}`;
+
+  const tbody = document.getElementById('participantsTable');
+  if (!slice.length) {
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="empty-icon">👥</div><p>No participants found</p></div></td></tr>`;
+  } else {
+    tbody.innerHTML = slice.map((s, i) => `
+      <tr>
+        <td style="color:var(--text-muted);font-size:0.78rem;">${(currentPage-1)*PER_PAGE+i+1}</td>
+        <td class="td-id">${s.id}</td>
+        <td class="td-name">${s.name}</td>
+        <td>
+          <div style="font-size:0.82rem;">${s.email}</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);">${s.phone}</div>
+        </td>
+        <td style="font-size:0.82rem;font-family:'Outfit',sans-serif;color:var(--primary-light);font-weight:600;">${s.rollNum || '—'}</td>
+        <td style="font-size:0.82rem;">${s.branch || '—'}</td>
+        <td style="font-size:0.82rem;">${s.yearOfStudy ? 'Year ' + s.yearOfStudy : '—'}</td>
+        <td><span class="badge badge-green" style="font-size:0.72rem;">${s.category}</span></td>
+        <td style="font-size:1rem;">${s.pledge ? '✅' : '—'}</td>
+        <td><span class="status-${s.status}">${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span></td>
+        <td class="td-actions">
+          <button class="action-btn action-view" onclick="viewParticipant('${s.id}')">
+            <i data-lucide="eye" style="width:12px;height:12px;"></i> View
+          </button>
+        </td>
+      </tr>`).join('');
+  }
+
+  // Pagination
+  const pg = document.getElementById('pagination');
+  pg.innerHTML = '';
+  if (pages > 1) {
+    ['‹','›'].forEach((t,dir) => {
+      /* handled below */
+    });
+    const prev = document.createElement('button');
+    prev.className='page-btn'; prev.textContent='‹'; prev.disabled=currentPage===1;
+    prev.onclick=()=>{currentPage--;renderTable();};
+    pg.appendChild(prev);
+    for(let i=1;i<=pages;i++){
+      const b=document.createElement('button');
+      b.className='page-btn'+(i===currentPage?' active':'');
+      b.textContent=i; b.onclick=()=>{currentPage=i;renderTable();};
+      pg.appendChild(b);
+    }
+    const next=document.createElement('button');
+    next.className='page-btn'; next.textContent='›'; next.disabled=currentPage===pages;
+    next.onclick=()=>{currentPage++;renderTable();};
+    pg.appendChild(next);
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function viewParticipant(id) {
+  const s = LL.getSubmissions().find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('detailTitle').textContent = s.name;
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-row"><span class="detail-label">Submission ID</span><span class="detail-value td-id">${s.id}</span></div>
+    <div class="detail-row"><span class="detail-label">Full Name</span><span class="detail-value">${s.name}</span></div>
+    <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${s.email}</span></div>
+    <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">${s.phone}</span></div>
+    <div class="detail-row"><span class="detail-label">Roll / Reg. No</span><span class="detail-value" style="color:var(--primary-light);font-weight:600;">${s.rollNum || '—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Department</span><span class="detail-value">${s.branch || '—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Year of Study</span><span class="detail-value">${s.yearOfStudy ? 'Year ' + s.yearOfStudy : '—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Category</span><span class="detail-value">${s.category}</span></div>
+    <div class="detail-row"><span class="detail-label">Instagram</span><span class="detail-value">${s.instagram || '—'}</span></div>
+    <div class="detail-row"><span class="detail-label">File</span><span class="detail-value">${s.fileName || '—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Pledge</span><span class="detail-value">${s.pledge ? '✅ Yes' : 'No'}</span></div>
+    <div class="detail-row"><span class="detail-label">Status</span><span class="status-${s.status}">${s.status}</span></div>
+    <div class="detail-row"><span class="detail-label">Registered</span><span class="detail-value">${formatDate(s.submittedAt)}</span></div>
+    <div style="margin-top:1rem;">
+      <div class="detail-label" style="margin-bottom:0.4rem;">Caption</div>
+      <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.7;background:var(--bg-deep);padding:0.75rem;border-radius:var(--radius-md);">${s.caption||'—'}</div>
+    </div>
+    <div style="margin-top:1.25rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
+      <a href="submissions.html" class="btn btn-primary" style="font-size:0.85rem;padding:0.6rem 1.2rem;">View Submission</a>
+      <button class="btn btn-outline" style="font-size:0.85rem;padding:0.6rem 1.2rem;" onclick="document.getElementById('detailModal').classList.remove('open')">Close</button>
+    </div>`;
+  document.getElementById('detailModal').classList.add('open');
+  if (window.lucide) lucide.createIcons();
+}
+
+document.getElementById('detailModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+});
+</script>
+</body>
+</html>
