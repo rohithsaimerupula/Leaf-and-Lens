@@ -64,7 +64,7 @@
 <!-- NAV -->
 <nav class="navbar solid" id="navbar">
   <div class="nav-inner">
-    <a href="index.html" class="nav-logo"><svg class="nav-logo-leaf" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>Leaf &amp; Lens</a>
+    <a href="index.html" class="nav-logo" id="navLogo"><svg class="nav-logo-leaf" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>Leaf &amp; Lens</a>
     <ul class="nav-links" id="navLinks">
       <li><a href="home.html" class="nav-link active">Home</a></li>
       <li><a href="rules.html" class="nav-link">Rules</a></li>
@@ -205,7 +205,7 @@
   <div class="wrap">
     <div class="footer-inner">
       <div>
-        <a href="index.html" class="footer-logo" style="text-decoration:none; color:inherit;"><svg class="footer-logo-leaf" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>Leaf &amp; Lens</a>
+        <a href="index.html" class="footer-logo" id="footerLogo" style="text-decoration:none; color:inherit;"><svg class="footer-logo-leaf" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>Leaf &amp; Lens</a>
         <div class="footer-tagline">Capture the Green. Change the World.</div>
         <p style="font-size:.76rem;color:var(--cream3);margin-top:.5rem;letter-spacing:.04em">World Environment Day — June 5, 2026</p>
       </div>
@@ -373,6 +373,32 @@ document.addEventListener('DOMContentLoaded',()=>{
   .catch(err => {
     console.warn("Turso live fetch failed, kept fallback.", err);
   });
+  // ── SECRET ADMIN EASTER EGG ──────────────────────
+  // Click the Leaf & Lens logo 5 times quickly to open admin login
+  let _adminClickCount = 0;
+  let _adminClickTimer = null;
+  function handleSecretClick(e) {
+    e.preventDefault();
+    _adminClickCount++;
+    // Visual pulse feedback on each click
+    this.style.transition = 'transform 0.1s ease, filter 0.1s ease';
+    this.style.transform = 'scale(1.15)';
+    this.style.filter = 'drop-shadow(0 0 6px rgba(82,183,136,0.8))';
+    setTimeout(() => { this.style.transform = ''; this.style.filter = ''; }, 150);
+    // Reset timer on each click
+    clearTimeout(_adminClickTimer);
+    _adminClickTimer = setTimeout(() => { _adminClickCount = 0; }, 1500);
+    // 5 clicks = go to admin
+    if (_adminClickCount >= 5) {
+      _adminClickCount = 0;
+      clearTimeout(_adminClickTimer);
+      window.location.href = 'admin/login.html';
+    }
+  }
+  const navLogo = document.getElementById('navLogo');
+  const footerLogo = document.getElementById('footerLogo');
+  if (navLogo) navLogo.addEventListener('click', handleSecretClick);
+  if (footerLogo) footerLogo.addEventListener('click', handleSecretClick);
 });
 </script>
 </body>
