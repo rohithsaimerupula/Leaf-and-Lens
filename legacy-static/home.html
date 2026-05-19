@@ -171,8 +171,8 @@
       <div class="eyebrow center">Competition Timeline</div>
     </div>
     <div class="card tl-row-h">
-      <div class="tl-item reveal d1"><div class="tl-dot-h"></div><div class="tl-date-h" id="tl-start-date">May 20, 2026</div><div class="tl-event-h">Registration Opens</div></div>
-      <div class="tl-item reveal d2"><div class="tl-dot-h"></div><div class="tl-date-h" id="tl-end-date">Active Period</div><div class="tl-event-h">Submission Deadline</div></div>
+      <div class="tl-item reveal d1"><div class="tl-dot-h"></div><div class="tl-date-h" id="tl-start-date">Registrations Open Soon</div><div class="tl-event-h" id="tl-start-event">Registration Opens</div></div>
+      <div class="tl-item reveal d2"><div class="tl-dot-h"></div><div class="tl-date-h" id="tl-end-date">Submission Deadline</div><div class="tl-event-h" id="tl-end-event">Will update soon</div></div>
       <div class="tl-item reveal d3"><div class="tl-dot-h"></div><div class="tl-date-h">Judging Phase</div><div class="tl-event-h">Evaluation Period</div></div>
       <div class="tl-item reveal d4"><div class="tl-dot-h" style="background:var(--gold-lt)"></div><div class="tl-date-h" id="tl-result-date">June 5, 2026</div><div class="tl-event-h">Winners Announced</div></div>
     </div>
@@ -286,27 +286,33 @@ document.addEventListener('DOMContentLoaded',()=>{
     const start = new Date(settings.regStartDate + 'T00:00:00');
     const end = new Date(settings.regEndDate + 'T23:59:59');
 
-    // Update Dates
+    // Update Dates and Subtitles dynamically depending on whether registration started
     const startEl = document.getElementById('tl-start-date');
+    const startEventEl = document.getElementById('tl-start-event');
     const endEl = document.getElementById('tl-end-date');
+    const endEventEl = document.getElementById('tl-end-event');
     const resultEl = document.getElementById('tl-result-date');
 
-    if (startEl) {
-      if (now < start) {
-        startEl.innerHTML = `Registrations Open Soon<br><small style="font-size: 0.72em; opacity: 0.65; font-family: sans-serif; font-weight: 400; display: block; margin-top: 0.3rem;">(${formatDateStr(settings.regStartDate)})</small>`;
-      } else {
-        startEl.textContent = formatDateStr(settings.regStartDate);
+    if (now < start) {
+      // NOT started yet
+      if (startEl) startEl.textContent = "Registrations Open Soon";
+      if (startEventEl) startEventEl.textContent = "Registration Opens";
+      
+      if (endEl) endEl.textContent = "Submission Deadline";
+      if (endEventEl) endEventEl.textContent = "Will update soon";
+    } else {
+      // LIVE / STARTED / CLOSED
+      if (startEl) startEl.textContent = formatDateStr(settings.regStartDate);
+      if (startEventEl) startEventEl.textContent = "Registration Opens";
+      
+      if (endEl) {
+        if (now <= end) {
+          endEl.innerHTML = `${formatDateStr(settings.regEndDate)} <span style="font-size: 0.75em; color: var(--gold-lt); font-weight: 500; margin-left: 0.2rem;">[Active Now]</span>`;
+        } else {
+          endEl.textContent = formatDateStr(settings.regEndDate);
+        }
       }
-    }
-
-    if (endEl) {
-      if (now >= start && now <= end) {
-        endEl.innerHTML = `${formatDateStr(settings.regEndDate)}<br><small style="font-size: 0.72em; color: var(--gold-lt); font-family: sans-serif; font-weight: 500; display: block; margin-top: 0.3rem;">[Active Now]</small>`;
-      } else if (now < start) {
-        endEl.innerHTML = `Submission Deadline<br><small style="font-size: 0.72em; opacity: 0.65; font-family: sans-serif; font-weight: 400; display: block; margin-top: 0.3rem;">(Will update soon)</small>`;
-      } else {
-        endEl.textContent = formatDateStr(settings.regEndDate);
-      }
+      if (endEventEl) endEventEl.textContent = "Submission Deadline";
     }
 
     if (resultEl) {

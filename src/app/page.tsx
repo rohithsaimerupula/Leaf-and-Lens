@@ -466,9 +466,24 @@ export default function Home() {
 
             {/* Items */}
             {[
-              { date: formatDisplayDate(settings.regStartDate), title: 'Registration Starts', desc: 'Secure your spot and download the Green Leaf Pockets submission prompts.', status: status?.status === 'Opening Soon' ? 'Active' as const : 'Past' as const },
-              { date: formatDisplayDate(settings.regEndDate), title: 'Submission Deadline', desc: 'All high-resolution photos and vertical reels must be uploaded by midnight.', status: status?.status === 'Live' ? 'Active' as const : (status?.status === 'Opening Soon' ? 'Upcoming' as const : 'Past' as const) },
-              { date: formatDisplayDate(settings.resultDate), title: 'Results Announcement', desc: 'Winners unveiled live at the Vignan\'s Institute of Information Technology auditorium on World Environment Day.', status: status?.status === 'Closed' ? 'Active' as const : 'Upcoming' as const }
+              { 
+                date: status?.status === 'Opening Soon' ? 'Registrations Open Soon' : formatDisplayDate(settings.regStartDate), 
+                title: 'Registration Starts', 
+                desc: 'Secure your spot and download the Green Leaf Pockets submission prompts.', 
+                status: status?.status === 'Opening Soon' ? 'Active' as const : 'Past' as const 
+              },
+              { 
+                date: status?.status === 'Opening Soon' ? 'Submission Deadline' : formatDisplayDate(settings.regEndDate), 
+                title: 'Submission Deadline', 
+                desc: status?.status === 'Opening Soon' ? 'Will update soon' : 'All high-resolution photos and vertical reels must be uploaded by midnight.', 
+                status: status?.status === 'Live' ? 'Active' as const : (status?.status === 'Opening Soon' ? 'Upcoming' as const : 'Past' as const) 
+              },
+              { 
+                date: formatDisplayDate(settings.resultDate), 
+                title: 'Results Announcement', 
+                desc: 'Winners unveiled live at the Vignan\'s Institute of Information Technology auditorium on World Environment Day.', 
+                status: status?.status === 'Closed' ? 'Active' as const : 'Upcoming' as const 
+              }
             ].map((item, idx) => (
               <div key={idx} className="relative flex flex-col md:flex-row gap-8 items-center md:items-start mb-16 last:mb-0 group">
                 {/* Node dot */}
