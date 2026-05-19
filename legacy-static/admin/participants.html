@@ -164,6 +164,9 @@ function renderTable() {
           <button class="action-btn action-view" onclick="viewParticipant('${s.id}')">
             <i data-lucide="eye" style="width:12px;height:12px;"></i> View
           </button>
+          ${s.status !== 'approved' ? `<button class="action-btn action-approve" onclick="setStatus('${s.id}','approved')">✓</button>` : ''}
+          ${s.status !== 'rejected' ? `<button class="action-btn action-reject"  onclick="setStatus('${s.id}','rejected')">✕</button>` : ''}
+          <button class="action-btn action-delete" onclick="deleteSub('${s.id}')">🗑</button>
         </td>
       </tr>`).join('');
   }
@@ -189,21 +192,47 @@ function renderTable() {
   if (window.lucide) lucide.createIcons();
 }
 
+async function setStatus(id, status) {
+  await TURSO.updateSubmissionStatus(id, status);
+  const idx = _allSubs.findIndex(s => s.id === id);
+  if (idx > -1) _allSubs[idx].status = status;
+  showToast(status === 'approved' ? '✅ Approved!' : '❌ Rejected', status === 'approved' ? 'success' : 'error');
+  renderTable();
+  if (document.getElementById('detailModal').classList.contains('open')) viewParticipant(id);
+}
+
+async function deleteSub(id) {
+  if (!confirm('Delete this registration permanently?')) return;
+  await TURSO.deleteSubmission(id);
+  _allSubs = _allSubs.filter(s => s.id !== id);
+  showToast('Registration removed', 'info');
+  renderTable();
+}
+
 function viewParticipant(id) {
   const s = _allSubs.find(x => x.id === id);
   if (!s) return;
   document.getElementById('detailTitle').textContent = s.member1Name || s.teamName;
   document.getElementById('detailBody').innerHTML = `
+    <div style="text-align:center;margin-bottom:1rem;background:var(--bg-deep);padding:1rem;border-radius:var(--radius-md);">
+      <div style="margin-bottom:0.5rem;font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;">Payment Screenshot</div>
+      ${s.paymentScreenshotUrl 
+        ? `<a href="${s.paymentScreenshotUrl}" target="_blank"><img src="${s.paymentScreenshotUrl}" style="max-width:100%;max-height:200px;border-radius:4px;object-fit:contain;" /></a>` 
+        : '<span style="color:var(--text-muted);">No payment screenshot attached</span>'}
+    </div>
     <div class="detail-row"><span class="detail-label">Submission ID</span><span class="detail-value td-id">${s.id}</span></div>
     <div class="detail-row"><span class="detail-label">Full Name</span><span class="detail-value">${s.member1Name || s.teamName}</span></div>
     <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${s.member1Email || '—'}</span></div>
     <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">${s.member1Phone || '—'}</span></div>
     <div class="detail-row"><span class="detail-label">Roll / Reg. No</span><span class="detail-value" style="color:var(--primary-light);font-weight:600;">${s.member1Roll || '—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Branch & Section</span><span class="detail-value">${s.branch || '—'} - ${s.section || '—'}</span></div>
     <div class="detail-row"><span class="detail-label">Category</span><span class="detail-value">${s.participationType}</span></div>
     <div class="detail-row"><span class="detail-label">Status</span><span class="status-${s.status}">${s.status}</span></div>
     <div class="detail-row"><span class="detail-label">Registered</span><span class="detail-value">${formatDate(s.submittedAt)}</span></div>
     <div style="margin-top:1.25rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
-      <a href="submissions.html" class="btn btn-primary" style="font-size:0.85rem;padding:0.6rem 1.2rem;">View Submission</a>
+      ${s.status !== 'approved' ? `<button class="btn btn-primary" style="font-size:0.85rem;padding:0.6rem 1.2rem;" onclick="setStatus('${s.id}','approved')">✓ Approve</button>` : ''}
+      ${s.status !== 'rejected' ? `<button class="action-btn action-reject" style="font-size:0.85rem;padding:0.6rem 1.2rem;" onclick="setStatus('${s.id}','rejected')">✕ Reject</button>` : ''}
+      <a href="submissions.html" class="btn btn-outline" style="font-size:0.85rem;padding:0.6rem 1.2rem;">View Files</a>
       <button class="btn btn-outline" style="font-size:0.85rem;padding:0.6rem 1.2rem;" onclick="document.getElementById('detailModal').classList.remove('open')">Close</button>
     </div>`;
   document.getElementById('detailModal').classList.add('open');

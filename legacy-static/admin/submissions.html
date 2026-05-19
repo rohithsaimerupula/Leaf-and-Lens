@@ -73,12 +73,6 @@
           <i data-lucide="search" class="search-icon" style="width:14px;height:14px;"></i>
           <input type="text" class="table-search" id="searchInput" placeholder="Search name, email, ID..." oninput="renderTable()" />
         </div>
-        <select class="table-filter" id="filterStatus" onchange="renderTable()">
-          <option value="all">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
         <select class="table-filter" id="filterCat" onchange="renderTable()">
           <option value="all">All Categories</option>
           <option value="Photo">Photo</option>
@@ -86,12 +80,6 @@
           <option value="Both">Both</option>
         </select>
         <div style="margin-left:auto;display:flex;gap:0.5rem;flex-wrap:wrap;">
-          <button class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;" onclick="bulkAction('approved')">
-            <i data-lucide="check-circle" style="width:14px;height:14px;"></i> Approve Selected
-          </button>
-          <button class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;color:var(--red-alert);border-color:rgba(230,57,70,0.3);" onclick="bulkAction('rejected')">
-            <i data-lucide="x-circle" style="width:14px;height:14px;"></i> Reject Selected
-          </button>
           <button class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;" onclick="exportAllCSV()">
             <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
           </button>
@@ -104,9 +92,8 @@
       <table>
         <thead>
           <tr>
-            <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" style="accent-color:var(--primary-light);" /></th>
             <th>ID</th><th>Name</th><th>Category</th>
-            <th>City</th><th>Submitted</th><th>Status</th><th>Actions</th>
+            <th>Roll No</th><th>Submitted</th><th>Status</th><th>Actions</th>
           </tr>
         </thead>
         <tbody id="submissionsTable"></tbody>
@@ -211,16 +198,15 @@ async function saveRating(id) {
 
 function getFiltered() {
   const q      = document.getElementById('searchInput').value.toLowerCase();
-  const status = document.getElementById('filterStatus').value;
   const cat    = document.getElementById('filterCat').value;
   return _allSubs.filter(s => {
+    if (s.status !== 'approved') return false; // ONLY SHOW APPROVED
     const name  = (s.member1Name || s.teamName || '').toLowerCase();
     const email = (s.member1Email || '').toLowerCase();
     const id    = (s.id || '').toLowerCase();
     const matchQ = !q || name.includes(q) || email.includes(q) || id.includes(q);
-    const matchS = status === 'all' || s.status === status;
     const matchC = cat === 'all' || s.participationType === cat;
-    return matchQ && matchS && matchC;
+    return matchQ && matchC;
   });
 }
 
@@ -231,15 +217,14 @@ function renderTable() {
   currentPage    = Math.min(currentPage, pages);
   const slice    = filtered.slice((currentPage-1)*PER_PAGE, currentPage*PER_PAGE);
 
-  document.getElementById('subCountLabel').textContent = `${total} submission${total !== 1 ? 's' : ''}`;
+  document.getElementById('subCountLabel').textContent = `${total} approved submission${total !== 1 ? 's' : ''}`;
 
   const tbody = document.getElementById('submissionsTable');
   if (!slice.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💭</div><p>No submissions found</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">💭</div><p>No approved submissions found</p></div></td></tr>`;
   } else {
     tbody.innerHTML = slice.map(s => `
       <tr>
-        <td><input type="checkbox" class="row-check" data-id="${s.id}" ${selectedIds.has(s.id)?'checked':''} onchange="toggleSelect('${s.id}',this.checked)" style="accent-color:var(--primary-light);" /></td>
         <td class="td-id">${s.id}</td>
         <td class="td-name">
           ${s.member1Name || s.teamName}
@@ -249,14 +234,11 @@ function renderTable() {
         <td>${s.participationType}</td>
         <td style="font-size:0.82rem;">${s.member1Roll || '—'}</td>
         <td style="font-size:0.8rem;">${formatDate(s.submittedAt)}</td>
-        <td><span class="status-${s.status}">${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span></td>
+        <td><span class="status-approved">Approved</span></td>
         <td class="td-actions">
           <button class="action-btn action-view" onclick="viewSubmission('${s.id}')">
-            <i data-lucide="eye" style="width:12px;height:12px;"></i> View
+            <i data-lucide="eye" style="width:12px;height:12px;"></i> View & Download
           </button>
-          ${s.status !== 'approved' ? `<button class="action-btn action-approve" onclick="setStatus('${s.id}','approved')">✓</button>` : ''}
-          ${s.status !== 'rejected' ? `<button class="action-btn action-reject"  onclick="setStatus('${s.id}','rejected')">✕</button>` : ''}
-          <button class="action-btn action-delete" onclick="deleteSub('${s.id}')">🗑</button>
         </td>
       </tr>`).join('');
   }
@@ -307,27 +289,6 @@ function toggleSelect(id, checked) {
   if (checked) selectedIds.add(id); else selectedIds.delete(id);
 }
 
-function toggleSelectAll(el) {
-  const checks = document.querySelectorAll('.row-check');
-  const filtered = getFiltered();
-  const slice = filtered.slice((currentPage-1)*PER_PAGE, currentPage*PER_PAGE);
-  checks.forEach(c => { c.checked = el.checked; });
-  slice.forEach(s => { if (el.checked) selectedIds.add(s.id); else selectedIds.delete(s.id); });
-}
-
-async function bulkAction(status) {
-  if (!selectedIds.size) { showToast('Select at least one submission', 'error'); return; }
-  if (!confirm(`${status === 'approved' ? 'Approve' : 'Reject'} ${selectedIds.size} submission(s)?`)) return;
-  for (const id of selectedIds) {
-    await TURSO.updateSubmissionStatus(id, status);
-    const idx = _allSubs.findIndex(s => s.id === id);
-    if (idx > -1) _allSubs[idx].status = status;
-  }
-  showToast(`${status === 'approved' ? '✅ Approved' : '❌ Rejected'} ${selectedIds.size} submissions`, 'success');
-  selectedIds.clear();
-  renderTable();
-}
-
 function viewSubmission(id) {
   const s = _allSubs.find(x => x.id === id);
   if (!s) return;
@@ -336,9 +297,21 @@ function viewSubmission(id) {
   if (s.photoUrl || s.reelUrl) {
     const url = s.photoUrl || s.reelUrl;
     if (s.reelUrl) {
-      prev.innerHTML = `<video src="${url}" controls></video>`;
+      prev.innerHTML = `
+        <video src="${url}" controls style="max-height:60vh;"></video>
+        <div style="margin-top:1rem;text-align:center;">
+          <a href="${url}" download="Reel_${s.id}.mp4" target="_blank" class="btn btn-primary" style="padding:0.6rem 1.2rem;">
+            <i data-lucide="download" style="width:16px;height:16px;margin-right:8px;"></i> Download Reel
+          </a>
+        </div>`;
     } else {
-      prev.innerHTML = `<img src="${url}" alt="Submission" />`;
+      prev.innerHTML = `
+        <img src="${url}" alt="Submission" style="max-height:60vh;object-fit:contain;" />
+        <div style="margin-top:1rem;text-align:center;">
+          <a href="${url}" download="Photo_${s.id}.jpg" target="_blank" class="btn btn-primary" style="padding:0.6rem 1.2rem;">
+            <i data-lucide="download" style="width:16px;height:16px;margin-right:8px;"></i> Download Photo
+          </a>
+        </div>`;
     }
   } else {
     prev.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--text-muted);background:var(--bg-deep);border-radius:var(--radius-md);">No file preview available</div>`;

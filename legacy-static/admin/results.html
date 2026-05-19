@@ -121,9 +121,7 @@
     <div class="cat-section-title">🎬 Reel Category Winners</div>
     <div class="results-grid" id="reelWinnersGrid"></div>
 
-    <!-- SPECIAL MENTIONS -->
-    <div class="cat-section-title">🌟 Special Mentions</div>
-    <div class="results-grid" id="specialGrid"></div>
+    <!-- SPECIAL MENTIONS REMOVED -->
 
     <!-- SAVE & PUBLISH -->
     <div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap;">
@@ -164,11 +162,7 @@ const REEL_RANKS = [
   { key:'reel_2nd',   label:'🥈 2nd Place',   cls:'silver' },
   { key:'reel_3rd',   label:'🥉 3rd Place',   cls:'bronze' },
 ];
-const SPECIAL_RANKS = [
-  { key:'special_1',  label:'Special Mention 1', cls:'special' },
-  { key:'special_2',  label:'Special Mention 2', cls:'special' },
-  { key:'special_3',  label:'Special Mention 3', cls:'special' },
-];
+// SPECIAL_RANKS Removed
 
 let _allSubs = [];
 let _savedWinners = [];
@@ -209,10 +203,8 @@ function buildSlot(rank, options) {
 function buildGrids() {
   const photoSubs   = getApproved('Photo');
   const reelSubs    = getApproved('Reel');
-  const allApproved = getApproved(null);
   document.getElementById('photoWinnersGrid').innerHTML = PHOTO_RANKS.map(r => buildSlot(r, photoSubs)).join('');
   document.getElementById('reelWinnersGrid').innerHTML  = REEL_RANKS.map(r => buildSlot(r, reelSubs)).join('');
-  document.getElementById('specialGrid').innerHTML      = SPECIAL_RANKS.map(r => buildSlot(r, allApproved)).join('');
 }
 
 function onSelect(key) {
@@ -230,7 +222,7 @@ function onSelect(key) {
 }
 
 async function saveResults() {
-  const allRanks = [...PHOTO_RANKS, ...REEL_RANKS, ...SPECIAL_RANKS];
+  const allRanks = [...PHOTO_RANKS, ...REEL_RANKS];
   for (const r of allRanks) {
     const sel = document.getElementById('sel-'+r.key);
     if (!sel || !sel.value) continue;
