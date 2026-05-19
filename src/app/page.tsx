@@ -39,6 +39,22 @@ export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
 
+  // Helper to format dates dynamically
+  const formatDisplayDate = (dateStr: string) => {
+    try {
+      if (!dateStr) return '';
+      const d = new Date(dateStr + 'T00:00:00');
+      if (isNaN(d.getTime())) return dateStr;
+      const day = d.getDate();
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const month = months[d.getMonth()];
+      const year = d.getFullYear();
+      return `${day < 10 ? '0' + day : day} ${month} ${year}`;
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
   useEffect(() => {
     // Load Settings and calculate status
     async function loadData() {
@@ -96,14 +112,30 @@ export default function Home() {
     };
     window.addEventListener('scroll', handleScroll);
 
-    // Countdown loop to resultDate or June 5, 2026
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!settings) return;
+
     const timerInterval = setInterval(() => {
-      const target = new Date("2026-06-05T00:00:00").getTime();
-      const now = new Date().getTime();
-      const diff = target - now;
+      const now = new Date();
+      const start = new Date(settings.regStartDate + 'T00:00:00');
+      const end = new Date(settings.regEndDate + 'T23:59:59');
+      const result = new Date(settings.resultDate + 'T00:00:00');
+
+      let target = result.getTime();
+      if (now < start) {
+        target = start.getTime();
+      } else if (now >= start && now <= end) {
+        target = end.getTime();
+      }
+
+      const diff = target - now.getTime();
 
       if (diff <= 0) {
-        clearInterval(timerInterval);
         setDays('00');
         setHours('00');
         setMinutes('00');
@@ -122,10 +154,9 @@ export default function Home() {
     }, 1000);
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
       clearInterval(timerInterval);
     };
-  }, []);
+  }, [settings]);
 
   const triggerConfetti = () => {
     confetti({
@@ -234,6 +265,16 @@ export default function Home() {
           <p className="text-lg md:text-xl font-light tracking-widest text-emerald-300 font-mono mb-8 uppercase">
             See Green. Capture Change.
           </p>
+
+          {status && (
+            <span className="text-[10px] uppercase font-mono tracking-widest text-emerald-400/70 mb-3 block animate-pulse">
+              {status.status === 'Opening Soon' 
+                ? '⏳ Launching in' 
+                : status.status === 'Live' 
+                  ? '⚡ Submissions close in' 
+                  : '🏆 Results announcement in'}
+            </span>
+          )}
 
           {/* TIMER DESIGN: Glassmorphism glowing ticking timer cards */}
           <div className="grid grid-cols-4 gap-3 md:gap-6 mb-12 max-w-lg w-full">
@@ -425,9 +466,9 @@ export default function Home() {
 
             {/* Items */}
             {[
-              { date: '20 May 2026', title: 'Registration Starts', desc: 'Secure your spot and download the Green Leaf Pockets submission prompts.', status: 'Past' },
-              { date: '26 May 2026', title: 'Submission Deadline', desc: 'All high-resolution photos and vertical reels must be uploaded by midnight.', status: 'Active' },
-              { date: '05 June 2026', title: 'Results Announcement', desc: 'Winners unveiled live at the Vignan\'s Institute of Information Technology auditorium on World Environment Day.', status: 'Upcoming' }
+              { date: formatDisplayDate(settings.regStartDate), title: 'Registration Starts', desc: 'Secure your spot and download the Green Leaf Pockets submission prompts.', status: status?.status === 'Opening Soon' ? 'Active' as const : 'Past' as const },
+              { date: formatDisplayDate(settings.regEndDate), title: 'Submission Deadline', desc: 'All high-resolution photos and vertical reels must be uploaded by midnight.', status: status?.status === 'Live' ? 'Active' as const : (status?.status === 'Opening Soon' ? 'Upcoming' as const : 'Past' as const) },
+              { date: formatDisplayDate(settings.resultDate), title: 'Results Announcement', desc: 'Winners unveiled live at the Vignan\'s Institute of Information Technology auditorium on World Environment Day.', status: status?.status === 'Closed' ? 'Active' as const : 'Upcoming' as const }
             ].map((item, idx) => (
               <div key={idx} className="relative flex flex-col md:flex-row gap-8 items-center md:items-start mb-16 last:mb-0 group">
                 {/* Node dot */}

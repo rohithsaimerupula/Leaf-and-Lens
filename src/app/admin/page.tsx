@@ -32,6 +32,7 @@ export default function Admin() {
   const [regEndDate, setRegEndDate] = useState('');
   const [resultDate, setResultDate] = useState('');
   const [resultsPublic, setResultsPublic] = useState(false);
+  const [timerDuration, setTimerDuration] = useState('3');
 
   // Active sub tab
   const [activeTab, setActiveTab] = useState<'submissions' | 'winners' | 'timers'>('submissions');
@@ -158,6 +159,64 @@ export default function Admin() {
     await db.saveSettings(updated);
     setSettings(updated);
     alert('Dynamic Timers and visibility rules saved successfully!');
+    loadAllData();
+  };
+
+  const handleStartTimerNow = async () => {
+    // 1. Get today's local date in YYYY-MM-DD format
+    const today = new Date();
+    const startStr = today.toISOString().split('T')[0];
+    
+    // 2. Add duration in days
+    const end = new Date();
+    end.setDate(today.getDate() + parseInt(timerDuration));
+    const endStr = end.toISOString().split('T')[0];
+
+    // 3. Set standard result date to 5 days after registration ends
+    const result = new Date(end);
+    result.setDate(end.getDate() + 5);
+    const resultStr = result.toISOString().split('T')[0];
+
+    // 4. Prepare updated settings
+    const updated: DynamicSettings = {
+      regStartDate: startStr,
+      regEndDate: endStr,
+      resultDate: resultStr,
+      resultsPublic: false
+    };
+
+    // 5. Save settings directly
+    await db.saveSettings(updated);
+    setSettings(updated);
+    setRegStartDate(startStr);
+    setRegEndDate(endStr);
+    setResultDate(resultStr);
+    setResultsPublic(false);
+
+    // 6. Confetti and feedback
+    confetti({ particleCount: 100, spread: 80 });
+    alert(`Registration timer started successfully! Portal is now LIVE.\nIt will close on ${endStr}.`);
+    loadAllData();
+  };
+
+  const handleStopRegistrationNow = async () => {
+    if (!confirm('Are you sure you want to stop registration and close the portal immediately?')) return;
+
+    // Set registration end date to yesterday
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const endStr = yesterday.toISOString().split('T')[0];
+
+    const updated: DynamicSettings = {
+      ...settings,
+      regEndDate: endStr
+    };
+
+    await db.saveSettings(updated);
+    setSettings(updated);
+    setRegEndDate(endStr);
+
+    alert('Registration portal has been closed successfully!');
     loadAllData();
   };
 
@@ -634,9 +693,56 @@ export default function Admin() {
           {/* TAB 3: TIMER GATING & VISIBILITY */}
           {activeTab === 'timers' && (
             <div className="glass-panel border-neon/10 rounded-2xl p-8 space-y-8">
-              <div>
-                <h2 className="text-2xl font-black font-outfit uppercase tracking-tight text-white">Timer Controls</h2>
-                <p className="text-xs text-slate-500 font-light mt-1">Set registration dates and results public accessibility live gates.</p>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-2xl font-black font-outfit uppercase tracking-tight text-white">Timer Controls</h2>
+                  <p className="text-xs text-slate-500 font-light mt-1">Set registration dates and results public accessibility live gates.</p>
+                </div>
+              </div>
+
+              {/* QUICK ACTION: DYNAMIC TIMER LAUNCHER */}
+              <div className="bg-emerald-950/20 border border-neon/30 rounded-2xl p-6 relative overflow-hidden group shadow-lg">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-neon/5 rounded-bl-full pointer-events-none" />
+                <h3 className="font-outfit font-black text-lg text-white uppercase mb-2 flex items-center gap-2">
+                  🚀 Quick Timer Action (Start Registration Now)
+                </h3>
+                <p className="text-xs text-emerald-300/80 font-light mb-4">
+                  Automatically set the portal to <strong className="text-neon">LIVE</strong> immediately by launching a registration timer for a selected duration. This will update the database instantly.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-4 items-end">
+                  <div className="w-full sm:w-1/2">
+                    <label className="block text-[10px] uppercase font-mono tracking-widest text-emerald-400/50 mb-2">Timer Duration</label>
+                    <select
+                      className="w-full px-4 py-3 rounded-xl bg-black/40 border border-slate-800 focus:border-neon focus:outline-none text-white text-sm"
+                      value={timerDuration}
+                      onChange={(e) => setTimerDuration(e.target.value)}
+                    >
+                      <option value="1">1 Day (Quick Sprint)</option>
+                      <option value="3">3 Days (Recommended)</option>
+                      <option value="5">5 Days</option>
+                      <option value="7">7 Days (Full Week)</option>
+                      <option value="10">10 Days</option>
+                    </select>
+                  </div>
+
+                  <div className="flex gap-3 w-full sm:w-1/2">
+                    <button
+                      onClick={handleStartTimerNow}
+                      className="flex-1 py-3 bg-neon text-black rounded-xl font-outfit font-bold uppercase tracking-wider text-xs border border-neon hover:bg-transparent hover:text-neon transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(74,222,128,0.25)]"
+                    >
+                      <Clock className="w-4 h-4" /> Start Registration Timer
+                    </button>
+                    
+                    <button
+                      onClick={handleStopRegistrationNow}
+                      className="py-3 px-4 bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-black rounded-xl font-outfit font-bold uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      title="Force Close Registration Immediately"
+                    >
+                      Close Portal 🛑
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
