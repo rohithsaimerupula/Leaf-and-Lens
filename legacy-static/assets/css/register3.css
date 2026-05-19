@@ -48,9 +48,9 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tex
 }
 .cs-icon {
   width: 64px; height: 64px; margin: 0 auto 1.5rem;
-  background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.2);
+  background: rgba(82,183,136,0.1); border: 1px solid rgba(82,183,136,0.2);
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  color: #ff6b7a;
+  color: var(--green);
 }
 .cs-title {
   font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.8rem;
