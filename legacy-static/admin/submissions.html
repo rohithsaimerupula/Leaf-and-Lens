@@ -154,7 +154,11 @@ function renderTable() {
       <tr>
         <td><input type="checkbox" class="row-check" data-id="${s.id}" ${selectedIds.has(s.id)?'checked':''} onchange="toggleSelect('${s.id}',this.checked)" style="accent-color:var(--primary-light);" /></td>
         <td class="td-id">${s.id}</td>
-        <td class="td-name">${s.member1Name || s.teamName}<br><span style="font-size:0.75rem;color:var(--text-muted);">${s.member1Email || ''}</span></td>
+        <td class="td-name">
+          ${s.member1Name || s.teamName}
+          ${s.aiFlags ? `<span style="display:inline-block;margin-left:6px;background:rgba(230,57,70,0.15);color:#e63946;padding:2px 6px;border-radius:4px;font-size:0.65rem;font-weight:700;letter-spacing:0.04em;">🤖 ${s.aiFlags}</span>` : ''}
+          <br><span style="font-size:0.75rem;color:var(--text-muted);">${s.member1Email || ''}</span>
+        </td>
         <td>${s.participationType}</td>
         <td style="font-size:0.82rem;">${s.member1Roll || '—'}</td>
         <td style="font-size:0.8rem;">${formatDate(s.submittedAt)}</td>
@@ -258,6 +262,7 @@ function viewSubmission(id) {
     <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">${s.member1Phone || '—'}</span></div>
     <div class="detail-row"><span class="detail-label">Roll No</span><span class="detail-value">${s.member1Roll || '—'}</span></div>
     <div class="detail-row"><span class="detail-label">Category</span><span class="detail-value">${s.participationType}</span></div>
+    ${s.aiFlags ? `<div class="detail-row"><span class="detail-label" style="color:#e63946">AI Scan</span><span class="detail-value" style="color:#e63946;font-weight:bold;">⚠️ ${s.aiFlags}</span></div>` : ''}
     <div class="detail-row"><span class="detail-label">Status</span><span class="status-${s.status}">${s.status}</span></div>
     <div class="detail-row"><span class="detail-label">Submitted</span><span class="detail-value">${formatDate(s.submittedAt)}</span></div>`;
   document.getElementById('modalActions').innerHTML = `

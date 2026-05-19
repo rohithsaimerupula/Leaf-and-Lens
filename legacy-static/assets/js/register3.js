@@ -205,6 +205,22 @@ function handleFile(type, input) {
     document.getElementById('photoName').textContent = file.name + ' (' + mb.toFixed(1) + ' MB)';
     document.getElementById('photoInfo').classList.remove('hidden');
     document.getElementById('photoDropBody').style.opacity = '0.4';
+
+    // Simple EXIF/Binary scanner for AI/Edited detection
+    const r = new FileReader();
+    r.onload = function(e) {
+      const txt = e.target.result || "";
+      const lower = txt.toLowerCase();
+      let flags = [];
+      if (lower.includes("adobe") || lower.includes("photoshop") || lower.includes("lightroom") || lower.includes("canva")) {
+        flags.push("Edited");
+      }
+      if (lower.includes("midjourney") || lower.includes("dall-e") || lower.includes("stable diffusion") || lower.includes("ai-generated")) {
+        flags.push("AI Generated");
+      }
+      formData.aiFlags = flags.length > 0 ? flags.join(" / ") : null;
+    };
+    r.readAsText(file.slice(0, 65536)); // Read first 64KB for EXIF headers
   } else if (type === 'reel') {
     reelFile = file;
     document.getElementById('reelName').textContent = file.name + ' (' + mb.toFixed(1) + ' MB)';
@@ -281,6 +297,7 @@ async function submitForm() {
       photoUrl:     photoB64,
       reelUrl:      reelB64,
       paymentScreenshotUrl: paymentB64,
+      aiFlags:      formData.aiFlags || null,
       status:       'pending',
       submittedAt:  new Date().toISOString()
     };
