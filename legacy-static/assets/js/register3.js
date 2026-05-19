@@ -60,9 +60,11 @@ function loadQR(settings) {
   }
 
   // Load QR
-  if (settings.qrImage) {
+  const qrSrc = (cat === 'Both') ? settings.qrImage50 : settings.qrImage30;
+  
+  if (qrSrc) {
     qrLoading.style.display = 'none';
-    qrImg.src = settings.qrImage;
+    qrImg.src = qrSrc;
     qrImg.classList.remove('hidden');
   } else {
     qrLoading.style.display = 'none';
