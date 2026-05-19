@@ -251,7 +251,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   const formatDateStr = (str) => {
     try {
-      const d = new Date(str + 'T00:00:00');
+      if (!str) return '';
+      const d = new Date(str);
       if (isNaN(d.getTime())) return str;
       const day = d.getDate();
       const monthsFull = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -264,8 +265,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   function applyTimeline(settings) {
     try {
       const now = new Date();
-      const start = new Date(settings.regStartDate + 'T00:00:00');
-      const end = new Date(settings.regEndDate + 'T23:59:59');
+      const start = new Date(settings.regStartDate);
+      const end = new Date(settings.regEndDate);
 
       // Update Dates and Subtitles dynamically depending on whether registration started
       const startEl = document.getElementById('tl-start-date');

@@ -94,28 +94,37 @@
           <div style="display:flex;flex-direction:column;gap:1rem;">
             <div>
               <label style="font-size:0.75rem;color:var(--text-muted);">Opens On</label>
-              <input type="date" id="regStartDate" class="table-search" style="width:100%;margin-top:0.25rem;background:rgba(5,15,8,0.5);"/>
+              <input type="datetime-local" id="regStartDate" class="table-search" style="width:100%;margin-top:0.25rem;background:rgba(5,15,8,0.5);"/>
             </div>
             <div>
               <label style="font-size:0.75rem;color:var(--text-muted);">Closes On</label>
-              <input type="date" id="regEndDate" class="table-search" style="width:100%;margin-top:0.25rem;background:rgba(5,15,8,0.5);"/>
+              <input type="datetime-local" id="regEndDate" class="table-search" style="width:100%;margin-top:0.25rem;background:rgba(5,15,8,0.5);"/>
             </div>
+          </div>
+          <div style="margin-top:1.5rem;background:rgba(5,15,8,0.5);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.04em;">Time Remaining</div>
+            <div id="countdownTimer" style="font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:700;color:var(--primary-light);">00:00:00:00</div>
           </div>
         </div>
       </div>
 
-      <!-- Toggles Row -->
-      <div style="display:flex;gap:1.5rem;margin-top:2rem;flex-wrap:wrap;align-items:center;border-top:1px solid var(--border);padding-top:1.5rem;">
-        <div style="display:flex;align-items:center;gap:0.75rem;">
-          <span style="font-size:0.88rem;color:var(--text-secondary);">Registration Active</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="toggleActive" onchange="toggleRegistration(this)" />
-            <span class="toggle-track"></span>
-          </label>
+      <!-- Actions Row -->
+      <div style="display:flex;gap:1rem;margin-top:2rem;flex-wrap:wrap;align-items:center;border-top:1px solid var(--border);padding-top:1.5rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;" id="regStatusDisplay">
+          <span style="font-size:0.88rem;color:var(--text-secondary);">Status:</span>
+          <span class="badge badge-yellow" id="statusBadge">Loading...</span>
         </div>
-        <button class="btn btn-primary" style="margin-left:auto;padding:0.75rem 1.5rem;" onclick="saveRegSettings()">
-          <i data-lucide="save" style="width:16px;height:16px;"></i> Save Settings
-        </button>
+        <div style="margin-left:auto;display:flex;gap:1rem;">
+          <button class="btn btn-primary" id="btnStartReg" style="padding:0.75rem 1.5rem;display:none;" onclick="changeRegStatus(true)">
+            ▶️ Start Registration
+          </button>
+          <button class="btn btn-outline" id="btnStopReg" style="padding:0.75rem 1.5rem;display:none;color:#e63946;border-color:rgba(230,57,70,0.3);" onclick="changeRegStatus(false)">
+            ⏸ Stop Registration
+          </button>
+          <button class="btn btn-primary" style="padding:0.75rem 1.5rem;background:var(--grad-primary);" onclick="saveRegSettings()">
+            <i data-lucide="save" style="width:16px;height:16px;"></i> Save Dates & QR
+          </button>
+        </div>
       </div>
     </div>
 
@@ -145,6 +154,7 @@
 <script src="../assets/js/main.js"></script>
 <script>
 let currentSettings = {};
+let timerInterval = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!LL.isAdminLoggedIn()) { window.location.href = 'login.html'; return; }
@@ -166,13 +176,34 @@ async function loadBadge() {
 
 async function loadSettings() {
   currentSettings = await TURSO.getSettings();
-  document.getElementById('toggleActive').checked = !!currentSettings.competitionActive;
+  
   if (currentSettings.regStartDate) document.getElementById('regStartDate').value = currentSettings.regStartDate;
   if (currentSettings.regEndDate)   document.getElementById('regEndDate').value   = currentSettings.regEndDate;
   if (currentSettings.qrImage) {
     document.getElementById('qrPreviewImg').src = currentSettings.qrImage;
     document.getElementById('qrPreviewWrap').style.display = 'block';
     document.getElementById('qrStatus').textContent = '✅ QR loaded from cloud';
+  }
+
+  updateStatusUI();
+  startCountdown();
+}
+
+function updateStatusUI() {
+  const btnStart = document.getElementById('btnStartReg');
+  const btnStop = document.getElementById('btnStopReg');
+  const badge = document.getElementById('statusBadge');
+  
+  if (currentSettings.competitionActive) {
+    badge.className = 'badge badge-green';
+    badge.innerHTML = '🟢 Active';
+    btnStart.style.display = 'none';
+    btnStop.style.display = 'inline-flex';
+  } else {
+    badge.className = 'badge badge-yellow';
+    badge.innerHTML = '⏸ Paused';
+    btnStart.style.display = 'inline-flex';
+    btnStop.style.display = 'none';
   }
 }
 
@@ -184,37 +215,91 @@ function handleQRUpload(input) {
     const b64 = e.target.result;
     document.getElementById('qrPreviewImg').src = b64;
     document.getElementById('qrPreviewWrap').style.display = 'block';
-    document.getElementById('qrStatus').textContent = '✅ QR ready — click Save Settings to push to cloud';
+    document.getElementById('qrStatus').textContent = '✅ QR ready — click Save to push to cloud';
     window._pendingQR = b64;
   };
   reader.readAsDataURL(file);
 }
 
-async function toggleRegistration(checkbox) {
+async function changeRegStatus(isActive) {
   const startDate = document.getElementById('regStartDate').value;
   const endDate = document.getElementById('regEndDate').value;
   const hasQR = currentSettings.qrImage || window._pendingQR;
 
-  if (checkbox.checked) {
-    if (!startDate || !endDate || !hasQR) {
-      checkbox.checked = false; // Revert
-      showToast('❌ Cannot activate: Please set QR Code and both dates first.', 'error');
-      return;
-    }
+  if (isActive && (!startDate || !endDate || !hasQR)) {
+    showToast('❌ Cannot start: Please set QR Code and both dates first.', 'error');
+    return;
   }
 
-  currentSettings.competitionActive = checkbox.checked;
-  await TURSO.saveSettings(currentSettings);
-  showToast(checkbox.checked ? '✅ Registrations Activated!' : '🔒 Registrations Paused', 'success');
+  currentSettings.competitionActive = isActive;
+  await saveRegSettings(); // Automatically save any modified dates when toggling status
+  updateStatusUI();
+  
+  if (isActive) showToast('✅ Registrations Started!', 'success');
+  else showToast('🔒 Registrations Paused!', 'success');
 }
 
 async function saveRegSettings() {
-  currentSettings.regStartDate      = document.getElementById('regStartDate').value || currentSettings.regStartDate;
-  currentSettings.regEndDate        = document.getElementById('regEndDate').value   || currentSettings.regEndDate;
+  currentSettings.regStartDate = document.getElementById('regStartDate').value || currentSettings.regStartDate;
+  currentSettings.regEndDate   = document.getElementById('regEndDate').value   || currentSettings.regEndDate;
   if (window._pendingQR) { currentSettings.qrImage = window._pendingQR; window._pendingQR = null; }
   
   await TURSO.saveSettings(currentSettings);
-  showToast('🚀 Settings saved to cloud!', 'success');
+  showToast('🚀 Registration Settings saved!', 'success');
+  startCountdown();
+}
+
+function startCountdown() {
+  if (timerInterval) clearInterval(timerInterval);
+  
+  const tick = () => {
+    const startStr = document.getElementById('regStartDate').value;
+    const endStr = document.getElementById('regEndDate').value;
+    const timerEl = document.getElementById('countdownTimer');
+    
+    if (!startStr || !endStr) {
+      timerEl.textContent = "00:00:00:00";
+      return;
+    }
+
+    const now = new Date().getTime();
+    const startTime = new Date(startStr).getTime();
+    const endTime = new Date(endStr).getTime();
+
+    let targetTime = 0;
+    let prefix = "";
+
+    if (now < startTime) {
+      targetTime = startTime;
+      prefix = "Starts in: ";
+      timerEl.style.color = "var(--text-secondary)";
+    } else if (now >= startTime && now <= endTime) {
+      targetTime = endTime;
+      prefix = "Closes in: ";
+      timerEl.style.color = "var(--primary-light)";
+    } else {
+      timerEl.textContent = "Registration Ended";
+      timerEl.style.color = "#e63946";
+      return;
+    }
+
+    const diff = targetTime - now;
+    if (diff < 0) {
+      startCountdown(); // Refresh logic if transition happens
+      return;
+    }
+
+    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+    const pad = n => n < 10 ? '0' + n : n;
+    timerEl.innerHTML = `<span style="font-size:0.8rem;color:var(--text-muted);font-weight:500;">${prefix}</span> ${pad(d)}d : ${pad(h)}h : ${pad(m)}m : ${pad(s)}s`;
+  };
+
+  tick();
+  timerInterval = setInterval(tick, 1000);
 }
 </script>
 </body>

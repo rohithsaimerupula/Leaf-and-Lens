@@ -14,8 +14,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Check dates if active
     if (isActive && settings.regStartDate && settings.regEndDate) {
-      const start = new Date(settings.regStartDate + 'T00:00:00');
-      const end = new Date(settings.regEndDate + 'T23:59:59');
+      const start = new Date(settings.regStartDate);
+      const end = new Date(settings.regEndDate);
       if (now < start || now > end) isActive = false;
     }
 
