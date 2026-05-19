@@ -8,6 +8,7 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <link rel="stylesheet" href="../assets/css/main.css" />
   <link rel="stylesheet" href="../assets/css/admin.css" />
+  <script src="../assets/js/turso.js"></script>
 </head>
 <body class="admin-body">
 
@@ -193,28 +194,26 @@
 
 <script src="../assets/js/main.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   if (!LL.isAdminLoggedIn()) { window.location.href = 'login.html'; return; }
   if (window.lucide) lucide.createIcons();
 
-  loadStats();
-  loadRecentTable();
-  loadSettings();
-  loadPledgeStat();
+  await loadStats();
+  await loadRecentTable();
+  await loadSettings();
 
   document.getElementById('logoutBtn').addEventListener('click', () => {
     LL.adminLogout(); window.location.href = 'login.html';
   });
 });
 
-function loadStats() {
-  const subs = LL.getSubmissions();
+async function loadStats() {
+  const subs = await TURSO.getSubmissions();
   const pending  = subs.filter(s => s.status === 'pending').length;
   const approved = subs.filter(s => s.status === 'approved').length;
   const rejected = subs.filter(s => s.status === 'rejected').length;
-  const photos   = subs.filter(s => s.category === 'Photo' || s.category === 'Both').length;
-  const reels    = subs.filter(s => s.category === 'Reel'  || s.category === 'Both').length;
-
+  const photos   = subs.filter(s => s.participationType === 'Photo' || s.participationType === 'Both').length;
+  const reels    = subs.filter(s => s.participationType === 'Reel'  || s.participationType === 'Both').length;
   document.getElementById('sc-total').textContent    = subs.length;
   document.getElementById('sc-pending').textContent  = pending;
   document.getElementById('sc-approved').textContent = approved;
@@ -223,17 +222,18 @@ function loadStats() {
   document.getElementById('sc-reels').textContent    = reels;
   document.getElementById('sbPendingBadge').textContent = pending;
   if (subs.length) document.getElementById('sc-total-delta').textContent = subs.length + ' total entries received';
+  return subs;
 }
 
-function loadRecentTable() {
-  const subs = [...LL.getSubmissions()].reverse().slice(0, 8);
+async function loadRecentTable() {
+  const subs = (await TURSO.getSubmissions()).slice(0, 8);
   const tbody = document.getElementById('recentTable');
   if (!subs.length) return;
   tbody.innerHTML = subs.map(s => `
     <tr>
       <td class="td-id">${s.id}</td>
-      <td class="td-name">${s.name}</td>
-      <td>${s.category}</td>
+      <td class="td-name">${s.member1Name || s.teamName}</td>
+      <td>${s.participationType}</td>
       <td>${formatDate(s.submittedAt)}</td>
       <td><span class="status-${s.status}">${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span></td>
       <td class="td-actions">
@@ -247,32 +247,30 @@ function loadRecentTable() {
   if (window.lucide) lucide.createIcons();
 }
 
-function quickAction(id, status) {
-  const subs = LL.getSubmissions();
-  const idx = subs.findIndex(s => s.id === id);
-  if (idx > -1) { subs[idx].status = status; LL.saveSubmissions(subs); }
+async function quickAction(id, status) {
+  await TURSO.updateSubmissionStatus(id, status);
   showToast(status === 'approved' ? '✅ Approved!' : '❌ Rejected', status === 'approved' ? 'success' : 'error');
-  loadStats(); loadRecentTable();
+  await loadStats();
+  await loadRecentTable();
 }
 
-function loadSettings() {
-  const s = LL.getSettings();
-  document.getElementById('toggleActive').checked  = s.competitionActive !== false;
+async function loadSettings() {
+  const s = await TURSO.getSettings();
+  document.getElementById('toggleActive').checked  = !!s.competitionActive;
   document.getElementById('toggleResults').checked = !!s.resultsPublic;
 }
 
-function updateSetting(key, val) {
-  const s = LL.getSettings(); s[key] = val; LL.saveSettings(s);
-  showToast('Settings updated', 'success');
+async function updateSetting(key, val) {
+  const s = await TURSO.getSettings();
+  s[key] = val;
+  await TURSO.saveSettings(s);
+  showToast('✅ Settings saved to cloud!', 'success');
 }
 
-function loadPledgeStat() {
-  const count = LL.getPledgeCount();
-  document.getElementById('pledgeStatNum').textContent = count;
-  document.getElementById('pledgeStatBar').style.width = Math.min((count/500)*100,100) + '%';
+async function exportAllCSV() {
+  const subs = await TURSO.getSubmissions();
+  exportCSV(subs, 'leaf_lens_all_participants.csv');
 }
-
-function exportAllCSV() { exportCSV(LL.getSubmissions(), 'leaf_lens_all_participants.csv'); }
 
 function changeAdminPassword() {
   const newPass = prompt('Enter new password (min 6 characters):');

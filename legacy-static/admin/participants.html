@@ -8,6 +8,7 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <link rel="stylesheet" href="../assets/css/main.css" />
   <link rel="stylesheet" href="../assets/css/admin.css" />
+  <script src="../assets/js/turso.js"></script>
 </head>
 <body class="admin-body">
 
@@ -67,7 +68,7 @@
           <option value="CIVIL">Civil</option>
           <option value="OTHER">Other</option>
         </select>
-        <button class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;margin-left:auto;" onclick="exportCSV(LL.getSubmissions(),'leaf_lens_participants.csv')">
+        <button class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;margin-left:auto;" onclick="exportAllCSV()">
           <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
         </button>
       </div>
@@ -108,10 +109,12 @@
 <script>
 const PER_PAGE = 12;
 let currentPage = 1;
+let _allSubs = [];
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   if (!LL.isAdminLoggedIn()) { window.location.href = 'login.html'; return; }
   if (window.lucide) lucide.createIcons();
+  _allSubs = await TURSO.getSubmissions();
   renderTable();
   document.getElementById('logoutBtn').addEventListener('click', () => { LL.adminLogout(); window.location.href = 'login.html'; });
 });
@@ -121,12 +124,15 @@ function getFiltered() {
   const cat    = document.getElementById('filterCat').value;
   const year   = document.getElementById('filterYear').value;
   const branch = document.getElementById('filterBranch').value;
-  return LL.getSubmissions().filter(s => {
-    const matchQ = !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q)
-                     || s.id.toLowerCase().includes(q) || (s.rollNum||'').toLowerCase().includes(q);
-    const matchC = cat    === 'all' || s.category    === cat;
-    const matchY = year   === 'all' || s.yearOfStudy === year;
-    const matchB = branch === 'all' || s.branch      === branch;
+  return _allSubs.filter(s => {
+    const name  = (s.member1Name || s.teamName || '').toLowerCase();
+    const email = (s.member1Email || '').toLowerCase();
+    const id    = (s.id || '').toLowerCase();
+    const roll  = (s.member1Roll || '').toLowerCase();
+    const matchQ = !q || name.includes(q) || email.includes(q) || id.includes(q) || roll.includes(q);
+    const matchC = cat    === 'all' || s.participationType === cat;
+    const matchY = year   === 'all'; // year filter not in Turso schema - skip
+    const matchB = branch === 'all'; // branch filter not in Turso schema - skip
     return matchQ && matchC && matchY && matchB;
   });
 }
@@ -148,16 +154,16 @@ function renderTable() {
       <tr>
         <td style="color:var(--text-muted);font-size:0.78rem;">${(currentPage-1)*PER_PAGE+i+1}</td>
         <td class="td-id">${s.id}</td>
-        <td class="td-name">${s.name}</td>
+        <td class="td-name">${s.member1Name || s.teamName}</td>
         <td>
-          <div style="font-size:0.82rem;">${s.email}</div>
-          <div style="font-size:0.78rem;color:var(--text-muted);">${s.phone}</div>
+          <div style="font-size:0.82rem;">${s.member1Email || '—'}</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);">${s.member1Phone || ''}</div>
         </td>
-        <td style="font-size:0.82rem;font-family:'Outfit',sans-serif;color:var(--primary-light);font-weight:600;">${s.rollNum || '—'}</td>
-        <td style="font-size:0.82rem;">${s.branch || '—'}</td>
-        <td style="font-size:0.82rem;">${s.yearOfStudy ? 'Year ' + s.yearOfStudy : '—'}</td>
-        <td><span class="badge badge-green" style="font-size:0.72rem;">${s.category}</span></td>
-        <td style="font-size:1rem;">${s.pledge ? '✅' : '—'}</td>
+        <td style="font-size:0.82rem;font-family:'Outfit',sans-serif;color:var(--primary-light);font-weight:600;">${s.member1Roll || '—'}</td>
+        <td style="font-size:0.82rem;">—</td>
+        <td style="font-size:0.82rem;">—</td>
+        <td><span class="badge badge-green" style="font-size:0.72rem;">${s.participationType}</span></td>
+        <td style="font-size:1rem;">—</td>
         <td><span class="status-${s.status}">${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span></td>
         <td class="td-actions">
           <button class="action-btn action-view" onclick="viewParticipant('${s.id}')">
@@ -166,6 +172,59 @@ function renderTable() {
         </td>
       </tr>`).join('');
   }
+
+  const pg = document.getElementById('pagination');
+  pg.innerHTML = '';
+  if (pages > 1) {
+    const prev = document.createElement('button');
+    prev.className='page-btn'; prev.textContent='‹'; prev.disabled=currentPage===1;
+    prev.onclick=()=>{currentPage--;renderTable();};
+    pg.appendChild(prev);
+    for(let i=1;i<=pages;i++){
+      const b=document.createElement('button');
+      b.className='page-btn'+(i===currentPage?' active':'');
+      b.textContent=i; b.onclick=()=>{currentPage=i;renderTable();};
+      pg.appendChild(b);
+    }
+    const next=document.createElement('button');
+    next.className='page-btn'; next.textContent='›'; next.disabled=currentPage===pages;
+    next.onclick=()=>{currentPage++;renderTable();};
+    pg.appendChild(next);
+  }
+  if (window.lucide) lucide.createIcons();
+}
+
+function viewParticipant(id) {
+  const s = _allSubs.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('detailTitle').textContent = s.member1Name || s.teamName;
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-row"><span class="detail-label">Submission ID</span><span class="detail-value td-id">${s.id}</span></div>
+    <div class="detail-row"><span class="detail-label">Full Name</span><span class="detail-value">${s.member1Name || s.teamName}</span></div>
+    <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${s.member1Email || '—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">${s.member1Phone || '—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Roll / Reg. No</span><span class="detail-value" style="color:var(--primary-light);font-weight:600;">${s.member1Roll || '—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Category</span><span class="detail-value">${s.participationType}</span></div>
+    <div class="detail-row"><span class="detail-label">Status</span><span class="status-${s.status}">${s.status}</span></div>
+    <div class="detail-row"><span class="detail-label">Registered</span><span class="detail-value">${formatDate(s.submittedAt)}</span></div>
+    <div style="margin-top:1.25rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
+      <a href="submissions.html" class="btn btn-primary" style="font-size:0.85rem;padding:0.6rem 1.2rem;">View Submission</a>
+      <button class="btn btn-outline" style="font-size:0.85rem;padding:0.6rem 1.2rem;" onclick="document.getElementById('detailModal').classList.remove('open')">Close</button>
+    </div>`;
+  document.getElementById('detailModal').classList.add('open');
+  if (window.lucide) lucide.createIcons();
+}
+
+async function exportAllCSV() {
+  exportCSV(_allSubs, 'leaf_lens_participants.csv');
+}
+
+document.getElementById('detailModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+});
+</script>
+</body>
+</html>
 
   // Pagination
   const pg = document.getElementById('pagination');

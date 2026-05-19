@@ -169,6 +169,122 @@ const SPECIAL_RANKS = [
   { key:'special_3',  label:'Special Mention 3', cls:'special' },
 ];
 
+let _allSubs = [];
+let _savedWinners = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!LL.isAdminLoggedIn()) { window.location.href = 'login.html'; return; }
+  if (window.lucide) lucide.createIcons();
+  _allSubs = await TURSO.getSubmissions();
+  _savedWinners = await TURSO.getWinners();
+  buildGrids();
+  await loadPublicSetting();
+  document.getElementById('logoutBtn').addEventListener('click', () => { LL.adminLogout(); window.location.href = 'login.html'; });
+});
+
+function getApproved(catFilter) {
+  return _allSubs.filter(s => {
+    if (s.status !== 'approved') return false;
+    if (!catFilter) return true;
+    return s.participationType === catFilter || s.participationType === 'Both';
+  });
+}
+
+function buildSlot(rank, options) {
+  const saved = _savedWinners.find(r => r.key === rank.key);
+  return `
+    <div class="winner-slot ${saved ? 'filled' : ''}" id="slot-${rank.key}">
+      <div class="slot-rank ${rank.cls}">${rank.label}</div>
+      <select class="slot-select" id="sel-${rank.key}" onchange="onSelect('${rank.key}')">
+        <option value="">— Select Winner —</option>
+        ${options.map(s => `<option value="${s.id}" ${saved && saved.submissionId===s.id?'selected':''}>${s.member1Name || s.teamName} (${s.id})</option>`).join('')}
+      </select>
+      <div class="slot-preview ${saved?'show':''}" id="prev-${rank.key}">
+        ${saved ? `<strong style="color:var(--text-primary);">${saved.name}</strong> · ${saved.category}` : ''}
+      </div>
+    </div>`;
+}
+
+function buildGrids() {
+  const photoSubs   = getApproved('Photo');
+  const reelSubs    = getApproved('Reel');
+  const allApproved = getApproved(null);
+  document.getElementById('photoWinnersGrid').innerHTML = PHOTO_RANKS.map(r => buildSlot(r, photoSubs)).join('');
+  document.getElementById('reelWinnersGrid').innerHTML  = REEL_RANKS.map(r => buildSlot(r, reelSubs)).join('');
+  document.getElementById('specialGrid').innerHTML      = SPECIAL_RANKS.map(r => buildSlot(r, allApproved)).join('');
+}
+
+function onSelect(key) {
+  const sel  = document.getElementById('sel-'+key);
+  const prev = document.getElementById('prev-'+key);
+  const slot = document.getElementById('slot-'+key);
+  const id   = sel.value;
+  if (!id) { prev.classList.remove('show'); slot.classList.remove('filled'); return; }
+  const s = _allSubs.find(x => x.id === id);
+  if (s) {
+    prev.innerHTML = `<strong style="color:var(--text-primary);">${s.member1Name || s.teamName}</strong> · ${s.participationType}`;
+    prev.classList.add('show');
+    slot.classList.add('filled');
+  }
+}
+
+async function saveResults() {
+  const allRanks = [...PHOTO_RANKS, ...REEL_RANKS, ...SPECIAL_RANKS];
+  for (const r of allRanks) {
+    const sel = document.getElementById('sel-'+r.key);
+    if (!sel || !sel.value) continue;
+    const s = _allSubs.find(x => x.id === sel.value);
+    if (s) {
+      await TURSO.saveWinner({
+        key: r.key,
+        label: r.label,
+        submissionId: s.id,
+        name: s.member1Name || s.teamName,
+        branch: s.member1Roll || '',
+        category: s.participationType,
+        caption: ''
+      });
+    }
+  }
+  showToast('Results saved to Turso cloud! 🏆', 'success');
+}
+
+async function clearResults() {
+  if (!confirm('Clear all winners?')) return;
+  _savedWinners = [];
+  buildGrids();
+  showToast('Results cleared', 'info');
+}
+
+async function loadPublicSetting() {
+  const s = await TURSO.getSettings();
+  document.getElementById('togglePublic').checked = !!s.resultsPublic;
+  updatePublicLabel(!!s.resultsPublic);
+}
+
+async function togglePublic(val) {
+  const s = await TURSO.getSettings();
+  s.resultsPublic = val;
+  await TURSO.saveSettings(s);
+  updatePublicLabel(val);
+  showToast(val ? '🌍 Results are now PUBLIC on the live site!' : '🔒 Results hidden', val ? 'success' : 'info');
+}
+
+function updatePublicLabel(val) {
+  const el = document.getElementById('publicLabel');
+  const st = document.getElementById('resultsPublicStatus');
+  if (val) {
+    el.textContent = 'Results are LIVE 🌍'; el.style.color = 'var(--primary-light)';
+    if (st) { st.textContent = '🟢 Results Public'; st.style.color = 'var(--primary-light)'; }
+  } else {
+    el.textContent = 'Results Hidden'; el.style.color = 'var(--text-muted)';
+    if (st) { st.textContent = '🔒 Results Hidden'; st.style.color = 'var(--text-muted)'; }
+  }
+}
+</script>
+</body>
+</html>
+
 document.addEventListener('DOMContentLoaded', () => {
   if (!LL.isAdminLoggedIn()) { window.location.href = 'login.html'; return; }
   if (window.lucide) lucide.createIcons();
