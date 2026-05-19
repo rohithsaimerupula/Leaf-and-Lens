@@ -43,8 +43,31 @@
   </div>
 
   <div class="admin-content">
-    <!-- FILTER BAR -->
-    <div class="admin-table-wrap" style="margin-bottom:1.25rem;padding:1rem 1.5rem;">
+    
+    <!-- Tabs -->
+    <div style="display:flex;gap:1rem;margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:1rem;">
+      <button class="btn btn-outline" id="tab-table" onclick="switchView('table')" style="border:none;background:rgba(82,183,136,0.1);color:var(--primary-light);">
+        📋 All Submissions
+      </button>
+      <button class="btn btn-outline" id="tab-photos" onclick="switchView('photos')" style="border:none;color:var(--text-muted);">
+        🖼️ Rate Photos
+      </button>
+      <button class="btn btn-outline" id="tab-reels" onclick="switchView('reels')" style="border:none;color:var(--text-muted);">
+        🎬 Rate Reels
+      </button>
+    </div>
+
+    <!-- Rating Gallery View -->
+    <div id="galleryView" style="display:none;">
+      <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:1.5rem;">
+        <!-- Generated via JS -->
+      </div>
+    </div>
+
+    <!-- Table View -->
+    <div id="tableView">
+      <!-- FILTER BAR -->
+      <div class="admin-table-wrap" style="margin-bottom:1.25rem;padding:1rem 1.5rem;">
       <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
         <div class="search-wrap">
           <i data-lucide="search" class="search-icon" style="width:14px;height:14px;"></i>
@@ -90,6 +113,7 @@
       </table>
       <div class="pagination" id="pagination"></div>
     </div>
+    </div> <!-- /tableView -->
   </div>
 </main>
 
@@ -113,6 +137,7 @@ const PER_PAGE = 10;
 let currentPage = 1;
 let selectedIds = new Set();
 let _allSubs = [];
+let currentView = 'table';
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!LL.isAdminLoggedIn()) { window.location.href = 'login.html'; return; }
@@ -121,6 +146,68 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderTable();
   document.getElementById('logoutBtn').addEventListener('click', () => { LL.adminLogout(); window.location.href = 'login.html'; });
 });
+
+function switchView(mode) {
+  currentView = mode;
+  document.getElementById('tab-table').style.background = mode === 'table' ? 'rgba(82,183,136,0.1)' : 'transparent';
+  document.getElementById('tab-table').style.color = mode === 'table' ? 'var(--primary-light)' : 'var(--text-muted)';
+  document.getElementById('tab-photos').style.background = mode === 'photos' ? 'rgba(82,183,136,0.1)' : 'transparent';
+  document.getElementById('tab-photos').style.color = mode === 'photos' ? 'var(--primary-light)' : 'var(--text-muted)';
+  document.getElementById('tab-reels').style.background = mode === 'reels' ? 'rgba(82,183,136,0.1)' : 'transparent';
+  document.getElementById('tab-reels').style.color = mode === 'reels' ? 'var(--primary-light)' : 'var(--text-muted)';
+
+  if (mode === 'table') {
+    document.getElementById('tableView').style.display = 'block';
+    document.getElementById('galleryView').style.display = 'none';
+    renderTable();
+  } else {
+    document.getElementById('tableView').style.display = 'none';
+    document.getElementById('galleryView').style.display = 'block';
+    renderGallery(mode);
+  }
+}
+
+function renderGallery(mode) {
+  const grid = document.getElementById('galleryGrid');
+  const subs = _allSubs.filter(s => s.status === 'approved' && (s.participationType === 'Both' || s.participationType === (mode==='photos'?'Photo':'Reel')));
+  
+  if (!subs.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);">No approved ${mode} found.</div>`;
+    return;
+  }
+
+  grid.innerHTML = subs.map(s => `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;display:flex;flex-direction:column;">
+      <div style="height:200px;background:#000;display:flex;align-items:center;justify-content:center;">
+        ${mode === 'reels' && s.reelUrl 
+          ? `<video src="${s.reelUrl}" controls style="max-height:100%;max-width:100%;"></video>` 
+          : `<img src="${s.photoUrl}" style="max-height:100%;max-width:100%;object-fit:contain;" />`
+        }
+      </div>
+      <div style="padding:1rem;flex:1;display:flex;flex-direction:column;gap:0.5rem;">
+        <div style="font-weight:600;">${s.member1Name || s.teamName}</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);">${s.id}</div>
+        <div style="margin-top:auto;display:flex;gap:0.5rem;align-items:center;">
+          <input type="number" id="rating-${s.id}" value="${s.rating || ''}" min="0" max="10" placeholder="/10" style="width:60px;padding:0.4rem;background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;color:var(--text-bright);text-align:center;">
+          <button class="btn btn-primary" style="flex:1;padding:0.4rem;" onclick="saveRating('${s.id}')">Save Rating</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function saveRating(id) {
+  const val = document.getElementById(`rating-${id}`).value;
+  if (val === '' || val < 0 || val > 10) { showToast('Enter a valid rating 0-10', 'error'); return; }
+  if (TURSO.updateSubmissionRating) {
+    await TURSO.updateSubmissionRating(id, parseFloat(val));
+    const idx = _allSubs.findIndex(x => x.id === id);
+    if (idx > -1) _allSubs[idx].rating = parseFloat(val);
+    showToast('Rating saved!', 'success');
+  } else {
+    showToast('Database error', 'error');
+  }
+}
 
 function getFiltered() {
   const q      = document.getElementById('searchInput').value.toLowerCase();

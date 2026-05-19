@@ -54,20 +54,15 @@
           <option value="Reel">Reel</option>
           <option value="Both">Both</option>
         </select>
-        <select class="table-filter" id="filterYear" onchange="renderTable()">
-          <option value="all">All Years</option>
-          <option value="1">1st Year</option>
-          <option value="2">2nd Year</option>
-          <option value="3">3rd Year</option>
-          <option value="4">4th Year</option>
+        <select class="table-filter" id="filterYear">
+          <option value="all">1st Year</option>
         </select>
         <select class="table-filter" id="filterBranch" onchange="renderTable()">
           <option value="all">All Branches</option>
-          <option value="CSE">CSE / IT</option>
-          <option value="ECE">ECE / EEE</option>
-          <option value="MECH">Mechanical</option>
-          <option value="CIVIL">Civil</option>
-          <option value="OTHER">Other</option>
+          <option value="CSE">CSE</option><option value="IT">IT</option><option value="CS">CS</option>
+          <option value="CSD">CSD</option><option value="CAI">CAI</option><option value="AIDS">AIDS</option>
+          <option value="ECE">ECE</option><option value="ECM">ECM</option><option value="CIVIL">CIVIL</option>
+          <option value="MECH">MECH</option><option value="EEE">EEE</option>
         </select>
         <button class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;margin-left:auto;" onclick="exportAllCSV()">
           <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
@@ -101,20 +96,21 @@
         <i data-lucide="x" style="width:18px;height:18px;"></i>
       </button>
     </div>
-    <div class="modal-detail" id="detailBody"></div>
+    <div class="modal-body" id="detailBody"></div>
   </div>
 </div>
 
 <div id="toast-container"></div>
 <script src="../assets/js/main.js"></script>
 <script>
-const PER_PAGE = 12;
-let currentPage = 1;
 let _allSubs = [];
+let currentPage = 1;
+const PER_PAGE = 20;
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!LL.isAdminLoggedIn()) { window.location.href = 'login.html'; return; }
   if (window.lucide) lucide.createIcons();
+
   _allSubs = await TURSO.getSubmissions();
   renderTable();
   document.getElementById('logoutBtn').addEventListener('click', () => { LL.adminLogout(); window.location.href = 'login.html'; });
@@ -123,18 +119,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 function getFiltered() {
   const q      = document.getElementById('searchInput').value.toLowerCase();
   const cat    = document.getElementById('filterCat').value;
-  const year   = document.getElementById('filterYear').value;
   const branch = document.getElementById('filterBranch').value;
+
   return _allSubs.filter(s => {
     const name  = (s.member1Name || s.teamName || '').toLowerCase();
     const email = (s.member1Email || '').toLowerCase();
     const id    = (s.id || '').toLowerCase();
-    const roll  = (s.member1Roll || '').toLowerCase();
-    const matchQ = !q || name.includes(q) || email.includes(q) || id.includes(q) || roll.includes(q);
-    const matchC = cat    === 'all' || s.participationType === cat;
-    const matchY = year   === 'all'; // year filter not in Turso schema - skip
-    const matchB = branch === 'all'; // branch filter not in Turso schema - skip
-    return matchQ && matchC && matchY && matchB;
+    const matchQ = !q || name.includes(q) || email.includes(q) || id.includes(q);
+    const matchC = cat === 'all' || s.participationType === cat;
+    const matchB = branch === 'all' || s.branch === branch;
+    return matchQ && matchC && matchB;
   });
 }
 
@@ -145,7 +139,7 @@ function renderTable() {
   currentPage    = Math.min(currentPage, pages);
   const slice    = filtered.slice((currentPage-1)*PER_PAGE, currentPage*PER_PAGE);
 
-  document.getElementById('partCountLabel').textContent = `${total} participant${total !== 1 ? 's' : ''}`;
+  document.getElementById('subCountLabel').textContent = `${total} participant${total !== 1 ? 's' : ''}`;
 
   const tbody = document.getElementById('participantsTable');
   if (!slice.length) {
@@ -161,10 +155,10 @@ function renderTable() {
           <div style="font-size:0.78rem;color:var(--text-muted);">${s.member1Phone || ''}</div>
         </td>
         <td style="font-size:0.82rem;font-family:'Outfit',sans-serif;color:var(--primary-light);font-weight:600;">${s.member1Roll || '—'}</td>
-        <td style="font-size:0.82rem;">—</td>
-        <td style="font-size:0.82rem;">—</td>
+        <td style="font-size:0.82rem;">${s.branch || '—'} - ${s.section || '—'}</td>
+        <td style="font-size:0.82rem;">1st Year</td>
         <td><span class="badge badge-green" style="font-size:0.72rem;">${s.participationType}</span></td>
-        <td style="font-size:1rem;">—</td>
+        <td style="font-size:1rem;">🌿</td>
         <td><span class="status-${s.status}">${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span></td>
         <td class="td-actions">
           <button class="action-btn action-view" onclick="viewParticipant('${s.id}')">

@@ -126,6 +126,17 @@ const TURSO = (() => {
     }
   }
 
+  async function updateSubmissionRating(id, rating) {
+    try {
+      await query("UPDATE submissions SET rating = ? WHERE id = ?", [rating, id]);
+    } catch (e) {
+      console.warn("Turso updateSubmissionRating failed, using localStorage:", e);
+      const subs = JSON.parse(localStorage.getItem('ll_submissions') || '[]');
+      const idx = subs.findIndex(s => s.id === id);
+      if (idx > -1) { subs[idx].rating = rating; localStorage.setItem('ll_submissions', JSON.stringify(subs)); }
+    }
+  }
+
   async function deleteSubmission(id) {
     try {
       await query("DELETE FROM submissions WHERE id = ?", [id]);
@@ -160,7 +171,7 @@ const TURSO = (() => {
     }
   }
 
-  return { getSettings, saveSettings, getSubmissions, saveSubmission, updateSubmissionStatus, deleteSubmission, getWinners, saveWinner };
+  return { getSettings, saveSettings, getSubmissions, saveSubmission, updateSubmissionStatus, updateSubmissionRating, deleteSubmission, getWinners, saveWinner };
 })();
 
 window.TURSO = TURSO;
