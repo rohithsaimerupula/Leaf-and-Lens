@@ -242,89 +242,137 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
   // Load and apply dynamic settings for the timeline
-  try {
-    const settings = JSON.parse(localStorage.getItem('ll_settings')) || {
-      regStartDate: "2026-05-20",
-      regEndDate: "2026-05-26",
-      resultsPublic: false,
-      resultDate: "2026-06-05"
-    };
+  const defaultSettings = {
+    regStartDate: "2026-05-20",
+    regEndDate: "2026-05-26",
+    resultsPublic: false,
+    resultDate: "2026-06-05"
+  };
 
-    const formatDateStr = (str) => {
-      try {
-        const d = new Date(str + 'T00:00:00');
-        if (isNaN(d.getTime())) return str;
-        const day = d.getDate();
-        const monthsFull = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        return `${monthsFull[d.getMonth()]} ${day < 10 ? '0' + day : day}, ${d.getFullYear()}`;
-      } catch (e) {
-        return str;
-      }
-    };
+  const formatDateStr = (str) => {
+    try {
+      const d = new Date(str + 'T00:00:00');
+      if (isNaN(d.getTime())) return str;
+      const day = d.getDate();
+      const monthsFull = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      return `${monthsFull[d.getMonth()]} ${day < 10 ? '0' + day : day}, ${d.getFullYear()}`;
+    } catch (e) {
+      return str;
+    }
+  };
 
-    const now = new Date();
-    const start = new Date(settings.regStartDate + 'T00:00:00');
-    const end = new Date(settings.regEndDate + 'T23:59:59');
+  function applyTimeline(settings) {
+    try {
+      const now = new Date();
+      const start = new Date(settings.regStartDate + 'T00:00:00');
+      const end = new Date(settings.regEndDate + 'T23:59:59');
 
-    // Update Dates and Subtitles dynamically depending on whether registration started
-    const startEl = document.getElementById('tl-start-date');
-    const startEventEl = document.getElementById('tl-start-event');
-    const endEl = document.getElementById('tl-end-date');
-    const endEventEl = document.getElementById('tl-end-event');
-    const resultEl = document.getElementById('tl-result-date');
+      // Update Dates and Subtitles dynamically depending on whether registration started
+      const startEl = document.getElementById('tl-start-date');
+      const startEventEl = document.getElementById('tl-start-event');
+      const endEl = document.getElementById('tl-end-date');
+      const endEventEl = document.getElementById('tl-end-event');
+      const resultEl = document.getElementById('tl-result-date');
 
-    if (now < start) {
-      // NOT started yet
-      if (startEl) startEl.textContent = "Registrations Open Soon";
-      if (startEventEl) startEventEl.textContent = "Registration Opens";
-      
-      if (endEl) endEl.textContent = "Submission Deadline";
-      if (endEventEl) endEventEl.textContent = "Will update soon";
-    } else {
-      // LIVE / STARTED / CLOSED
-      if (startEl) startEl.textContent = formatDateStr(settings.regStartDate);
-      if (startEventEl) startEventEl.textContent = "Registration Opens";
-      
-      if (endEl) {
-        if (now <= end) {
-          endEl.innerHTML = `${formatDateStr(settings.regEndDate)} <span style="font-size: 0.75em; color: var(--gold-lt); font-weight: 500; margin-left: 0.2rem;">[Active Now]</span>`;
-        } else {
-          endEl.textContent = formatDateStr(settings.regEndDate);
+      if (now < start) {
+        // NOT started yet
+        if (startEl) startEl.textContent = "Registrations Open Soon";
+        if (startEventEl) startEventEl.textContent = "Registration Opens";
+        
+        if (endEl) endEl.textContent = "Submission Deadline";
+        if (endEventEl) endEventEl.textContent = "Will update soon";
+      } else {
+        // LIVE / STARTED / CLOSED
+        if (startEl) startEl.textContent = formatDateStr(settings.regStartDate);
+        if (startEventEl) startEventEl.textContent = "Registration Opens";
+        
+        if (endEl) {
+          if (now <= end) {
+            endEl.innerHTML = `${formatDateStr(settings.regEndDate)} <span style="font-size: 0.75em; color: var(--gold-lt); font-weight: 500; margin-left: 0.2rem;">[Active Now]</span>`;
+          } else {
+            endEl.textContent = formatDateStr(settings.regEndDate);
+          }
         }
+        if (endEventEl) endEventEl.textContent = "Submission Deadline";
       }
-      if (endEventEl) endEventEl.textContent = "Submission Deadline";
-    }
 
-    if (resultEl) {
-      resultEl.textContent = formatDateStr(settings.resultDate);
-    }
+      if (resultEl) {
+        resultEl.textContent = formatDateStr(settings.resultDate);
+      }
 
-    // Dynamic dot active classes depending on phase
-    const dots = document.querySelectorAll('.tl-dot-h');
-    dots.forEach(dot => dot.classList.remove('active'));
-    
-    if (now < start) {
-      // Opening soon
-      if (dots[0]) dots[0].classList.add('active');
-    } else if (now >= start && now <= end) {
-      // Live
-      if (dots[0]) dots[0].style.opacity = '0.6';
-      if (dots[1]) dots[1].classList.add('active');
-    } else if (now > end && now <= new Date(settings.resultDate + 'T23:59:59')) {
-      // Judging
-      if (dots[0]) dots[0].style.opacity = '0.4';
-      if (dots[1]) dots[1].style.opacity = '0.4';
-      if (dots[2]) dots[2].classList.add('active');
-    } else {
-      // Winners public
-      if (dots[0]) dots[0].style.opacity = '0.4';
-      if (dots[1]) dots[1].style.opacity = '0.4';
-      if (dots[2]) dots[2].style.opacity = '0.4';
-      if (dots[3]) dots[3].classList.add('active');
+      // Dynamic dot active classes depending on phase
+      const dots = document.querySelectorAll('.tl-dot-h');
+      dots.forEach(dot => {
+        dot.classList.remove('active');
+        dot.style.opacity = '';
+      });
+      
+      if (now < start) {
+        // Opening soon
+        if (dots[0]) dots[0].classList.add('active');
+      } else if (now >= start && now <= end) {
+        // Live
+        if (dots[0]) dots[0].style.opacity = '0.6';
+        if (dots[1]) dots[1].classList.add('active');
+      } else if (now > end && now <= new Date(settings.resultDate + 'T23:59:59')) {
+        // Judging
+        if (dots[0]) dots[0].style.opacity = '0.4';
+        if (dots[1]) dots[1].style.opacity = '0.4';
+        if (dots[2]) dots[2].classList.add('active');
+      } else {
+        // Winners public
+        if (dots[0]) dots[0].style.opacity = '0.4';
+        if (dots[1]) dots[1].style.opacity = '0.4';
+        if (dots[2]) dots[2].style.opacity = '0.4';
+        if (dots[3]) dots[3].classList.add('active');
+      }
+    } catch (e) {
+      console.error("Error applying timeline settings", e);
     }
-  } catch (e) {
-    console.error("Error loading dynamic settings", e);
   }
+
+  // Load fallback settings immediately
+  let fallback = defaultSettings;
+  try {
+    const local = localStorage.getItem('ll_settings');
+    if (local) fallback = JSON.parse(local);
+  } catch (e) {}
+  applyTimeline(fallback);
+
+  // Fetch live settings from Turso Database over HTTP
+  const dbUrl = "https://leaf-and-lens-tharunmerupula.aws-ap-south-1.turso.io/v2/pipeline";
+  const dbToken = "Bearer eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NzkxOTA0NzQsImlkIjoiMDE5ZTNmZmQtM2QwMS03OGMyLTlmNTAtZThiYmJjMmY3N2QzIiwicmlkIjoiZTkwMDMyNTQtMzIwZi00YTJhLWFhYTQtMjM2NzQ0Mjg4OGI1In0.fv4NNmBZhf2nwtdxUnM8dCjBeHQsP8BXvZBHlcjdDumt8wl6RiCSOFFAvqzwnhBQY1deZCXNppT8TfPtrkLzAA";
+
+  fetch(dbUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': dbToken,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      requests: [
+        { type: 'execute', stmt: { sql: "SELECT value FROM config WHERE key = 'settings'" } },
+        { type: 'close' }
+      ]
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    try {
+      const rows = data.results[0].response.result.rows;
+      if (rows && rows.length > 0) {
+        const rawValue = rows[0][0].value || rows[0][0] || rows[0].value;
+        const liveSettings = JSON.parse(rawValue);
+        applyTimeline(liveSettings);
+        localStorage.setItem('ll_settings', JSON.stringify(liveSettings));
+      }
+    } catch(e) {
+      console.warn("Failed to parse Turso live settings, kept fallback.", e);
+    }
+  })
+  .catch(err => {
+    console.warn("Turso live fetch failed, kept fallback.", err);
+  });
 });
 </script>
 </body>
