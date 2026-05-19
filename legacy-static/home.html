@@ -181,23 +181,7 @@
 
 <div class="divider"></div>
 
-<!-- PLEDGE -->
-<section class="section-sm" id="pledge">
-  <div class="wrap">
-    <div class="pledge-row reveal">
-      <img class="pledge-img" src="https://images.unsplash.com/photo-1448375240586-882707db888b?w=300&q=60" alt="Nature pledge"/>
-      <div class="pledge-info">
-        <div class="eyebrow">Climate Action</div>
-        <h3 class="h3" style="margin-bottom:.5rem">The Environmental Pledge</h3>
-        <p class="prose" style="margin-bottom:1rem;font-size:.85rem">Join participants who have pledged to take meaningful action for our planet.</p>
-        <div class="pledge-num" id="pledgeCount">0</div>
-        <div class="pledge-unit">pledges made</div>
-        <div class="pledge-bar-track" style="margin-top:.75rem"><div class="pledge-bar-fill" id="pledgeBarFill" style="width:0%"></div></div>
-        <div class="pledge-goal">Goal: 500 pledges</div>
-      </div>
-    </div>
-  </div>
-</section>
+
 
 <!-- CTA -->
 <section style="padding:0">
@@ -255,11 +239,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const els=document.querySelectorAll('.reveal,.reveal-l,.reveal-r');
   const obs=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('visible');obs.unobserve(x.target)}}),{threshold:.1});
   els.forEach(el=>obs.observe(el));
-  const count=parseInt(localStorage.getItem('LL_pledge_count')||String(Math.floor(Math.random()*80)+120));
-  localStorage.setItem('LL_pledge_count',count);
-  const cEl=document.getElementById('pledgeCount'),bEl=document.getElementById('pledgeBarFill');
-  if(cEl)cEl.textContent=count;
-  if(bEl)setTimeout(()=>bEl.style.width=Math.min(100,(count/500)*100)+'%',300);
+
 
   // Load and apply dynamic settings for the timeline
   try {
