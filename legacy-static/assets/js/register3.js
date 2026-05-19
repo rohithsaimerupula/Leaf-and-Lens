@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (!isActive) {
-      document.getElementById('closedBanner').style.display = 'flex';
+      document.getElementById('closedScreen').style.display = 'flex';
       document.getElementById('regWrap').style.display = 'none';
       return;
     } else {
