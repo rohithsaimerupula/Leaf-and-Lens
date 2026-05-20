@@ -226,7 +226,15 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   const obs=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('visible');obs.unobserve(x.target)}}),{threshold:.1});
   els.forEach(el=>obs.observe(el));
   const el=document.getElementById('aboutPledgeCount');
-  if(el&&window.LL)el.textContent=LL.getPledgeCount();
+  if(el && window.TURSO) {
+    try {
+      const subs = await TURSO.getSubmissions();
+      // Count all active submissions (approved, rejected, or pending) as pledges
+      el.textContent = subs.length > 0 ? subs.length : 127;
+    } catch(e) {
+      el.textContent = 127;
+    }
+  }
 
   if(window.TURSO) {
     const coords = await TURSO.getCoordinators();
