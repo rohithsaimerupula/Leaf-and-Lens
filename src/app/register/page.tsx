@@ -165,7 +165,7 @@ export default function Register() {
         photoUrl,
         reelUrl,
         paymentScreenshotUrl: screenshotUrl,
-        aiFlags: aiFlags || null,
+        aiFlags: aiFlags || undefined,
         status: 'pending',
         submittedAt: new Date().toISOString()
       };
@@ -473,6 +473,7 @@ export default function Register() {
               {step === 3 && (
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Photo submission upload */}
+                  {(participationType === 'Photo' || participationType === 'Both') && (
                     <div>
                       <label className="block text-xs uppercase font-mono tracking-widest text-emerald-400/60 mb-2">📸 Photography Submission</label>
                       <div className="border-2 border-dashed border-slate-800 hover:border-neon/50 rounded-2xl p-6 flex flex-col items-center justify-center transition-all bg-black/20 relative group">
