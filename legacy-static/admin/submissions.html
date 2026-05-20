@@ -220,22 +220,7 @@ function getBranchFromRoll(roll) {
   return branches[code] || '';
 }
 
-function getSectionFromRoll(roll) {
-  if (!roll || typeof roll !== 'string') return '';
-  const r = roll.toUpperCase().trim();
-  if (r.length < 10) return '';
-  const last2 = r.substring(r.length - 2);
-  const firstChar = last2.charAt(0);
-  const secondChar = last2.charAt(1);
-  if (firstChar >= '0' && firstChar <= '5') return 'A';
-  if (firstChar === '6' && secondChar === '0') return 'A';
-  if (firstChar === '6' || firstChar === '7' || firstChar === '8' || firstChar === '9' || firstChar === 'A' || firstChar === 'B') return 'B';
-  if (firstChar === 'C' && secondChar === '0') return 'B';
-  if (firstChar === 'C' || firstChar === 'D' || firstChar === 'E' || firstChar === 'F' || firstChar === 'G' || firstChar === 'H') return 'C';
-  if (firstChar === 'I' && secondChar === '0') return 'C';
-  if (firstChar === 'I' || firstChar === 'J' || firstChar === 'K' || firstChar === 'L' || firstChar === 'M' || firstChar === 'N' || firstChar === 'O' || firstChar === 'P') return 'D';
-  return '';
-}
+
 
 function getFiltered() {
   const q      = document.getElementById('searchInput').value.toLowerCase();
@@ -287,7 +272,7 @@ function renderTable() {
         <td style="font-size:0.82rem;">
           ${(() => {
             const b = s.branch || getBranchFromRoll(s.member1Roll);
-            const sec = s.section || getSectionFromRoll(s.member1Roll);
+            const sec = s.section;
             return b ? (sec ? `${b}-${sec}`.toUpperCase() : b.toUpperCase()) : '—';
           })()}
         </td>
@@ -375,7 +360,7 @@ function viewSubmission(id) {
     <div class="detail-row"><span class="detail-label">Branch & Section</span><span class="detail-value">
       ${(() => {
         const b = s.branch || getBranchFromRoll(s.member1Roll);
-        const sec = s.section || getSectionFromRoll(s.member1Roll);
+        const sec = s.section;
         return b ? (sec ? `${b}-${sec}`.toUpperCase() : b.toUpperCase()) : '—';
       })()}
     </span></div>

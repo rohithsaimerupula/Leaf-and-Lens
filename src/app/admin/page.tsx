@@ -32,23 +32,6 @@ function getBranchFromRoll(roll: string | null | undefined): string {
   return branches[code] || '';
 }
 
-function getSectionFromRoll(roll: string | null | undefined): string {
-  if (!roll || typeof roll !== 'string') return '';
-  const r = roll.toUpperCase().trim();
-  if (r.length < 10) return '';
-  const last2 = r.substring(r.length - 2);
-  const firstChar = last2.charAt(0);
-  const secondChar = last2.charAt(1);
-  if (firstChar >= '0' && firstChar <= '5') return 'A';
-  if (firstChar === '6' && secondChar === '0') return 'A';
-  if (firstChar === '6' || firstChar === '7' || firstChar === '8' || firstChar === '9' || firstChar === 'A' || firstChar === 'B') return 'B';
-  if (firstChar === 'C' && secondChar === '0') return 'B';
-  if (firstChar === 'C' || firstChar === 'D' || firstChar === 'E' || firstChar === 'F' || firstChar === 'G' || firstChar === 'H') return 'C';
-  if (firstChar === 'I' && secondChar === '0') return 'C';
-  if (firstChar === 'I' || firstChar === 'J' || firstChar === 'K' || firstChar === 'L' || firstChar === 'M' || firstChar === 'N' || firstChar === 'O' || firstChar === 'P') return 'D';
-  return '';
-}
-
 export default function Admin() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
@@ -569,7 +552,7 @@ export default function Admin() {
                             <span className="block font-mono text-[10px] text-slate-500 mt-1">
                               {selectedSub.member1Roll} · {(() => {
                                 const b = selectedSub.branch || getBranchFromRoll(selectedSub.member1Roll);
-                                const sec = selectedSub.section || getSectionFromRoll(selectedSub.member1Roll);
+                                const sec = selectedSub.section;
                                 return b ? (sec ? `${b}-${sec}`.toUpperCase() : b.toUpperCase()) : '—';
                               })()} · {selectedSub.member1Phone}
                             </span>
@@ -582,7 +565,7 @@ export default function Admin() {
                               <span className="block font-mono text-[10px] text-slate-500 mt-1">
                                 {selectedSub.member2Roll} · {(() => {
                                   const b = selectedSub.member2Branch || getBranchFromRoll(selectedSub.member2Roll);
-                                  const sec = selectedSub.member2Section || getSectionFromRoll(selectedSub.member2Roll);
+                                  const sec = selectedSub.member2Section;
                                   return b ? (sec ? `${b}-${sec}`.toUpperCase() : b.toUpperCase()) : '—';
                                 })()} · {selectedSub.member2Phone}
                               </span>
