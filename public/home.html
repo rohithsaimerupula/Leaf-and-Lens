@@ -229,8 +229,6 @@
 <script src="assets/js/main.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded',()=>{
-  const hamburger=document.getElementById('hamburger'),navLinks=document.getElementById('navLinks');
-  if(hamburger)hamburger.addEventListener('click',()=>navLinks.classList.toggle('open'));
   window.addEventListener('scroll',()=>{
     const n=document.getElementById('navbar');
     if(n)n.classList.toggle('scrolled',window.scrollY>60);
