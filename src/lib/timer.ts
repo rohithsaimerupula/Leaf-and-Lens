@@ -13,9 +13,13 @@ export interface EventStatusDetails {
 export function calculateEventStatus(settings: DynamicSettings): EventStatusDetails {
   const now = new Date();
   
-  // Parse dates with local midnight time normalization
-  const start = new Date(settings.regStartDate + 'T00:00:00');
-  const end = new Date(settings.regEndDate + 'T23:59:59');
+  const parseSettingDate = (d: string, defaultTime: string) => {
+    if (!d) return new Date(NaN);
+    return d.includes('T') ? new Date(d) : new Date(d + defaultTime);
+  };
+  
+  const start = parseSettingDate(settings.regStartDate, 'T00:00:00');
+  const end = parseSettingDate(settings.regEndDate, 'T23:59:59');
 
   if (now < start) {
     return {

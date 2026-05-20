@@ -44,7 +44,7 @@ export default function Home() {
   const formatDisplayDate = (dateStr: string) => {
     try {
       if (!dateStr) return '';
-      const d = new Date(dateStr + 'T00:00:00');
+      const d = dateStr.includes('T') ? new Date(dateStr) : new Date(dateStr + 'T00:00:00');
       if (isNaN(d.getTime())) return dateStr;
       const day = d.getDate();
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -126,9 +126,13 @@ export default function Home() {
 
     const timerInterval = setInterval(() => {
       const now = new Date();
-      const start = new Date(settings.regStartDate + 'T00:00:00');
-      const end = new Date(settings.regEndDate + 'T23:59:59');
-      const result = new Date(settings.resultDate + 'T00:00:00');
+      const parseSettingDate = (d: string, defaultTime: string) => {
+        if (!d) return new Date(NaN);
+        return d.includes('T') ? new Date(d) : new Date(d + defaultTime);
+      };
+      const start = parseSettingDate(settings.regStartDate, 'T00:00:00');
+      const end = parseSettingDate(settings.regEndDate, 'T23:59:59');
+      const result = parseSettingDate(settings.resultDate, 'T00:00:00');
 
       let target = result.getTime();
       if (now < start) {
