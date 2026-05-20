@@ -81,7 +81,7 @@
         <thead>
           <tr>
             <th>#</th><th>ID</th><th>Name</th><th>Contact</th>
-            <th>Roll No</th><th>Branch</th><th>Year</th><th>Category</th><th>Pledge</th><th>Status</th><th>Actions</th>
+            <th>Roll No</th><th>Branch &amp; Sec</th><th>Year</th><th>Category</th><th>Pledge</th><th>Status</th><th>Actions</th>
           </tr>
         </thead>
         <tbody id="participantsTable"></tbody>
@@ -156,7 +156,8 @@ function getFiltered() {
     const phone = (s.member1Phone || '').toLowerCase();
     const matchQ = !q || name.includes(q) || email.includes(q) || id.includes(q) || phone.includes(q);
     const matchC = cat === 'all' || s.participationType === cat;
-    const matchB = branch === 'all' || s.branch === branch;
+    const activeBranch = s.branch || getBranchFromRoll(s.member1Roll);
+    const matchB = branch === 'all' || activeBranch === branch;
     const matchS = status === 'all' || s.status === status;
     return matchQ && matchC && matchB && matchS;
   });
