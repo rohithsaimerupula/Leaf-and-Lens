@@ -271,10 +271,37 @@ function handleFile(type, input) {
     };
     r.readAsText(file.slice(0, 65536)); // Read first 64KB for EXIF headers
   } else if (type === 'reel') {
-    reelFile = file;
-    document.getElementById('reelName').textContent = file.name + ' (' + mb.toFixed(1) + ' MB)';
-    document.getElementById('reelInfo').classList.remove('hidden');
-    document.getElementById('reelDropBody').style.opacity = '0.4';
+    const isMkv = file.name.toLowerCase().endsWith('.mkv');
+    if (isMkv) {
+      reelFile = file;
+      document.getElementById('reelName').textContent = file.name + ' (' + mb.toFixed(1) + ' MB) · [Duration check bypassed for MKV]';
+      document.getElementById('reelInfo').classList.remove('hidden');
+      document.getElementById('reelDropBody').style.opacity = '0.4';
+    } else {
+      document.getElementById('reelName').textContent = 'Analyzing video duration...';
+      document.getElementById('reelInfo').classList.remove('hidden');
+      
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.src = URL.createObjectURL(file);
+      video.onloadedmetadata = function() {
+        window.URL.revokeObjectURL(video.src);
+        const duration = video.duration;
+        if (isNaN(duration) || duration < 30 || duration > 60) {
+          showToast('Video duration must be between 30 and 60 seconds! Your video is ' + Math.round(duration || 0) + 's.', 'error');
+          clearFile('reel');
+        } else {
+          reelFile = file;
+          document.getElementById('reelName').textContent = file.name + ' (' + mb.toFixed(1) + ' MB · ' + Math.round(duration) + 's)';
+          document.getElementById('reelDropBody').style.opacity = '0.4';
+        }
+      };
+      video.onerror = function() {
+        window.URL.revokeObjectURL(video.src);
+        showToast('Error reading video file. Ensure it is a valid MP4/MKV.', 'error');
+        clearFile('reel');
+      };
+    }
   } else if (type === 'payment') {
     paymentFile = file;
     document.getElementById('paymentName').textContent = file.name + ' (' + mb.toFixed(1) + ' MB)';

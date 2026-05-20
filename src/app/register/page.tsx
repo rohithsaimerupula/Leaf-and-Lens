@@ -471,21 +471,38 @@ export default function Register() {
               {step === 3 && (
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Photo submission upload */}
-                  {(participationType === 'Photo' || participationType === 'Both') && (
                     <div>
                       <label className="block text-xs uppercase font-mono tracking-widest text-emerald-400/60 mb-2">📸 Photography Submission</label>
                       <div className="border-2 border-dashed border-slate-800 hover:border-neon/50 rounded-2xl p-6 flex flex-col items-center justify-center transition-all bg-black/20 relative group">
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            if (file) {
+                              if (file.size > 10 * 1024 * 1024) {
+                                alert('Photograph file size must be less than 10MB.');
+                                e.target.value = '';
+                                setPhotoFile(null);
+                                return;
+                              }
+                              const type = file.type;
+                              if (type !== 'image/jpeg' && type !== 'image/png' && type !== 'image/jpg') {
+                                alert('Photograph must be a JPG or PNG image.');
+                                e.target.value = '';
+                                setPhotoFile(null);
+                                return;
+                              }
+                            }
+                            setPhotoFile(file);
+                          }}
                           className="absolute inset-0 opacity-0 cursor-pointer"
                         />
                         <Upload className="w-8 h-8 text-slate-500 group-hover:text-neon transition-colors mb-2" />
                         <span className="text-sm font-outfit font-bold text-white uppercase mb-1">
                           {photoFile ? photoFile.name : 'Choose Photograph File'}
                         </span>
-                        <span className="text-[10px] font-mono text-slate-500 uppercase">JPG or PNG formats only</span>
+                        <span className="text-[10px] font-mono text-slate-500 uppercase">JPG or PNG formats only · Max 10 MB</span>
                       </div>
                     </div>
                   )}
@@ -498,14 +515,56 @@ export default function Register() {
                         <input
                           type="file"
                           accept="video/mp4, video/mkv"
-                          onChange={(e) => setReelFile(e.target.files?.[0] || null)}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            if (file) {
+                              if (file.size > 50 * 1024 * 1024) {
+                                alert('Reel file size must be less than 50MB.');
+                                e.target.value = '';
+                                setReelFile(null);
+                                return;
+                              }
+                              const ext = file.name.split('.').pop()?.toLowerCase();
+                              if (ext !== 'mp4' && ext !== 'mkv') {
+                                alert('Reel must be an MP4 or MKV video.');
+                                e.target.value = '';
+                                setReelFile(null);
+                                return;
+                              }
+                              if (ext !== 'mkv') {
+                                const video = document.createElement('video');
+                                video.preload = 'metadata';
+                                video.src = URL.createObjectURL(file);
+                                video.onloadedmetadata = () => {
+                                  URL.revokeObjectURL(video.src);
+                                  if (video.duration < 30 || video.duration > 60) {
+                                    alert(`Reel duration must be between 30 and 60 seconds. Your file is ${Math.round(video.duration)} seconds.`);
+                                    e.target.value = '';
+                                    setReelFile(null);
+                                  } else {
+                                    setReelFile(file);
+                                  }
+                                };
+                                video.onerror = () => {
+                                  URL.revokeObjectURL(video.src);
+                                  alert('Invalid video file or metadata error.');
+                                  e.target.value = '';
+                                  setReelFile(null);
+                                };
+                              } else {
+                                setReelFile(file);
+                              }
+                            } else {
+                              setReelFile(null);
+                            }
+                          }}
                           className="absolute inset-0 opacity-0 cursor-pointer"
                         />
                         <Upload className="w-8 h-8 text-slate-500 group-hover:text-purple-400 transition-colors mb-2" />
                         <span className="text-sm font-outfit font-bold text-white uppercase mb-1">
                           {reelFile ? reelFile.name : 'Choose Reel File'}
                         </span>
-                        <span className="text-[10px] font-mono text-slate-500 uppercase">MP4 or MKV vertical formats</span>
+                        <span className="text-[10px] font-mono text-slate-500 uppercase">MP4 or MKV vertical formats · 30-60 sec · Max 50 MB</span>
                       </div>
                     </div>
                   )}
