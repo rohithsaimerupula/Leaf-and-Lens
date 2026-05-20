@@ -467,16 +467,22 @@ export default function Home() {
             {/* Items */}
             {[
               { 
-                date: status?.status === 'Opening Soon' ? 'Registrations Open Soon' : formatDisplayDate(settings.regStartDate), 
+                date: status?.status === 'Opening Soon' ? 'Registration opens soon' : formatDisplayDate(settings.regStartDate), 
                 title: 'Registration Starts', 
                 desc: 'Secure your spot and download the Green Leaf Pockets submission prompts.', 
                 status: status?.status === 'Opening Soon' ? 'Active' as const : 'Past' as const 
               },
               { 
-                date: status?.status === 'Opening Soon' ? 'Submission Deadline' : formatDisplayDate(settings.regEndDate), 
+                date: status?.status === 'Opening Soon' ? 'Submission Deadline updated soon' : formatDisplayDate(settings.regEndDate), 
                 title: 'Submission Deadline', 
-                desc: status?.status === 'Opening Soon' ? 'Will update soon' : 'All high-resolution photos and vertical reels must be uploaded by midnight.', 
+                desc: status?.status === 'Opening Soon' ? 'Submission Deadline' : 'All high-resolution photos and vertical reels must be uploaded by midnight.', 
                 status: status?.status === 'Live' ? 'Active' as const : (status?.status === 'Opening Soon' ? 'Upcoming' as const : 'Past' as const) 
+              },
+              { 
+                date: 'June 1 to June 3, 2026', 
+                title: 'Judging Phase', 
+                desc: 'Evaluation Period', 
+                status: status?.status === 'Live' || status?.status === 'Opening Soon' ? 'Upcoming' as const : (Date.now() < new Date('2026-06-03T23:59:59').getTime() ? 'Active' as const : 'Past' as const)
               },
               { 
                 date: formatDisplayDate(settings.resultDate), 
@@ -721,9 +727,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 border-t border-slate-900/60 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 relative z-10 text-xs text-slate-500 font-mono">
           <p>© 2026 Leaf & Lens · VIIT BS&H. Celebrating World Environment Day.</p>
           <div className="flex gap-4">
-            <span className="hover:text-white cursor-pointer">Instagram</span>
-            <span>·</span>
-            <span className="hover:text-white cursor-pointer">WhatsApp</span>
+            <a href="https://wa.me/919014123748" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">WhatsApp 9014123748</a>
           </div>
         </div>
       </footer>
