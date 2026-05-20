@@ -286,7 +286,10 @@ function viewSubmission(id) {
   document.getElementById('modalTitle').textContent = s.id + ' — ' + (s.member1Name || s.teamName);
   const prev = document.getElementById('modalPreview');
   let mediaHTML = '';
-  if (s.photoUrl) {
+  const isPhoto = s.participationType === 'Photo' || s.participationType === 'Both';
+  const isReel = s.participationType === 'Reel' || s.participationType === 'Both';
+  
+  if (isPhoto && s.photoUrl && s.photoUrl !== 'null' && s.photoUrl !== 'undefined') {
     mediaHTML += `
       <div style="margin-bottom:1.5rem;">
         <img src="${s.photoUrl}" alt="Photo Submission" style="max-height:60vh;max-width:100%;object-fit:contain;border-radius:4px;" />
@@ -298,7 +301,7 @@ function viewSubmission(id) {
       </div>
     `;
   }
-  if (s.reelUrl) {
+  if (isReel && s.reelUrl && s.reelUrl !== 'null' && s.reelUrl !== 'undefined') {
     mediaHTML += `
       <div style="margin-bottom:1rem;">
         <video src="${s.reelUrl}" controls style="max-height:60vh;max-width:100%;border-radius:4px;"></video>
