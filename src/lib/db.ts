@@ -74,6 +74,12 @@ export interface Submission {
   paymentScreenshotUrl: string;
   status: 'pending' | 'approved' | 'rejected';
   submittedAt: string;
+  branch?: string;
+  section?: string;
+  member2Branch?: string;
+  member2Section?: string;
+  aiFlags?: string;
+  rating?: number;
 }
 
 export interface Winner {
@@ -210,9 +216,33 @@ async function initTursoSchema() {
         reelUrl TEXT,
         paymentScreenshotUrl TEXT NOT NULL,
         status TEXT NOT NULL DEFAULT 'pending',
-        submittedAt TEXT NOT NULL
+        submittedAt TEXT NOT NULL,
+        branch TEXT,
+        section TEXT,
+        member2Branch TEXT,
+        member2Section TEXT,
+        aiFlags TEXT,
+        rating REAL
       )
     `);
+    
+    // Add columns dynamically to the existing cloud database
+    const columns = [
+      { name: 'branch', type: 'TEXT' },
+      { name: 'section', type: 'TEXT' },
+      { name: 'member2Branch', type: 'TEXT' },
+      { name: 'member2Section', type: 'TEXT' },
+      { name: 'aiFlags', type: 'TEXT' },
+      { name: 'rating', type: 'REAL' }
+    ];
+    for (const col of columns) {
+      try {
+        await tursoClient.execute(`ALTER TABLE submissions ADD COLUMN ${col.name} ${col.type}`);
+      } catch (err) {
+        // Column already exists or table alter failed (e.g. SQLite duplicate column error)
+      }
+    }
+
     await tursoClient.execute(`
       CREATE TABLE IF NOT EXISTS winners (
         key TEXT PRIMARY KEY,
@@ -269,7 +299,13 @@ export const db = {
           reelUrl: row.reelUrl || undefined,
           paymentScreenshotUrl: row.paymentScreenshotUrl,
           status: row.status,
-          submittedAt: row.submittedAt
+          submittedAt: row.submittedAt,
+          branch: row.branch || undefined,
+          section: row.section || undefined,
+          member2Branch: row.member2Branch || undefined,
+          member2Section: row.member2Section || undefined,
+          aiFlags: row.aiFlags || undefined,
+          rating: row.rating !== null && row.rating !== undefined ? Number(row.rating) : undefined
         } as Submission));
       } catch (e) {
         console.error("Turso getSubmissions failed, using LocalStorage fallback:", e);
@@ -299,12 +335,14 @@ export const db = {
         await tursoClient.execute({
           sql: `INSERT OR REPLACE INTO submissions (
             id, teamName, participationType, member1Name, member1Roll, member1Email, member1Phone,
-            member2Name, member2Roll, member2Email, member2Phone, photoUrl, reelUrl, paymentScreenshotUrl, status, submittedAt
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            member2Name, member2Roll, member2Email, member2Phone, photoUrl, reelUrl, paymentScreenshotUrl, status, submittedAt,
+            branch, section, member2Branch, member2Section, aiFlags, rating
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           args: [
             sub.id, sub.teamName, sub.participationType, sub.member1Name, sub.member1Roll, sub.member1Email, sub.member1Phone,
             sub.member2Name || null, sub.member2Roll || null, sub.member2Email || null, sub.member2Phone || null,
-            sub.photoUrl || null, sub.reelUrl || null, sub.paymentScreenshotUrl, sub.status, sub.submittedAt
+            sub.photoUrl || null, sub.reelUrl || null, sub.paymentScreenshotUrl, sub.status, sub.submittedAt,
+            sub.branch || null, sub.section || null, sub.member2Branch || null, sub.member2Section || null, sub.aiFlags || null, sub.rating !== undefined ? sub.rating : null
           ]
         });
       } catch (e) {

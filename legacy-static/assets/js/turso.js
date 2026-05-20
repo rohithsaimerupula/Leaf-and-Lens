@@ -94,8 +94,8 @@ const TURSO = (() => {
         `INSERT OR REPLACE INTO submissions
           (id, teamName, participationType, member1Name, member1Roll, member1Email, member1Phone,
            member2Name, member2Roll, member2Email, member2Phone, photoUrl, reelUrl,
-           paymentScreenshotUrl, status, submittedAt)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+           paymentScreenshotUrl, status, submittedAt, branch, section, member2Branch, member2Section, aiFlags, rating)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         [
           sub.id, sub.teamName || sub.name || '', sub.participationType || sub.category || '',
           sub.member1Name || sub.name || '', sub.member1Roll || sub.rollNum || '',
@@ -103,7 +103,8 @@ const TURSO = (() => {
           sub.member2Name || null, sub.member2Roll || null, sub.member2Email || null, sub.member2Phone || null,
           sub.photoUrl || null, sub.reelUrl || null,
           sub.paymentScreenshotUrl || sub.paymentScreenshot || '',
-          sub.status || 'pending', sub.submittedAt || new Date().toISOString()
+          sub.status || 'pending', sub.submittedAt || new Date().toISOString(),
+          sub.branch || null, sub.section || null, sub.member2Branch || null, sub.member2Section || null, sub.aiFlags || null, sub.rating !== undefined ? sub.rating : null
         ]
       );
     } catch (e) {
