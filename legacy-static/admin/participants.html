@@ -121,6 +121,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('logoutBtn').addEventListener('click', () => { LL.adminLogout(); window.location.href = 'login.html'; });
 });
 
+function getBranchFromRoll(roll) {
+  if (!roll || typeof roll !== 'string') return '';
+  const r = roll.toUpperCase().trim();
+  if (r.length < 8) return '';
+  const code = r.substring(6, 8);
+  const branches = {
+    '05': 'CSE',
+    '12': 'IT',
+    '06': 'CS',
+    '42': 'CSD',
+    '43': 'CAI',
+    '54': 'AIDS',
+    '04': 'ECE',
+    '19': 'ECM',
+    '01': 'CIVIL',
+    '03': 'MECH',
+    '02': 'EEE'
+  };
+  return branches[code] || '';
+}
+
 function getFiltered() {
   const q      = document.getElementById('searchInput').value.toLowerCase();
   const cat    = document.getElementById('filterCat').value;
@@ -158,13 +179,29 @@ function renderTable() {
       <tr>
         <td style="color:var(--text-muted);font-size:0.78rem;">${(currentPage-1)*PER_PAGE+i+1}</td>
         <td class="td-id">${s.id}</td>
-        <td class="td-name">${s.member1Name || s.teamName}</td>
+        <td class="td-name">
+          <div><strong>${s.member1Name || s.teamName}</strong></div>
+          <div style="margin-top:0.25rem; display:flex; gap:0.25rem;">
+            ${(s.aiFlags && s.aiFlags.toLowerCase().includes('ai')) 
+              ? `<span class="badge" style="font-size:0.65rem;padding:2px 6px;background:rgba(230,57,70,0.15);color:#e63946;font-weight:700;">🤖 AI</span>`
+              : (s.aiFlags && s.aiFlags.toLowerCase().includes('edit'))
+                ? `<span class="badge" style="font-size:0.65rem;padding:2px 6px;background:rgba(244,162,97,0.15);color:#f4a261;font-weight:700;">✏️ Edited</span>`
+                : `<span class="badge" style="font-size:0.65rem;padding:2px 6px;background:rgba(82,183,136,0.15);color:#52b788;font-weight:700;">🟢 Natural</span>`
+            }
+          </div>
+        </td>
         <td>
           <div style="font-size:0.82rem;">${s.member1Email || '—'}</div>
           <div style="font-size:0.78rem;color:var(--text-muted);">${s.member1Phone || ''}</div>
         </td>
         <td style="font-size:0.82rem;font-family:'Outfit',sans-serif;color:var(--primary-light);font-weight:600;">${s.member1Roll || '—'}</td>
-        <td style="font-size:0.82rem;">${s.branch || '—'} - ${s.section || '—'}</td>
+        <td style="font-size:0.82rem;">
+          ${(() => {
+            const b = s.branch || getBranchFromRoll(s.member1Roll);
+            const sec = s.section;
+            return b ? (sec ? `${b} - ${sec}` : b) : '—';
+          })()}
+        </td>
         <td style="font-size:0.82rem;">1st Year</td>
         <td><span class="badge badge-green" style="font-size:0.72rem;">${s.participationType}</span></td>
         <td style="font-size:1rem;">🌿</td>
@@ -242,9 +279,25 @@ function viewParticipant(id) {
     <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${s.member1Email || '—'}</span></div>
     <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">${s.member1Phone || '—'}</span></div>
     <div class="detail-row"><span class="detail-label">Roll / Reg. No</span><span class="detail-value" style="color:var(--primary-light);font-weight:600;">${s.member1Roll || '—'}</span></div>
-    <div class="detail-row"><span class="detail-label">Branch & Section</span><span class="detail-value">${s.branch || '—'} - ${s.section || '—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Branch & Section</span><span class="detail-value">
+      ${(() => {
+        const b = s.branch || getBranchFromRoll(s.member1Roll);
+        const sec = s.section;
+        return b ? (sec ? `${b} - ${sec}` : b) : '—';
+      })()}
+    </span></div>
     <div class="detail-row"><span class="detail-label">Category</span><span class="detail-value">${s.participationType}</span></div>
-    ${s.aiFlags ? `<div class="detail-row"><span class="detail-label" style="color:var(--secondary-light);">AI Analysis</span><span class="detail-value" style="color:var(--secondary-light);font-weight:bold;">⚠️ ${s.aiFlags}</span></div>` : ''}
+    <div class="detail-row">
+      <span class="detail-label">AI Analysis</span>
+      <span class="detail-value" style="font-weight:bold;">
+        ${(s.aiFlags && s.aiFlags.toLowerCase().includes('ai')) 
+          ? `<span style="color:#e63946;">🤖 AI Generated (${s.aiFlags})</span>`
+          : (s.aiFlags && s.aiFlags.toLowerCase().includes('edit'))
+            ? `<span style="color:#f4a261;">✏️ Edited (${s.aiFlags})</span>`
+            : `<span style="color:#52b788;">✓ Natural / Authentic</span>`
+        }
+      </span>
+    </div>
     <div class="detail-row"><span class="detail-label">Status</span><span class="status-${s.status}">${s.status}</span></div>
     <div class="detail-row"><span class="detail-label">Registered</span><span class="detail-value">${formatDate(s.submittedAt)}</span></div>
     <div style="margin-top:1.25rem;display:flex;gap:0.75rem;flex-wrap:wrap;">

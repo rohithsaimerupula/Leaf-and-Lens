@@ -199,6 +199,27 @@ async function saveRating(id) {
   }
 }
 
+function getBranchFromRoll(roll) {
+  if (!roll || typeof roll !== 'string') return '';
+  const r = roll.toUpperCase().trim();
+  if (r.length < 8) return '';
+  const code = r.substring(6, 8);
+  const branches = {
+    '05': 'CSE',
+    '12': 'IT',
+    '06': 'CS',
+    '42': 'CSD',
+    '43': 'CAI',
+    '54': 'AIDS',
+    '04': 'ECE',
+    '19': 'ECM',
+    '01': 'CIVIL',
+    '03': 'MECH',
+    '02': 'EEE'
+  };
+  return branches[code] || '';
+}
+
 function getFiltered() {
   const q      = document.getElementById('searchInput').value.toLowerCase();
   const cat    = document.getElementById('filterCat').value;
@@ -321,9 +342,26 @@ function viewSubmission(id) {
     <div class="detail-row"><span class="detail-label">Name</span><span class="detail-value">${s.member1Name || s.teamName}</span></div>
     <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${s.member1Email || '—'}</span></div>
     <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">${s.member1Phone || '—'}</span></div>
-    <div class="detail-row"><span class="detail-label">Roll No</span><span class="detail-value">${s.member1Roll || '—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Roll No</span><span class="detail-value" style="color:var(--primary-light);font-weight:600;">${s.member1Roll || '—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Branch & Section</span><span class="detail-value">
+      ${(() => {
+        const b = s.branch || getBranchFromRoll(s.member1Roll);
+        const sec = s.section;
+        return b ? (sec ? `${b} - ${sec}` : b) : '—';
+      })()}
+    </span></div>
     <div class="detail-row"><span class="detail-label">Category</span><span class="detail-value">${s.participationType}</span></div>
-    ${s.aiFlags ? `<div class="detail-row"><span class="detail-label" style="color:#e63946">AI Scan</span><span class="detail-value" style="color:#e63946;font-weight:bold;">⚠️ ${s.aiFlags}</span></div>` : ''}
+    <div class="detail-row">
+      <span class="detail-label">AI Analysis</span>
+      <span class="detail-value" style="font-weight:bold;">
+        ${(s.aiFlags && s.aiFlags.toLowerCase().includes('ai')) 
+          ? `<span style="color:#e63946;">🤖 AI Generated (${s.aiFlags})</span>`
+          : (s.aiFlags && s.aiFlags.toLowerCase().includes('edit'))
+            ? `<span style="color:#f4a261;">✏️ Edited (${s.aiFlags})</span>`
+            : `<span style="color:#52b788;">✓ Natural / Authentic</span>`
+        }
+      </span>
+    </div>
     <div class="detail-row"><span class="detail-label">Status</span><span class="status-${s.status}">${s.status}</span></div>
     <div class="detail-row"><span class="detail-label">Submitted</span><span class="detail-value">${formatDate(s.submittedAt)}</span></div>`;
   document.getElementById('modalActions').innerHTML = `
