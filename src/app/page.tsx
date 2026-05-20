@@ -198,7 +198,7 @@ export default function Home() {
           </Link>
 
           <div className="hidden lg:flex items-center gap-8 font-outfit text-sm font-semibold tracking-wide">
-            {['Home', 'About', 'Rules', 'Timeline', 'Gallery', 'Contact'].map((sec) => {
+            {['Home', 'About', 'Rules', 'Timeline', 'Gallery', 'Coordinators', 'Contact'].map((sec) => {
               const id = sec.toLowerCase();
               return (
                 <a
