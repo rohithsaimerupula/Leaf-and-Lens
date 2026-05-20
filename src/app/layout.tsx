@@ -19,7 +19,7 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: "Leaf & Lens 2026 — Vignan's Institute of Information Technology",
-  description: "Official portal for Leaf & Lens 2026, a World Environment Day competition themed 'Green Leaf Pockets'. Organized by Vignan's Institute of Information Technology (VIIT).",
+  description: "Official portal for Leaf & Lens 2026, a World Environment Day competition themed 'Urban Green Pockets'. Organized by Vignan's Institute of Information Technology (VIIT).",
 };
 
 export default function RootLayout({

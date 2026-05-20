@@ -359,7 +359,7 @@ export default function Home() {
               Leaf & Lens is a creative environmental photography and reels competition organized for <strong>first-year students</strong> to celebrate nature through the power of mobile cameras.
             </p>
             <p className="text-slate-400 leading-relaxed font-light">
-              We challenge you to seek out and frame the micro-ecosystems and resilient green spaces on campus—the unnoticed moss scaling a concrete ledge, alpine pockets, or beautiful dewdrops. Turn your lens into a tool for environmental advocacy!
+              We challenge you to seek out and frame the micro-ecosystems and resilient green spaces on campus—the unnoticed moss scaling a concrete ledge, urban green pockets, or beautiful dewdrops. Turn your lens into a tool for environmental advocacy!
             </p>
 
             {/* Counters */}
@@ -477,7 +477,7 @@ export default function Home() {
               { 
                 date: status?.status === 'Opening Soon' ? 'Registration opens soon' : formatDisplayDate(settings.regStartDate), 
                 title: 'Registration Starts', 
-                desc: 'Secure your spot and download the Green Leaf Pockets submission prompts.', 
+                desc: 'Secure your spot and download the Urban Green Pockets submission prompts.', 
                 status: status?.status === 'Opening Soon' ? 'Active' as const : 'Past' as const 
               },
               { 
@@ -546,7 +546,7 @@ export default function Home() {
                 Cash Prizes & Honors
               </h2>
               <p className="text-slate-300 font-light text-base md:text-lg leading-relaxed">
-                Trophies, certificates, and exciting cash prizes will be awarded separately for the **Photography** and **Reels** categories. Show us the best green leaf pockets on campus!
+                Trophies, certificates, and exciting cash prizes will be awarded separately for the **Photography** and **Reels** categories. Show us the best urban green pockets on campus!
               </p>
             </div>
           </div>
