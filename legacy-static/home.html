@@ -171,9 +171,9 @@
       <div class="eyebrow center">Competition Timeline</div>
     </div>
     <div class="card tl-row-h">
-      <div class="tl-item reveal d1"><div class="tl-dot-h"></div><div class="tl-date-h" id="tl-start-date">Registrations Open Soon</div><div class="tl-event-h" id="tl-start-event">Registration Opens</div></div>
-      <div class="tl-item reveal d2"><div class="tl-dot-h"></div><div class="tl-date-h" id="tl-end-date">Submission Deadline</div><div class="tl-event-h" id="tl-end-event">Will update soon</div></div>
-      <div class="tl-item reveal d3"><div class="tl-dot-h"></div><div class="tl-date-h">Judging Phase</div><div class="tl-event-h">Evaluation Period</div></div>
+      <div class="tl-item reveal d1"><div class="tl-dot-h"></div><div class="tl-date-h" id="tl-start-date">Registration opens soon</div><div class="tl-event-h" id="tl-start-event">Registration Opens</div></div>
+      <div class="tl-item reveal d2"><div class="tl-dot-h"></div><div class="tl-date-h" id="tl-end-date">Submission Deadline updated soon</div><div class="tl-event-h" id="tl-end-event">Submission Deadline</div></div>
+      <div class="tl-item reveal d3"><div class="tl-dot-h"></div><div class="tl-date-h">June 1 to June 3, 2026</div><div class="tl-event-h">Judging Phase</div></div>
       <div class="tl-item reveal d4"><div class="tl-dot-h" style="background:var(--gold-lt)"></div><div class="tl-date-h" id="tl-result-date">June 5, 2026</div><div class="tl-event-h">Winners Announced</div></div>
     </div>
   </div>
@@ -211,7 +211,7 @@
       </div>
       <div class="footer-links">
         <div class="footer-col"><h4>Competition</h4><a href="register.html">Register Now</a><a href="rules.html">Rules &amp; Guidelines</a><a href="about.html">About the Event</a></div>
-        <div class="footer-col"><h4>Contact</h4><a href="mailto:leaflens2026@gmail.com">leaflens2026@gmail.com</a><a href="#">Instagram</a><a href="#">WhatsApp</a></div>
+        <div class="footer-col"><h4>Contact</h4><a href="mailto:rohithsaimerupula01@gmail.com">rohithsaimerupula01@gmail.com</a><a href="https://wa.me/919014123748">WhatsApp 9014123748</a></div>
       </div>
     </div>
     <div class="footer-bottom">
@@ -275,13 +275,13 @@ document.addEventListener('DOMContentLoaded',()=>{
       const endEventEl = document.getElementById('tl-end-event');
       const resultEl = document.getElementById('tl-result-date');
 
-      if (now < start) {
-        // NOT started yet
-        if (startEl) startEl.textContent = "Registrations Open Soon";
+      if (!settings.regStartDate || isNaN(start.getTime()) || now < start) {
+        // NOT started yet or deleted
+        if (startEl) startEl.textContent = "Registration opens soon";
         if (startEventEl) startEventEl.textContent = "Registration Opens";
         
-        if (endEl) endEl.textContent = "Submission Deadline";
-        if (endEventEl) endEventEl.textContent = "Will update soon";
+        if (endEl) endEl.textContent = "Submission Deadline updated soon";
+        if (endEventEl) endEventEl.textContent = "Submission Deadline";
       } else {
         // LIVE / STARTED / CLOSED
         if (startEl) startEl.textContent = formatDateStr(settings.regStartDate);
