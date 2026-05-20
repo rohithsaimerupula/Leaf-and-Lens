@@ -1,9 +1,0 @@
-1:"$Sreact.fragment"
-2:I[11972,["/Leaf-and-Lens/_next/static/chunks/0og0o26lp6ujq.js","/Leaf-and-Lens/_next/static/chunks/100g3vhkmfpw_.js"],"ClientPageRoot"]
-3:I[2661,["/Leaf-and-Lens/_next/static/chunks/0og0o26lp6ujq.js","/Leaf-and-Lens/_next/static/chunks/100g3vhkmfpw_.js","/Leaf-and-Lens/_next/static/chunks/05llvu_y-laov.js","/Leaf-and-Lens/_next/static/chunks/0l6rmpx2609ql.js","/Leaf-and-Lens/_next/static/chunks/036t2nsoihyb_.js"],"default",1]
-6:I[71150,["/Leaf-and-Lens/_next/static/chunks/0og0o26lp6ujq.js","/Leaf-and-Lens/_next/static/chunks/100g3vhkmfpw_.js"],"OutletBoundary"]
-7:"$Sreact.suspense"
-0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/Leaf-and-Lens/_next/static/chunks/05llvu_y-laov.js","async":true}],["$","script","script-1",{"src":"/Leaf-and-Lens/_next/static/chunks/0l6rmpx2609ql.js","async":true}],["$","script","script-2",{"src":"/Leaf-and-Lens/_next/static/chunks/036t2nsoihyb_.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"hJ2cjtyi9JQLe2DI1sEyf"}
-4:{}
-5:"$0:rsc:props:children:0:props:serverProvidedParams:params"
-8:null
