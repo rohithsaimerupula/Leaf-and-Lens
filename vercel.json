@@ -1,0 +1,5 @@
+{
+  "buildCommand": "echo 'No build step'",
+  "outputDirectory": "legacy-static",
+  "cleanUrls": true
+}
