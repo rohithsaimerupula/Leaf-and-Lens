@@ -148,7 +148,7 @@ function renderTable() {
   currentPage    = Math.min(currentPage, pages);
   const slice    = filtered.slice((currentPage-1)*PER_PAGE, currentPage*PER_PAGE);
 
-  document.getElementById('subCountLabel').textContent = `${total} participant${total !== 1 ? 's' : ''}`;
+  document.getElementById('partCountLabel').textContent = `${total} participant${total !== 1 ? 's' : ''}`;
 
   const tbody = document.getElementById('participantsTable');
   if (!slice.length) {
