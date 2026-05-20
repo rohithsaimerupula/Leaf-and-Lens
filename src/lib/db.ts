@@ -94,6 +94,30 @@ export interface DynamicSettings {
   resultDate: string;
 }
 
+export interface Coordinator {
+  name: string;
+  role: string;
+  phone: string;
+  initials: string;
+}
+
+export interface CoordinatorsData {
+  faculty: Coordinator[];
+  student: Coordinator[];
+}
+
+const defaultCoordinators: CoordinatorsData = {
+  faculty: [
+    { name: 'Dr. K. Sirisha', role: 'Faculty Coordinator', phone: '8688753830', initials: 'KS' },
+    { name: 'Ms. Ch. Meenakshi', role: 'Faculty Coordinator', phone: '7075739689', initials: 'CM' }
+  ],
+  student: [
+    { name: 'M. Rohith Sai', role: 'Student Coordinator', phone: '9014123748', initials: 'MR' },
+    { name: 'N. Govardhan', role: 'Student Coordinator', phone: '9030536726', initials: 'NG' },
+    { name: 'M. Kotesh', role: 'Student Coordinator', phone: '9908474421', initials: 'MK' }
+  ]
+};
+
 // LocalStorage Mock engine (for seamless out-of-the-box operation)
 class LocalDb {
   private getStorageItem<T>(key: string, defaultValue: T): T {
@@ -147,6 +171,14 @@ class LocalDb {
 
   async saveSettings(settings: DynamicSettings): Promise<void> {
     this.setStorageItem('ll_settings', settings);
+  }
+
+  async getCoordinators(): Promise<CoordinatorsData> {
+    return this.getStorageItem<CoordinatorsData>('ll_coordinators', defaultCoordinators);
+  }
+
+  async saveCoordinators(coords: CoordinatorsData): Promise<void> {
+    this.setStorageItem('ll_coordinators', coords);
   }
 }
 
@@ -431,6 +463,43 @@ export const db = {
       }
     } else {
       await localDb.saveSettings(settings);
+    }
+  },
+
+  // Coordinators APIS
+  async getCoordinators(): Promise<CoordinatorsData> {
+    if (db.isTursoActive()) {
+      try {
+        await initTursoSchema();
+        const res = await tursoClient.execute({
+          sql: "SELECT value FROM config WHERE key = ?",
+          args: ["coordinators"]
+        });
+        if (res.rows.length > 0) {
+          return JSON.parse(res.rows[0].value as string) as CoordinatorsData;
+        }
+        return defaultCoordinators;
+      } catch (e) {
+        return localDb.getCoordinators();
+      }
+    } else {
+      return localDb.getCoordinators();
+    }
+  },
+
+  async saveCoordinators(coords: CoordinatorsData): Promise<void> {
+    if (db.isTursoActive()) {
+      try {
+        await initTursoSchema();
+        await tursoClient.execute({
+          sql: "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
+          args: ["coordinators", JSON.stringify(coords)]
+        });
+      } catch (e) {
+        await localDb.saveCoordinators(coords);
+      }
+    } else {
+      await localDb.saveCoordinators(coords);
     }
   },
 

@@ -147,6 +147,66 @@ const TURSO = (() => {
     }
   }
 
+  // ── ADMIN CREDENTIALS ────────────────────────────
+  const defaultCreds = { username: 'admin', password: 'leaflens2026' };
+
+  async function getAdminCreds() {
+    try {
+      const result = await query("SELECT value FROM config WHERE key = 'admin_creds'");
+      const rows = parseRows(result);
+      if (rows.length > 0) return { ...defaultCreds, ...JSON.parse(rows[0].value) };
+      return defaultCreds;
+    } catch (e) {
+      try { return JSON.parse(localStorage.getItem('ll_admin_creds')) || defaultCreds; }
+      catch { return defaultCreds; }
+    }
+  }
+
+  async function saveAdminCreds(creds) {
+    const val = JSON.stringify(creds);
+    try {
+      await query("INSERT OR REPLACE INTO config (key, value) VALUES ('admin_creds', ?)", [val]);
+      localStorage.setItem('ll_admin_creds', val);
+    } catch (e) {
+      localStorage.setItem('ll_admin_creds', val);
+    }
+  }
+
+  // ── COORDINATORS ─────────────────────────────────
+  const defaultCoordinators = {
+    faculty: [
+      { name: 'Dr. K. Sirisha', role: 'Faculty Coordinator', phone: '8688753830', initials: 'KS' },
+      { name: 'Ms. Ch. Meenakshi', role: 'Faculty Coordinator', phone: '7075739689', initials: 'CM' }
+    ],
+    student: [
+      { name: 'M. Rohith Sai', role: 'Student Coordinator', phone: '9014123748', initials: 'MR' },
+      { name: 'N. Govardhan', role: 'Student Coordinator', phone: '9030536726', initials: 'NG' },
+      { name: 'M. Kotesh', role: 'Student Coordinator', phone: '9908474421', initials: 'MK' }
+    ]
+  };
+
+  async function getCoordinators() {
+    try {
+      const result = await query("SELECT value FROM config WHERE key = 'coordinators'");
+      const rows = parseRows(result);
+      if (rows.length > 0) return JSON.parse(rows[0].value);
+      return defaultCoordinators;
+    } catch (e) {
+      try { return JSON.parse(localStorage.getItem('ll_coordinators')) || defaultCoordinators; }
+      catch { return defaultCoordinators; }
+    }
+  }
+
+  async function saveCoordinators(coords) {
+    const val = JSON.stringify(coords);
+    try {
+      await query("INSERT OR REPLACE INTO config (key, value) VALUES ('coordinators', ?)", [val]);
+      localStorage.setItem('ll_coordinators', val);
+    } catch (e) {
+      localStorage.setItem('ll_coordinators', val);
+    }
+  }
+
   // ── WINNERS ─────────────────────────────────────
   async function getWinners() {
     try {
@@ -171,7 +231,7 @@ const TURSO = (() => {
     }
   }
 
-  return { getSettings, saveSettings, getSubmissions, saveSubmission, updateSubmissionStatus, updateSubmissionRating, deleteSubmission, getWinners, saveWinner };
+  return { getSettings, saveSettings, getSubmissions, saveSubmission, updateSubmissionStatus, updateSubmissionRating, deleteSubmission, getWinners, saveWinner, getAdminCreds, saveAdminCreds, getCoordinators, saveCoordinators };
 })();
 
 window.TURSO = TURSO;

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { db, Submission, Winner, DynamicSettings } from '@/lib/db';
+import { db, Submission, Winner, DynamicSettings, CoordinatorsData } from '@/lib/db';
 import { calculateEventStatus, EventStatusDetails } from '@/lib/timer';
 import LoadingScreen from '@/components/LoadingScreen';
 import CursorTrail from '@/components/CursorTrail';
@@ -24,6 +24,7 @@ export default function Home() {
   const [status, setStatus] = useState<EventStatusDetails | null>(null);
   const [winners, setWinners] = useState<Winner[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [coordinators, setCoordinators] = useState<CoordinatorsData | null>(null);
 
   // Ticking countdown states
   const [days, setDays] = useState('00');
@@ -64,6 +65,9 @@ export default function Home() {
 
       const w = await db.getWinners();
       setWinners(w);
+
+      const coords = await db.getCoordinators();
+      setCoordinators(coords);
 
       const allSubs = await db.getSubmissions();
       setSubmissions(allSubs);
@@ -610,23 +614,23 @@ export default function Home() {
                 Faculty Coordinators
               </h3>
               <div className="space-y-4">
-                {[
-                  { name: 'Dr. K. Sirisha', role: 'Faculty steering head', num: '9014123748' },
-                  { name: 'Ms. Ch. Meenakshi', role: 'Faculty steering support', num: '9030536726' }
-                ].map((c) => (
-                  <div key={c.name} className="flex justify-between items-center bg-black/30 p-4 rounded-xl border border-slate-900">
-                    <div>
-                      <h4 className="font-outfit font-bold text-white text-lg">{c.name}</h4>
-                      <p className="text-slate-400 text-xs font-mono mt-0.5">{c.role}</p>
+                {coordinators?.faculty.map((c, i) => (
+                  <div key={i} className="flex justify-between items-center bg-black/30 p-4 rounded-xl border border-slate-900">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-900 to-emerald-700 border border-emerald-500/30 flex items-center justify-center font-playfair font-bold text-emerald-100 text-lg">
+                        {c.initials}
+                      </div>
+                      <div>
+                        <h4 className="font-outfit font-bold text-white text-lg">{c.name}</h4>
+                        <p className="text-slate-400 text-xs font-mono mt-0.5">{c.role}</p>
+                      </div>
                     </div>
                     <a
-                      href={`https://wa.me/91${c.num}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={`tel:${c.phone}`}
                       className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-black transition-colors"
-                      title="Quick WhatsApp Chat"
+                      title="Call"
                     >
-                      <MessageSquare className="w-5 h-5" />
+                      <Phone className="w-5 h-5" />
                     </a>
                   </div>
                 ))}
@@ -639,24 +643,23 @@ export default function Home() {
                 Student Coordinators
               </h3>
               <div className="space-y-4">
-                {[
-                  { name: 'M. Rohith Sai', role: 'Student Chair', num: '9014123748' },
-                  { name: 'N. Govardhan', role: 'Technical Lead', num: '9030536726' },
-                  { name: 'M. Kotesh', role: 'Operations Head', num: '9908474421' }
-                ].map((c) => (
-                  <div key={c.name} className="flex justify-between items-center bg-black/30 p-4 rounded-xl border border-slate-900">
-                    <div>
-                      <h4 className="font-outfit font-bold text-white text-lg">{c.name}</h4>
-                      <p className="text-slate-400 text-xs font-mono mt-0.5">{c.role}</p>
+                {coordinators?.student.map((c, i) => (
+                  <div key={i} className="flex justify-between items-center bg-black/30 p-4 rounded-xl border border-slate-900">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-900 to-emerald-700 border border-emerald-500/30 flex items-center justify-center font-playfair font-bold text-emerald-100 text-lg">
+                        {c.initials}
+                      </div>
+                      <div>
+                        <h4 className="font-outfit font-bold text-white text-lg">{c.name}</h4>
+                        <p className="text-slate-400 text-xs font-mono mt-0.5">{c.role}</p>
+                      </div>
                     </div>
                     <a
-                      href={`https://wa.me/91${c.num}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={`tel:${c.phone}`}
                       className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-black transition-colors"
-                      title="Quick WhatsApp Chat"
+                      title="Call"
                     >
-                      <MessageSquare className="w-5 h-5" />
+                      <Phone className="w-5 h-5" />
                     </a>
                   </div>
                 ))}

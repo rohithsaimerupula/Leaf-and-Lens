@@ -245,13 +245,13 @@
         pc.appendChild(p);
       }
 
-      document.getElementById('loginForm').addEventListener('submit', e => {
+      document.getElementById('loginForm').addEventListener('submit', async e => {
         e.preventDefault();
         const user = document.getElementById('adminUser').value.trim();
         const pass = document.getElementById('adminPass').value;
         const errEl = document.getElementById('loginErr');
 
-        const stored = LL.get('ll_admin_creds') || { username: 'admin', password: 'leaflens2026' };
+        const stored = await TURSO.getAdminCreds();
         if (user === stored.username && pass === stored.password) {
           LL.adminLogin();
           document.querySelector('.login-console').style.transform = 'scale(1.05)';

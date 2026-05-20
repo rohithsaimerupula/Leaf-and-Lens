@@ -276,12 +276,12 @@ async function exportAllCSV() {
   exportCSV(subs, 'leaf_lens_all_participants.csv');
 }
 
-function changeAdminPassword() {
+async function changeAdminPassword() {
   const newPass = prompt('Enter new password (min 6 characters):');
   if (!newPass || newPass.length < 6) { showToast('Password too short', 'error'); return; }
-  const creds = LL.get('ll_admin_creds') || { username: 'admin', password: 'leaflens2026' };
+  const creds = await TURSO.getAdminCreds();
   creds.password = newPass;
-  LL.set('ll_admin_creds', creds);
+  await TURSO.saveAdminCreds(creds);
   showToast('Password updated successfully!', 'success');
 }
 </script>
