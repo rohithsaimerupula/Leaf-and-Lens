@@ -44,6 +44,7 @@ export default function Register() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [reelFile, setReelFile] = useState<File | null>(null);
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [aiFlags, setAiFlags] = useState<string | null>(null);
 
   const [photoProgress, setPhotoProgress] = useState(0);
   const [reelProgress, setReelProgress] = useState(0);
@@ -164,6 +165,7 @@ export default function Register() {
         photoUrl,
         reelUrl,
         paymentScreenshotUrl: screenshotUrl,
+        aiFlags: aiFlags || null,
         status: 'pending',
         submittedAt: new Date().toISOString()
       };
@@ -493,6 +495,34 @@ export default function Register() {
                                 setPhotoFile(null);
                                 return;
                               }
+
+                              // EXIF scan for AI / Edited markers
+                              const reader = new FileReader();
+                              reader.onload = (event) => {
+                                const buffer = event.target?.result as ArrayBuffer;
+                                const arr = new Uint8Array(buffer);
+                                let txt = "";
+                                for (let i = 0; i < arr.length; i++) {
+                                  const c = arr[i];
+                                  if (c >= 32 && c <= 126) {
+                                    txt += String.fromCharCode(c);
+                                  } else {
+                                    txt += " ";
+                                  }
+                                }
+                                const lower = txt.toLowerCase();
+                                const flags: string[] = [];
+                                if (lower.includes("adobe") || lower.includes("photoshop") || lower.includes("lightroom") || lower.includes("canva") || lower.includes("gimp") || lower.includes("picsart")) {
+                                  flags.push("Edited");
+                                }
+                                if (lower.includes("midjourney") || lower.includes("dall-e") || lower.includes("stable diffusion") || lower.includes("ai-generated") || lower.includes("firefly") || lower.includes("creator: adobedirefill")) {
+                                  flags.push("AI Generated");
+                                }
+                                setAiFlags(flags.length > 0 ? flags.join(" / ") : null);
+                              };
+                              reader.readAsArrayBuffer(file.slice(0, 65536));
+                            } else {
+                              setAiFlags(null);
                             }
                             setPhotoFile(file);
                           }}

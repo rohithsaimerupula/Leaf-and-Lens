@@ -258,18 +258,28 @@ function handleFile(type, input) {
     // Simple EXIF/Binary scanner for AI/Edited detection
     const r = new FileReader();
     r.onload = function(e) {
-      const txt = e.target.result || "";
+      const buffer = e.target.result;
+      const arr = new Uint8Array(buffer);
+      let txt = "";
+      for (let i = 0; i < arr.length; i++) {
+        const c = arr[i];
+        if (c >= 32 && c <= 126) {
+          txt += String.fromCharCode(c);
+        } else {
+          txt += " ";
+        }
+      }
       const lower = txt.toLowerCase();
       let flags = [];
-      if (lower.includes("adobe") || lower.includes("photoshop") || lower.includes("lightroom") || lower.includes("canva")) {
+      if (lower.includes("adobe") || lower.includes("photoshop") || lower.includes("lightroom") || lower.includes("canva") || lower.includes("gimp") || lower.includes("picsart")) {
         flags.push("Edited");
       }
-      if (lower.includes("midjourney") || lower.includes("dall-e") || lower.includes("stable diffusion") || lower.includes("ai-generated")) {
+      if (lower.includes("midjourney") || lower.includes("dall-e") || lower.includes("stable diffusion") || lower.includes("ai-generated") || lower.includes("firefly") || lower.includes("creator: adobedirefill")) {
         flags.push("AI Generated");
       }
       formData.aiFlags = flags.length > 0 ? flags.join(" / ") : null;
     };
-    r.readAsText(file.slice(0, 65536)); // Read first 64KB for EXIF headers
+    r.readAsArrayBuffer(file.slice(0, 65536)); // Read first 64KB for EXIF headers
   } else if (type === 'reel') {
     const isMkv = file.name.toLowerCase().endsWith('.mkv');
     if (isMkv) {

@@ -542,7 +542,22 @@ export default function Admin() {
                       </div>
 
                       <div className="space-y-4 pt-4 border-t border-slate-900">
-                        <h4 className="font-outfit font-black text-slate-400 uppercase tracking-wide">File Submissions</h4>
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-outfit font-black text-slate-400 uppercase tracking-wide">File Submissions</h4>
+                          {selectedSub.aiFlags && selectedSub.aiFlags.toLowerCase().includes('ai') ? (
+                            <span className="px-2 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-bold font-mono uppercase rounded flex items-center gap-1">
+                              🤖 AI
+                            </span>
+                          ) : selectedSub.aiFlags && selectedSub.aiFlags.toLowerCase().includes('edit') ? (
+                            <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold font-mono uppercase rounded flex items-center gap-1">
+                              ✏️ Edited
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold font-mono uppercase rounded flex items-center gap-1">
+                              🟢 Natural
+                            </span>
+                          )}
+                        </div>
                         
                         <div className="flex flex-wrap gap-3">
                           {selectedSub.photoUrl && (

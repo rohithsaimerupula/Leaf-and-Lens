@@ -251,9 +251,14 @@ function renderTable() {
       <tr>
         <td class="td-id">${s.id}</td>
         <td class="td-name">
-          <div style="display:flex;align-items:center;gap:0.5rem;">
+          <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
             <strong>${s.member1Name || s.teamName}</strong> <span style="font-size:0.7rem;color:var(--text-muted);">(Leader)</span>
-            ${s.aiFlags ? `<span style="background:rgba(230,57,70,0.15);color:#e63946;padding:2px 6px;border-radius:4px;font-size:0.65rem;font-weight:700;letter-spacing:0.04em;">🤖 ${s.aiFlags}</span>` : ''}
+            ${(s.aiFlags && s.aiFlags.toLowerCase().includes('ai')) 
+              ? `<span style="background:rgba(230,57,70,0.15);color:#e63946;padding:2px 6px;border-radius:4px;font-size:0.65rem;font-weight:700;letter-spacing:0.04em;">🤖 AI</span>`
+              : (s.aiFlags && s.aiFlags.toLowerCase().includes('edit'))
+                ? `<span style="background:rgba(244,162,97,0.15);color:#f4a261;padding:2px 6px;border-radius:4px;font-size:0.65rem;font-weight:700;letter-spacing:0.04em;">✏️ Edited</span>`
+                : `<span style="background:rgba(82,183,136,0.15);color:#52b788;padding:2px 6px;border-radius:4px;font-size:0.65rem;font-weight:700;letter-spacing:0.04em;">🟢 Natural</span>`
+            }
           </div>
           <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.2rem;">
             📞 ${s.member1Phone || 'N/A'} &nbsp;|&nbsp; 
