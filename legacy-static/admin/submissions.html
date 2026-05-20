@@ -285,28 +285,35 @@ function viewSubmission(id) {
   if (!s) return;
   document.getElementById('modalTitle').textContent = s.id + ' — ' + (s.member1Name || s.teamName);
   const prev = document.getElementById('modalPreview');
-  if (s.photoUrl || s.reelUrl) {
-    const url = s.photoUrl || s.reelUrl;
-    if (s.reelUrl) {
-      prev.innerHTML = `
-        <video src="${url}" controls style="max-height:60vh;"></video>
-        <div style="margin-top:1rem;text-align:center;">
-          <a href="${url}" download="Reel_${s.id}.mp4" target="_blank" class="btn btn-primary" style="padding:0.6rem 1.2rem;">
-            <i data-lucide="download" style="width:16px;height:16px;margin-right:8px;"></i> Download Reel
+  let mediaHTML = '';
+  if (s.photoUrl) {
+    mediaHTML += `
+      <div style="margin-bottom:1.5rem;">
+        <img src="${s.photoUrl}" alt="Photo Submission" style="max-height:60vh;max-width:100%;object-fit:contain;border-radius:4px;" />
+        <div style="margin-top:0.5rem;text-align:center;">
+          <a href="${s.photoUrl}" download="Photo_${s.id}.jpg" target="_blank" class="btn btn-primary" style="padding:0.4rem 1rem;font-size:0.8rem;">
+            <i data-lucide="download" style="width:14px;height:14px;margin-right:6px;"></i> Download Photo
           </a>
-        </div>`;
-    } else {
-      prev.innerHTML = `
-        <img src="${url}" alt="Submission" style="max-height:60vh;object-fit:contain;" />
-        <div style="margin-top:1rem;text-align:center;">
-          <a href="${url}" download="Photo_${s.id}.jpg" target="_blank" class="btn btn-primary" style="padding:0.6rem 1.2rem;">
-            <i data-lucide="download" style="width:16px;height:16px;margin-right:8px;"></i> Download Photo
-          </a>
-        </div>`;
-    }
-  } else {
-    prev.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--text-muted);background:var(--bg-deep);border-radius:var(--radius-md);">No file preview available</div>`;
+        </div>
+      </div>
+    `;
   }
+  if (s.reelUrl) {
+    mediaHTML += `
+      <div style="margin-bottom:1rem;">
+        <video src="${s.reelUrl}" controls style="max-height:60vh;max-width:100%;border-radius:4px;"></video>
+        <div style="margin-top:0.5rem;text-align:center;">
+          <a href="${s.reelUrl}" download="Reel_${s.id}.mp4" target="_blank" class="btn btn-primary" style="padding:0.4rem 1rem;font-size:0.8rem;">
+            <i data-lucide="download" style="width:14px;height:14px;margin-right:6px;"></i> Download Reel
+          </a>
+        </div>
+      </div>
+    `;
+  }
+  if (!mediaHTML) {
+    mediaHTML = `<div style="padding:2rem;text-align:center;color:var(--text-muted);background:var(--bg-deep);border-radius:var(--radius-md);">No file preview available</div>`;
+  }
+  prev.innerHTML = mediaHTML;
   document.getElementById('modalDetail').innerHTML = `
     <div class="detail-row"><span class="detail-label">Name</span><span class="detail-value">${s.member1Name || s.teamName}</span></div>
     <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${s.member1Email || '—'}</span></div>

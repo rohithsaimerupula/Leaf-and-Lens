@@ -212,9 +212,13 @@ async function loadStats() {
   const pending  = subs.filter(s => s.status === 'pending').length;
   const approved = subs.filter(s => s.status === 'approved').length;
   const rejected = subs.filter(s => s.status === 'rejected').length;
-  const photos   = subs.filter(s => s.participationType === 'Photo' || s.participationType === 'Both').length;
-  const reels    = subs.filter(s => s.participationType === 'Reel'  || s.participationType === 'Both').length;
-  document.getElementById('sc-total').textContent    = subs.length;
+  
+  // As requested, total, photos, and reels should only reflect approved students
+  const approvedSubs = subs.filter(s => s.status === 'approved');
+  const photos   = approvedSubs.filter(s => s.participationType === 'Photo' || s.participationType === 'Both').length;
+  const reels    = approvedSubs.filter(s => s.participationType === 'Reel'  || s.participationType === 'Both').length;
+  
+  document.getElementById('sc-total').textContent    = approved;
   document.getElementById('sc-pending').textContent  = pending;
   document.getElementById('sc-approved').textContent = approved;
   document.getElementById('sc-rejected').textContent = rejected;

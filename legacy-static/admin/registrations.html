@@ -189,9 +189,13 @@ async function loadBadge() {
 
 async function loadSettings() {
   currentSettings = await TURSO.getSettings();
+  const formatForDatetimeLocal = (val) => {
+    if (!val) return '';
+    return val.includes('T') ? val : val + 'T00:00';
+  };
   
-  if (currentSettings.regStartDate) document.getElementById('regStartDate').value = currentSettings.regStartDate;
-  if (currentSettings.regEndDate)   document.getElementById('regEndDate').value   = currentSettings.regEndDate;
+  if (currentSettings.regStartDate) document.getElementById('regStartDate').value = formatForDatetimeLocal(currentSettings.regStartDate);
+  if (currentSettings.regEndDate)   document.getElementById('regEndDate').value   = formatForDatetimeLocal(currentSettings.regEndDate);
   
   if (currentSettings.qrImage30) {
     document.getElementById('qrPreviewImg30').src = currentSettings.qrImage30;

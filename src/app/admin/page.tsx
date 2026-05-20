@@ -83,9 +83,10 @@ export default function Admin() {
     const pending = subs.filter(x => x.status === 'pending').length;
     const approved = subs.filter(x => x.status === 'approved').length;
     const rejected = subs.filter(x => x.status === 'rejected').length;
-    const photos = subs.filter(x => x.participationType === 'Photo').length;
-    const reels = subs.filter(x => x.participationType === 'Reel').length;
-    const both = subs.filter(x => x.participationType === 'Both').length;
+    const approvedSubs = subs.filter(x => x.status === 'approved');
+    const photos = approvedSubs.filter(x => x.participationType === 'Photo' || x.participationType === 'Both').length;
+    const reels = approvedSubs.filter(x => x.participationType === 'Reel' || x.participationType === 'Both').length;
+    const both = approvedSubs.filter(x => x.participationType === 'Both').length;
 
     // Calculate total collection
     let revenue = 0;
@@ -96,7 +97,7 @@ export default function Admin() {
     });
 
     setStats({
-      total: subs.length,
+      total: approved,
       pending,
       approved,
       rejected,

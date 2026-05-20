@@ -236,6 +236,7 @@ function viewParticipant(id) {
     <div class="detail-row"><span class="detail-label">Roll / Reg. No</span><span class="detail-value" style="color:var(--primary-light);font-weight:600;">${s.member1Roll || '—'}</span></div>
     <div class="detail-row"><span class="detail-label">Branch & Section</span><span class="detail-value">${s.branch || '—'} - ${s.section || '—'}</span></div>
     <div class="detail-row"><span class="detail-label">Category</span><span class="detail-value">${s.participationType}</span></div>
+    ${s.aiFlags ? `<div class="detail-row"><span class="detail-label" style="color:var(--secondary-light);">AI Analysis</span><span class="detail-value" style="color:var(--secondary-light);font-weight:bold;">⚠️ ${s.aiFlags}</span></div>` : ''}
     <div class="detail-row"><span class="detail-label">Status</span><span class="status-${s.status}">${s.status}</span></div>
     <div class="detail-row"><span class="detail-label">Registered</span><span class="detail-value">${formatDate(s.submittedAt)}</span></div>
     <div style="margin-top:1.25rem;display:flex;gap:0.75rem;flex-wrap:wrap;">

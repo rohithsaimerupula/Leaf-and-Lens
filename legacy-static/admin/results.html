@@ -178,11 +178,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function getApproved(catFilter) {
-  return _allSubs.filter(s => {
+  let list = _allSubs.filter(s => {
     if (s.status !== 'approved') return false;
     if (!catFilter) return true;
     return s.participationType === catFilter || s.participationType === 'Both';
   });
+  
+  // Sort by rating descending. Give priority to rated. If not rated, treat as -1.
+  list.sort((a, b) => {
+    const rA = (a.rating !== undefined && a.rating !== null && !isNaN(a.rating)) ? Number(a.rating) : -1;
+    const rB = (b.rating !== undefined && b.rating !== null && !isNaN(b.rating)) ? Number(b.rating) : -1;
+    return rB - rA; // highest rating first
+  });
+  
+  return list;
 }
 
 function buildSlot(rank, options) {
@@ -192,7 +201,10 @@ function buildSlot(rank, options) {
       <div class="slot-rank ${rank.cls}">${rank.label}</div>
       <select class="slot-select" id="sel-${rank.key}" onchange="onSelect('${rank.key}')">
         <option value="">— Select Winner —</option>
-        ${options.map(s => `<option value="${s.id}" ${saved && saved.submissionId===s.id?'selected':''}>${s.member1Name || s.teamName} (${s.id})</option>`).join('')}
+        ${options.map(s => {
+          const ratingText = (s.rating !== undefined && s.rating !== null && !isNaN(s.rating)) ? ` - ⭐ ${s.rating}/10` : '';
+          return `<option value="${s.id}" ${saved && saved.submissionId===s.id?'selected':''}>${s.member1Name || s.teamName} (${s.id})${ratingText}</option>`;
+        }).join('')}
       </select>
       <div class="slot-preview ${saved?'show':''}" id="prev-${rank.key}">
         ${saved ? `<strong style="color:var(--text-primary);">${saved.name}</strong> · ${saved.category}` : ''}
