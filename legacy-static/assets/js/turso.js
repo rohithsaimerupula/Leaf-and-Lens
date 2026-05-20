@@ -33,7 +33,12 @@ const TURSO = (() => {
     return result.rows.map(row => {
       const obj = {};
       cols.forEach((col, i) => {
-        obj[col] = row[i]?.value ?? row[i] ?? null;
+        const valObj = row[i];
+        if (valObj && typeof valObj === 'object') {
+          obj[col] = valObj.type === 'null' ? null : (valObj.value ?? null);
+        } else {
+          obj[col] = valObj ?? null;
+        }
       });
       return obj;
     });
