@@ -56,6 +56,7 @@
         </select>
         <select class="table-filter" id="filterStatus" onchange="renderTable()">
           <option value="all">All Status</option>
+          <option value="pending">⏳ Pending</option>
           <option value="approved">✅ Approved</option>
           <option value="rejected">❌ Rejected</option>
         </select>
@@ -151,7 +152,6 @@ function getFiltered() {
   const status = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : 'all';
 
   return _allSubs.filter(s => {
-    if (s.status === 'pending') return false; // ONLY show approved & rejected
     const name  = (s.member1Name || s.teamName || '').toLowerCase();
     const email = (s.member1Email || '').toLowerCase();
     const id    = (s.id || '').toLowerCase();
