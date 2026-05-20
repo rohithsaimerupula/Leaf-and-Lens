@@ -93,7 +93,7 @@
         <thead>
           <tr>
             <th>ID</th><th>Name</th><th>Category</th>
-            <th>Roll No</th><th>Submitted</th><th>Status</th><th>Actions</th>
+            <th>Roll No</th><th>Branch &amp; Sec</th><th>Submitted</th><th>Status</th><th>Actions</th>
           </tr>
         </thead>
         <tbody id="submissionsTable"></tbody>
@@ -267,6 +267,13 @@ function renderTable() {
         </td>
         <td>${s.participationType}</td>
         <td style="font-size:0.82rem;">${s.member1Roll || '—'}</td>
+        <td style="font-size:0.82rem;">
+          ${(() => {
+            const b = s.branch || getBranchFromRoll(s.member1Roll);
+            const sec = s.section;
+            return b ? (sec ? `${b}-${sec}`.toUpperCase() : b.toUpperCase()) : '—';
+          })()}
+        </td>
         <td style="font-size:0.8rem;">${formatDate(s.submittedAt)}</td>
         <td><span class="status-approved">Approved</span></td>
         <td class="td-actions">
@@ -352,7 +359,7 @@ function viewSubmission(id) {
       ${(() => {
         const b = s.branch || getBranchFromRoll(s.member1Roll);
         const sec = s.section;
-        return b ? (sec ? `${b} - ${sec}` : b) : '—';
+        return b ? (sec ? `${b}-${sec}`.toUpperCase() : b.toUpperCase()) : '—';
       })()}
     </span></div>
     <div class="detail-row"><span class="detail-label">Category</span><span class="detail-value">${s.participationType}</span></div>

@@ -528,14 +528,18 @@ export default function Admin() {
                           <div className="bg-black/30 p-3 rounded-xl border border-slate-900">
                             <span className="text-[9px] uppercase font-mono text-emerald-400/50">Lead Member</span>
                             <span className="block font-outfit font-bold text-white text-sm mt-0.5">{selectedSub.member1Name}</span>
-                            <span className="block font-mono text-[10px] text-slate-500 mt-1">{selectedSub.member1Roll} · {selectedSub.member1Phone}</span>
+                            <span className="block font-mono text-[10px] text-slate-500 mt-1">
+                              {selectedSub.member1Roll} · {(selectedSub.branch && selectedSub.section ? `${selectedSub.branch}-${selectedSub.section}`.toUpperCase() : selectedSub.branch || '—')} · {selectedSub.member1Phone}
+                            </span>
                           </div>
 
                           {selectedSub.member2Name && (
                             <div className="bg-black/30 p-3 rounded-xl border border-slate-900">
                               <span className="text-[9px] uppercase font-mono text-purple-400/50">Member 2</span>
                               <span className="block font-outfit font-bold text-white text-sm mt-0.5">{selectedSub.member2Name}</span>
-                              <span className="block font-mono text-[10px] text-slate-500 mt-1">{selectedSub.member2Roll} · {selectedSub.member2Phone}</span>
+                              <span className="block font-mono text-[10px] text-slate-500 mt-1">
+                                {selectedSub.member2Roll} · {(selectedSub.member2Branch && selectedSub.member2Section ? `${selectedSub.member2Branch}-${selectedSub.member2Section}`.toUpperCase() : selectedSub.member2Branch || selectedSub.branch || '—')} · {selectedSub.member2Phone}
+                              </span>
                             </div>
                           )}
                         </div>
