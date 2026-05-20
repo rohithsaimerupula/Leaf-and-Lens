@@ -92,6 +92,10 @@ export interface DynamicSettings {
   regEndDate: string;
   resultsPublic: boolean;
   resultDate: string;
+  competitionActive?: boolean;
+  timerStarted?: boolean;
+  qrImage30?: string;
+  qrImage50?: string;
 }
 
 export interface Coordinator {

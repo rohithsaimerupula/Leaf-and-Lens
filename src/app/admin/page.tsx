@@ -151,6 +151,7 @@ export default function Admin() {
 
   const handleSaveSettings = async () => {
     const updated: DynamicSettings = {
+      ...settings,
       regStartDate,
       regEndDate,
       resultDate,
@@ -179,10 +180,13 @@ export default function Admin() {
 
     // 4. Prepare updated settings
     const updated: DynamicSettings = {
+      ...settings,
       regStartDate: startStr,
       regEndDate: endStr,
       resultDate: resultStr,
-      resultsPublic: false
+      resultsPublic: false,
+      competitionActive: true,
+      timerStarted: true
     };
 
     // 5. Save settings directly
@@ -209,7 +213,9 @@ export default function Admin() {
 
     const updated: DynamicSettings = {
       ...settings,
-      regEndDate: endStr
+      regEndDate: endStr,
+      competitionActive: false,
+      timerStarted: false
     };
 
     await db.saveSettings(updated);
