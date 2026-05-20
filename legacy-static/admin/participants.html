@@ -225,9 +225,17 @@ function viewParticipant(id) {
   document.getElementById('detailBody').innerHTML = `
     <div style="text-align:center;margin-bottom:1rem;background:var(--bg-deep);padding:1rem;border-radius:var(--radius-md);">
       <div style="margin-bottom:0.5rem;font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;">Payment Screenshot</div>
-      ${s.paymentScreenshotUrl 
-        ? `<a href="${s.paymentScreenshotUrl}" target="_blank"><img src="${s.paymentScreenshotUrl}" style="max-width:100%;max-height:200px;border-radius:4px;object-fit:contain;" /></a>` 
-        : '<span style="color:var(--text-muted);">No payment screenshot attached</span>'}
+      ${(s.paymentScreenshotUrl && s.paymentScreenshotUrl !== 'null' && s.paymentScreenshotUrl !== 'undefined' && s.paymentScreenshotUrl.length > 10)
+        ? `<a href="${s.paymentScreenshotUrl}" target="_blank" title="Click to open full size">
+             <img src="${s.paymentScreenshotUrl}" 
+               style="max-width:100%;max-height:240px;border-radius:6px;object-fit:contain;border:1px solid var(--border);cursor:zoom-in;" 
+               onerror="this.style.display='none';this.nextSibling.style.display='block';" />
+             <span style="display:none;color:var(--text-muted);font-size:0.8rem;">⚠️ Image could not be displayed (stored as external URL)</span>
+           </a>
+           <div style="margin-top:0.5rem;">
+             <a href="${s.paymentScreenshotUrl}" target="_blank" class="btn btn-outline" style="font-size:0.75rem;padding:0.3rem 0.8rem;">🔗 Open Screenshot</a>
+           </div>`
+        : '<span style="color:var(--text-muted);font-size:0.85rem;">No payment screenshot attached</span>'}
     </div>
     <div class="detail-row"><span class="detail-label">Submission ID</span><span class="detail-value td-id">${s.id}</span></div>
     <div class="detail-row"><span class="detail-label">Full Name</span><span class="detail-value">${s.member1Name || s.teamName}</span></div>
