@@ -297,39 +297,65 @@ async function scanImageForAIFlags(file) {
 // ── HUGGING FACE ML-BASED AI DETECTION ───────────────
 async function detectAIWithHF(file) {
   // Skip if token not configured
-  if (!HF_TOKEN || HF_TOKEN === 'hf_YOUR_TOKEN_HERE') return null;
+  if (!HF_TOKEN || HF_TOKEN.includes('YOUR_TOKEN_HERE')) return null;
 
   try {
     // Convert to ArrayBuffer and send raw image bytes to HF Inference API
     const arrayBuffer = await file.arrayBuffer();
 
-    const response = await fetch(
-      `https://api-inference.huggingface.co/models/${HF_MODEL}`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${HF_TOKEN}`,
-          'Content-Type': file.type || 'image/jpeg'
-        },
-        body: arrayBuffer
-      }
-    );
+    // Try up to 4 times (model might take 10-15s to load if asleep)
+    for (let i = 0; i < 4; i++) {
+      const response = await fetch(
+        `https://api-inference.huggingface.co/models/${HF_MODEL}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${HF_TOKEN}`,
+            'Content-Type': file.type || 'image/jpeg'
+          },
+          body: arrayBuffer
+        }
+      );
 
-    if (!response.ok) {
-      console.warn('HF API error:', response.status);
+      // Model is asleep/loading
+      if (response.status === 503) {
+        console.log(`[HF API] Model is waking up... retrying in 4s (Attempt ${i+1})`);
+        await new Promise(r => setTimeout(r, 4000));
+        continue;
+      }
+
+      if (!response.ok) {
+        console.warn('[HF API] Error:', response.status, await response.text());
+        return null;
+      }
+
+      const results = await response.json();
+      console.log('[HF API] Results:', results);
+
+      if (!Array.isArray(results)) {
+        console.warn('[HF API] Unexpected response:', results);
+        return null;
+      }
+
+      // Check for common AI labels (artificial, fake, generated)
+      const aiLabel = results.find(r => 
+        r.label && (
+          r.label.toLowerCase().includes('artificial') || 
+          r.label.toLowerCase().includes('fake') ||
+          r.label.toLowerCase().includes('generated') ||
+          r.label.toLowerCase() === 'ai'
+        )
+      );
+
+      const score = aiLabel ? aiLabel.score : 0;
+      const pct = Math.round(score * 100);
+
+      if (score >= 0.70) return `AI Generated (HF: ${pct}%)`;
+      if (score >= 0.40) return `Possibly AI Generated (HF: ${pct}%)`;
       return null;
     }
-
-    const results = await response.json();
-    // Response: [{"label": "artificial", "score": 0.95}, {"label": "human", "score": 0.05}]
-    if (!Array.isArray(results)) return null;
-
-    const artificial = results.find(r => r.label && r.label.toLowerCase().includes('artificial'));
-    const score = artificial ? artificial.score : 0;
-    const pct = Math.round(score * 100);
-
-    if (score >= 0.75) return `AI Generated (HF: ${pct}% confidence)`;
-    if (score >= 0.50) return `Possibly AI Generated (HF: ${pct}% confidence)`;
+    
+    console.warn('[HF API] Model took too long to wake up.');
     return null;
 
   } catch (e) {
