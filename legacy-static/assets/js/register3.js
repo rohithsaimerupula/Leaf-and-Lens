@@ -399,9 +399,14 @@ function handleFile(type, input) {
       if (!finalFlag && metaFlag) finalFlag = metaFlag; // edited flag from metadata
       formData.aiFlags = finalFlag;
 
-      const badge = finalFlag
-        ? (finalFlag.toLowerCase().includes('ai') ? ' · ⚠️ AI Detected' : ' · ✏️ Edited')
-        : ' · ✅ Looks Natural';
+      // STRICT BLOCK IF AI DETECTED
+      if (finalFlag && finalFlag.toLowerCase().includes('ai')) {
+        showToast('AI-generated images are not allowed. Please upload an original photo.', 'error');
+        clearFile('photo');
+        return;
+      }
+
+      const badge = finalFlag ? ' · ✏️ Edited' : ' · ✅ Looks Natural';
       statusEl.textContent = file.name + ' (' + mb.toFixed(1) + ' MB)' + badge;
     });
   } else if (type === 'reel') {
@@ -481,6 +486,7 @@ async function submitForm() {
   if (!valid) { showToast('Please upload required files', 'error'); return; }
 
   const btn = document.getElementById('btnSubmit') || document.getElementById('btn2Next');
+  if (btn.disabled) return;
   const originalText = btn.innerHTML;
   btn.disabled = true;
   btn.textContent = 'Submitting...';
