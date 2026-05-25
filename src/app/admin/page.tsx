@@ -584,6 +584,15 @@ export default function Admin() {
                         </div>
                       </div>
 
+                      {selectedSub.creativeSummary && (
+                        <div className="space-y-2 pt-4 border-t border-slate-900">
+                          <h4 className="font-outfit font-black text-slate-400 uppercase tracking-wide">✨ Creative Summary</h4>
+                          <p className="text-sm text-slate-300 italic whitespace-pre-wrap bg-black/20 p-4 rounded-xl border border-slate-800">
+                            {selectedSub.creativeSummary}
+                          </p>
+                        </div>
+                      )}
+
                       <div className="space-y-4 pt-4 border-t border-slate-900">
                         <div className="flex justify-between items-center">
                           <h4 className="font-outfit font-black text-slate-400 uppercase tracking-wide">File Submissions</h4>
