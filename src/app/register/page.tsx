@@ -111,7 +111,7 @@ export default function Register() {
     if (settings?.maxTeams) {
       const allSubs = await import('@/lib/db').then(m => m.db.getSubmissions());
       if (allSubs.length >= settings.maxTeams) {
-        setValidationError(`Registration is full! Maximum ${settings.maxTeams} teams have already registered.`);
+        setValidationError(`The maximum registration limit has been reached. Please contact a student coordinator for further assistance.`);
         return;
       }
     }

@@ -117,8 +117,9 @@ export interface CoordinatorsData {
 
 const defaultCoordinators: CoordinatorsData = {
   faculty: [
-    { name: 'Dr. K. Sirisha', role: 'Faculty Coordinator', phone: '8688753830', initials: 'KS' },
-    { name: 'Ms. Ch. Meenakshi', role: 'Faculty Coordinator', phone: '7075739689', initials: 'CM' }
+    { name: 'Mr. S. Yogeshwara Rao', role: 'Faculty Coordinator', phone: '9490149200', initials: 'SY' },
+    { name: 'Ms. Ch. Meenakshi', role: 'Faculty Coordinator', phone: '7075739689', initials: 'CM' },
+    { name: 'Dr. K. Sirisha', role: 'Faculty Coordinator', phone: '8688753830', initials: 'KS' }
   ],
   student: [
     { name: 'M. Rohith Sai', role: 'Student Coordinator', phone: '9014123748', initials: 'MR' },
