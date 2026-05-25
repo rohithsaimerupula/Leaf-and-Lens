@@ -47,6 +47,7 @@ export default function Register() {
 
   const [photoProgress, setPhotoProgress] = useState(0);
   const [reelProgress, setReelProgress] = useState(0);
+  const [creativeSummary, setCreativeSummary] = useState('');
 
   // Errors
   const [validationError, setValidationError] = useState('');
@@ -129,6 +130,11 @@ export default function Register() {
       return;
     }
 
+    if (!creativeSummary.trim()) {
+      setValidationError('Please add a creative summary describing what inspired you.');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -160,6 +166,7 @@ export default function Register() {
         }),
         photoUrl,
         reelUrl,
+        creativeSummary,
         aiFlags: aiFlags || undefined,
         status: 'pending',
         submittedAt: new Date().toISOString()
@@ -258,6 +265,7 @@ export default function Register() {
                     setM2Roll('');
                     setM2Email('');
                     setM2Phone('');
+                    setCreativeSummary('');
                     setPhotoFile(null);
                     setReelFile(null);
                   }}
@@ -593,6 +601,17 @@ export default function Register() {
                       </div>
                     </div>
                   )}
+
+                  {/* Creative Summary */}
+                  <div>
+                    <label className="block text-xs uppercase font-mono tracking-widest text-emerald-400/60 mb-2">✨ Creative Summary</label>
+                    <textarea
+                      className="w-full px-4 py-3 rounded-xl bg-black/40 border border-slate-800 focus:border-neon focus:outline-none text-white transition-all font-outfit text-sm placeholder-slate-600 resize-none h-24"
+                      placeholder="Describe what inspired your submission..."
+                      value={creativeSummary}
+                      onChange={(e) => setCreativeSummary(e.target.value)}
+                    ></textarea>
+                  </div>
 
                   {/* Free Event Notice */}
                   <div className="bg-neon/5 border border-neon/20 rounded-2xl p-5 flex items-center gap-4">
