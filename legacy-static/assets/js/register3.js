@@ -1,5 +1,10 @@
 // register3.js — Leaf & Lens 3-Step Registration Logic
 
+// ── CONFIG ───────────────────────────────────────────
+// Get a FREE token from: https://huggingface.co/settings/tokens (read-only token)
+const HF_TOKEN = 'hf_YOUR_TOKEN_HERE';
+const HF_MODEL = 'umm-maybe/AI-image-detector';
+
 let formData = {};
 let currentStep = 1;
 let photoFile = null, reelFile = null, paymentFile = null;
@@ -287,7 +292,51 @@ async function scanImageForAIFlags(file) {
   }
 }
 
-// ── FILE HANDLING ────────────────────────────────────
+// ── HUGGING FACE ML-BASED AI DETECTION ───────────────
+async function detectAIWithHF(file) {
+  // Skip if token not configured
+  if (!HF_TOKEN || HF_TOKEN === 'hf_YOUR_TOKEN_HERE') return null;
+
+  try {
+    // Convert to ArrayBuffer and send raw image bytes to HF Inference API
+    const arrayBuffer = await file.arrayBuffer();
+
+    const response = await fetch(
+      `https://api-inference.huggingface.co/models/${HF_MODEL}`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${HF_TOKEN}`,
+          'Content-Type': file.type || 'image/jpeg'
+        },
+        body: arrayBuffer
+      }
+    );
+
+    if (!response.ok) {
+      console.warn('HF API error:', response.status);
+      return null;
+    }
+
+    const results = await response.json();
+    // Response: [{"label": "artificial", "score": 0.95}, {"label": "human", "score": 0.05}]
+    if (!Array.isArray(results)) return null;
+
+    const artificial = results.find(r => r.label && r.label.toLowerCase().includes('artificial'));
+    const score = artificial ? artificial.score : 0;
+    const pct = Math.round(score * 100);
+
+    if (score >= 0.75) return `AI Generated (HF: ${pct}% confidence)`;
+    if (score >= 0.50) return `Possibly AI Generated (HF: ${pct}% confidence)`;
+    return null;
+
+  } catch (e) {
+    console.warn('HF AI detection failed:', e);
+    return null;
+  }
+}
+
+
 function handleFile(type, input) {
   const file = input.files[0];
   if (!file) return;
@@ -306,10 +355,26 @@ function handleFile(type, input) {
     document.getElementById('photoInfo').classList.remove('hidden');
     document.getElementById('photoDropBody').style.opacity = '0.4';
 
-    // Comprehensive EXIF/Binary scanner for AI/Edited detection
-    // Reads first 512KB + last 64KB to catch metadata at both ends
-    scanImageForAIFlags(file).then(flags => {
-      formData.aiFlags = flags;
+    // Run metadata scan + HF ML scan in parallel for best accuracy
+    const statusEl = document.getElementById('photoName');
+    statusEl.textContent = file.name + ' (' + mb.toFixed(1) + ' MB) · 🔍 Scanning...';
+    formData.aiFlags = null; // reset
+
+    Promise.all([
+      scanImageForAIFlags(file),
+      detectAIWithHF(file)
+    ]).then(([metaFlag, hfFlag]) => {
+      // Combine results: either source can flag as AI
+      let finalFlag = null;
+      if (metaFlag && metaFlag.toLowerCase().includes('ai')) finalFlag = metaFlag;
+      if (hfFlag) finalFlag = finalFlag ? finalFlag + ' / ' + hfFlag : hfFlag;
+      if (!finalFlag && metaFlag) finalFlag = metaFlag; // edited flag from metadata
+      formData.aiFlags = finalFlag;
+
+      const badge = finalFlag
+        ? (finalFlag.toLowerCase().includes('ai') ? ' · ⚠️ AI Detected' : ' · ✏️ Edited')
+        : ' · ✅ Looks Natural';
+      statusEl.textContent = file.name + ' (' + mb.toFixed(1) + ' MB)' + badge;
     });
   } else if (type === 'reel') {
     const isMkv = file.name.toLowerCase().endsWith('.mkv');
