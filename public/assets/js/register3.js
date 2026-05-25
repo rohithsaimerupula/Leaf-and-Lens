@@ -123,9 +123,9 @@ async function step1Next() {
 
   if (!valid) { showToast('Please fill all required fields', 'error'); return; }
 
-  // Strict Uniqueness Checks
+  // Same-team duplicate check
   if (formData.s2Reg && formData.s1Reg === formData.s2Reg) {
-    showToast('Student 1 and Student 2 cannot have the same Registration Number', 'error');
+    showToast('❌ Student 1 and Student 2 cannot have the same Registration Number', 'error');
     return;
   }
 
@@ -134,28 +134,13 @@ async function step1Next() {
   btn.disabled = true;
   btn.innerHTML = 'Checking Registry...';
 
-  try {
-    const allSubs = await TURSO.getSubmissions();
-    const existingRegs = new Set();
-    allSubs.forEach(s => {
-      if (s.member1Roll) existingRegs.add(s.member1Roll.toUpperCase());
-      if (s.member2Roll) existingRegs.add(s.member2Roll.toUpperCase());
-    });
-
-    if (existingRegs.has(formData.s1Reg)) {
-      showToast(`Registration Number ${formData.s1Reg} has already registered in another team.`, 'error');
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-      return;
-    }
-    if (formData.s2Reg && existingRegs.has(formData.s2Reg)) {
-      showToast(`Registration Number ${formData.s2Reg} has already registered in another team.`, 'error');
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-      return;
-    }
-  } catch(e) {
-    console.error("Could not fetch submissions for uniqueness check, proceeding anyway...", e);
+  // Cross-team duplicate check
+  const dupError = await checkDuplicateReg(formData.s1Reg, formData.s2Reg);
+  if (dupError) {
+    showToast(dupError, 'error');
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+    return;
   }
 
   btn.disabled = false;
@@ -184,6 +169,28 @@ function setupUploadStep() {
     photoZone.style.display = 'block';
     reelZone.style.display  = 'block';
     note.textContent = '✨ Upload both your Photo (JPG/PNG) and Reel (MP4/MKV)';
+  }
+}
+
+// ── SHARED REG NUMBER DUPLICATE CHECK ────────────────
+async function checkDuplicateReg(reg1, reg2) {
+  try {
+    const allSubs = await TURSO.getSubmissions();
+    const existingRegs = new Set();
+    allSubs.forEach(s => {
+      if (s.member1Roll) existingRegs.add(s.member1Roll.toUpperCase());
+      if (s.member2Roll) existingRegs.add(s.member2Roll.toUpperCase());
+    });
+    if (existingRegs.has(reg1)) {
+      return `❌ Registration Number ${reg1} is already registered in another team.`;
+    }
+    if (reg2 && existingRegs.has(reg2)) {
+      return `❌ Registration Number ${reg2} is already registered in another team.`;
+    }
+    return null; // No duplicate
+  } catch(e) {
+    console.error('Duplicate check failed:', e);
+    return '❌ Could not verify registration numbers. Please check your internet connection and try again.';
   }
 }
 
@@ -322,6 +329,15 @@ async function submitForm() {
   btn.textContent = 'Submitting...';
 
   try {
+    // Final cross-team duplicate re-check before saving
+    const dupError = await checkDuplicateReg(formData.s1Reg, formData.s2Reg);
+    if (dupError) {
+      showToast(dupError, 'error');
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      return;
+    }
+
     const toBase64 = f => new Promise((res, rej) => {
       const r = new FileReader();
       r.onload = () => res(r.result);
