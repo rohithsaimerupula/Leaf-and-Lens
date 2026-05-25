@@ -182,8 +182,8 @@ const TURSO = (() => {
   const defaultCoordinators = {
     faculty: [
       { name: 'Mr. S. Yogeshwara Rao', role: 'Faculty Coordinator', phone: '94901 49200', initials: 'SY' },
-      { name: 'Ms. Ch. Meenakshi', role: 'Faculty Coordinator', phone: '7075739689', initials: 'CM' },
-      { name: 'Dr. K. Sirisha', role: 'Faculty Coordinator', phone: '8688753830', initials: 'KS' }
+      { name: 'Dr. K. Sirisha', role: 'Faculty Coordinator', phone: '8688753830', initials: 'KS' },
+      { name: 'Ms. Ch. Meenakshi', role: 'Faculty Coordinator', phone: '7075739689', initials: 'CM' }
     ],
     student: [
       { name: 'M. Rohith Sai', role: 'Student Coordinator', phone: '9014123748', initials: 'MR' },
