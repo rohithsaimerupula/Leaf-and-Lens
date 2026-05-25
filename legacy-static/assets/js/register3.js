@@ -385,6 +385,7 @@ function handleFile(type, input) {
 
     // Run metadata scan + HF ML scan in parallel for best accuracy
     const statusEl = document.getElementById('photoName');
+    statusEl.style.color = ''; // Reset color from previous errors
     statusEl.textContent = file.name + ' (' + mb.toFixed(1) + ' MB) · 🔍 Scanning...';
     formData.aiFlags = null; // reset
     
@@ -408,7 +409,17 @@ function handleFile(type, input) {
       // STRICT BLOCK IF AI DETECTED
       if (finalFlag && finalFlag.toLowerCase().includes('ai')) {
         showToast('AI-generated images are not allowed. Please upload an original photo.', 'error');
-        clearFile('photo');
+        
+        // Remove file data so it can't be submitted, but keep UI visible to show the error
+        photoFile = null;
+        document.getElementById('filePhoto').value = '';
+        statusEl.textContent = file.name + ' (' + mb.toFixed(1) + ' MB) · ⚠️ AI Recognized';
+        statusEl.style.color = '#ff6b6b';
+        
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Registration';
+        }
         return;
       }
 
