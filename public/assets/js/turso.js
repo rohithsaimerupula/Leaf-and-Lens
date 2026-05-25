@@ -181,8 +181,9 @@ const TURSO = (() => {
   // ── COORDINATORS ─────────────────────────────────
   const defaultCoordinators = {
     faculty: [
-      { name: 'Dr. K. Sirisha', role: 'Faculty Coordinator', phone: '8688753830', initials: 'KS' },
-      { name: 'Ms. Ch. Meenakshi', role: 'Faculty Coordinator', phone: '7075739689', initials: 'CM' }
+      { name: 'Mr. S. Yogeshwara Rao', role: 'Faculty Coordinator', phone: '94901 49200', initials: 'SY' },
+      { name: 'Ms. Ch. Meenakshi', role: 'Faculty Coordinator', phone: '7075739689', initials: 'CM' },
+      { name: 'Dr. K. Sirisha', role: 'Faculty Coordinator', phone: '8688753830', initials: 'KS' }
     ],
     student: [
       { name: 'M. Rohith Sai', role: 'Student Coordinator', phone: '9014123748', initials: 'MR' },
@@ -192,15 +193,7 @@ const TURSO = (() => {
   };
 
   async function getCoordinators() {
-    try {
-      const result = await query("SELECT value FROM config WHERE key = 'coordinators'");
-      const rows = parseRows(result);
-      if (rows.length > 0) return JSON.parse(rows[0].value);
-      return defaultCoordinators;
-    } catch (e) {
-      try { return JSON.parse(localStorage.getItem('ll_coordinators')) || defaultCoordinators; }
-      catch { return defaultCoordinators; }
-    }
+    return defaultCoordinators;
   }
 
   async function saveCoordinators(coords) {
