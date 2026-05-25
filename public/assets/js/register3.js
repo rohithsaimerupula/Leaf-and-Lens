@@ -511,7 +511,12 @@ async function submitForm() {
     else err.classList.remove('show');
   }
 
-  if (!valid) { showToast('Please upload required files', 'error'); return; }
+  const csEl = document.getElementById('creativeSummary');
+  const csErr = document.getElementById('e-creativeSummary');
+  if (!csEl.value.trim()) { csErr.classList.add('show'); valid = false; }
+  else { csErr.classList.remove('show'); formData.creativeSummary = csEl.value.trim(); }
+
+  if (!valid) { showToast('Please complete all required fields and upload files', 'error'); return; }
 
   const btn = document.getElementById('btnSubmit') || document.getElementById('btn2Next');
   if (btn.disabled) return;
@@ -560,6 +565,7 @@ async function submitForm() {
       member2Section: formData.s2Section || null,
       photoUrl:     photoB64,
       reelUrl:      reelB64,
+      creativeSummary: formData.creativeSummary,
       paymentScreenshotUrl: null,
       aiFlags:      formData.aiFlags || null,
       status:       'pending',
