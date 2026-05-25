@@ -510,39 +510,13 @@ export const db = {
 
   // Coordinators APIS
   async getCoordinators(): Promise<CoordinatorsData> {
-    if (db.isTursoActive()) {
-      try {
-        await initTursoSchema();
-        const res = await tursoClient.execute({
-          sql: "SELECT value FROM config WHERE key = ?",
-          args: ["coordinators"]
-        });
-        if (res.rows.length > 0) {
-          return JSON.parse(res.rows[0].value as string) as CoordinatorsData;
-        }
-        return defaultCoordinators;
-      } catch (e) {
-        return localDb.getCoordinators();
-      }
-    } else {
-      return localDb.getCoordinators();
-    }
+    // Always return default from code, as there is no admin UI to edit them, 
+    // to prevent old versions from getting stuck in the database cache.
+    return defaultCoordinators;
   },
 
   async saveCoordinators(coords: CoordinatorsData): Promise<void> {
-    if (db.isTursoActive()) {
-      try {
-        await initTursoSchema();
-        await tursoClient.execute({
-          sql: "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
-          args: ["coordinators", JSON.stringify(coords)]
-        });
-      } catch (e) {
-        await localDb.saveCoordinators(coords);
-      }
-    } else {
-      await localDb.saveCoordinators(coords);
-    }
+    // No-op
   },
 
   // Unified Direct Upload API
