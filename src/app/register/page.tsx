@@ -8,8 +8,8 @@ import { calculateEventStatus, EventStatusDetails } from '@/lib/timer';
 import CursorTrail from '@/components/CursorTrail';
 import AmbientMusic from '@/components/AmbientMusic';
 import { 
-  Camera, Film, QrCode, AlertCircle, ArrowLeft, ArrowRight, 
-  Upload, CheckCircle, RefreshCw, Smartphone, ShieldAlert, Sparkles 
+  AlertCircle, ArrowLeft, ArrowRight, 
+  Upload, CheckCircle, RefreshCw, ShieldAlert, Sparkles 
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -43,12 +43,10 @@ export default function Register() {
   // Upload States
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [reelFile, setReelFile] = useState<File | null>(null);
-  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [aiFlags, setAiFlags] = useState<string | null>(null);
 
   const [photoProgress, setPhotoProgress] = useState(0);
   const [reelProgress, setReelProgress] = useState(0);
-  const [screenshotProgress, setScreenshotProgress] = useState(0);
 
   // Errors
   const [validationError, setValidationError] = useState('');
@@ -62,11 +60,6 @@ export default function Register() {
     loadData();
   }, []);
 
-  // Calculate pricing based on selection
-  const getPrice = () => {
-    if (participationType === 'Both') return 50;
-    return 30;
-  };
 
   const handleNextStep = () => {
     setValidationError('');
@@ -114,6 +107,15 @@ export default function Register() {
     e.preventDefault();
     setValidationError('');
 
+    // Check maxTeams limit
+    if (settings?.maxTeams) {
+      const allSubs = await import('@/lib/db').then(m => m.db.getSubmissions());
+      if (allSubs.length >= settings.maxTeams) {
+        setValidationError(`Registration is full! Maximum ${settings.maxTeams} teams have already registered.`);
+        return;
+      }
+    }
+
     if (participationType === 'Photo' && !photoFile) {
       setValidationError('Please upload your nature photograph.');
       return;
@@ -126,10 +128,6 @@ export default function Register() {
       setValidationError('Please upload both the photograph and the reel.');
       return;
     }
-    if (!screenshotFile) {
-      setValidationError('Please upload your UPI payment screenshot to complete the submission.');
-      return;
-    }
 
     setSubmitting(true);
 
@@ -137,7 +135,6 @@ export default function Register() {
       // 1. Upload files to direct database/storage base64
       let photoUrl = '';
       let reelUrl = '';
-      let screenshotUrl = '';
 
       if (photoFile) {
         photoUrl = await db.uploadFile(photoFile, 'submissions/photos', setPhotoProgress);
@@ -145,7 +142,6 @@ export default function Register() {
       if (reelFile) {
         reelUrl = await db.uploadFile(reelFile, 'submissions/reels', setReelProgress);
       }
-      screenshotUrl = await db.uploadFile(screenshotFile, 'submissions/receipts', setScreenshotProgress);
 
       // 2. Prepare payload
       const submissionPayload: Submission = {
@@ -164,7 +160,6 @@ export default function Register() {
         }),
         photoUrl,
         reelUrl,
-        paymentScreenshotUrl: screenshotUrl,
         aiFlags: aiFlags || undefined,
         status: 'pending',
         submittedAt: new Date().toISOString()
@@ -241,7 +236,7 @@ export default function Register() {
                 Your nature story has been submitted 🌿
               </h2>
               <p className="text-slate-400 font-light max-w-md">
-                Thank you for participating! Our Department jury will verify your UPI receipt and submission files. Approved entries will go live in the public Gallery!
+                Thank you for participating! Our Department jury will review your submission files. Approved entries will go live in the public Gallery!
               </p>
               <div className="flex gap-4 mt-4">
                 <Link
@@ -265,7 +260,6 @@ export default function Register() {
                     setM2Phone('');
                     setPhotoFile(null);
                     setReelFile(null);
-                    setScreenshotFile(null);
                   }}
                   className="px-6 py-2.5 bg-transparent text-slate-400 border border-slate-800 hover:text-white hover:border-white rounded-full font-outfit font-bold text-xs uppercase tracking-wider transition-all"
                 >
@@ -320,9 +314,9 @@ export default function Register() {
                     <label className="block text-xs uppercase font-mono tracking-widest text-emerald-400/60 mb-3">Participation Type</label>
                     <div className="grid grid-cols-3 gap-4">
                       {[
-                        { id: 'Photo', label: '📸 Photo only', fee: '₹30' },
-                        { id: 'Reel', label: '🎬 Reel only', fee: '₹30' },
-                        { id: 'Both', label: '🌟 Both categories', fee: '₹50' }
+                        { id: 'Photo', label: '📸 Photo only' },
+                        { id: 'Reel', label: '🎬 Reel only' },
+                        { id: 'Both', label: '🌟 Both categories' }
                       ].map((opt) => (
                         <button
                           key={opt.id}
@@ -335,7 +329,7 @@ export default function Register() {
                           }`}
                         >
                           <span className="font-outfit font-bold text-sm">{opt.label}</span>
-                          <span className="text-[10px] font-mono text-neon/80 font-black">{opt.fee}</span>
+                          <span className="text-[10px] font-mono text-neon/80 font-black">FREE</span>
                         </button>
                       ))}
                     </div>
@@ -600,41 +594,14 @@ export default function Register() {
                     </div>
                   )}
 
-                  {/* UPI QR PAYMENT SYSTEM */}
-                  <div className="bg-black/40 border border-neon/15 rounded-2xl p-6">
-                    <h3 className="text-xs uppercase font-mono tracking-widest text-neon font-black mb-4 flex items-center gap-2">
-                      <QrCode className="w-4 h-4" /> UPI Payment Verification
-                    </h3>
-                    
-                    <div className="flex flex-col md:flex-row items-center gap-6">
-                      <div className="w-36 h-36 bg-white p-3 rounded-2xl flex items-center justify-center shrink-0 border border-slate-200">
-                        {/* Interactive dynamic UPI QR generation based on price */}
-                        <img
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=upi://pay?pa=rohithsaimerupula01@okaxis%26pn=Leaf%20and%20Lens%20Competition%26am=${getPrice()}%26cu=INR`}
-                          alt="UPI Payment QR"
-                          className="w-full h-full"
-                        />
-                      </div>
-                      <div className="flex-1 text-center md:text-left">
-                        <span className="text-xs uppercase font-mono font-black text-emerald-400/50 block">Amount to Pay</span>
-                        <span className="text-3xl font-black font-outfit text-white">₹{getPrice()}.00</span>
-                        <p className="text-slate-400 text-xs mt-2 leading-relaxed">
-                          Scan this QR with any UPI app (GPay, PhonePe, Paytm). Complete the transfer and upload the transaction receipt screenshot below.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="border-2 border-dashed border-slate-800 hover:border-neon/50 rounded-xl p-4 mt-6 flex flex-col items-center justify-center transition-all bg-black/10 relative group">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => setScreenshotFile(e.target.files?.[0] || null)}
-                        className="absolute inset-0 opacity-0 cursor-pointer"
-                      />
-                      <Upload className="w-6 h-6 text-slate-500 group-hover:text-neon transition-colors mb-1.5" />
-                      <span className="text-xs font-outfit font-bold text-white uppercase">
-                        {screenshotFile ? screenshotFile.name : 'Upload Screenshot / Receipt'}
-                      </span>
+                  {/* Free Event Notice */}
+                  <div className="bg-neon/5 border border-neon/20 rounded-2xl p-5 flex items-center gap-4">
+                    <span className="text-3xl">🎉</span>
+                    <div>
+                      <h3 className="text-xs uppercase font-mono tracking-widest text-neon font-black mb-1">This Event is Free!</h3>
+                      <p className="text-slate-400 text-xs leading-relaxed">
+                        No registration fee required. Simply upload your submission files and hit submit. Good luck! 🌿
+                      </p>
                     </div>
                   </div>
 
@@ -642,7 +609,6 @@ export default function Register() {
                     <div className="space-y-2 font-mono text-xs text-neon/70">
                       {photoFile && <div className="flex justify-between"><span>Uploading Photograph...</span><span>{Math.round(photoProgress)}%</span></div>}
                       {reelFile && <div className="flex justify-between"><span>Uploading Reel...</span><span>{Math.round(reelProgress)}%</span></div>}
-                      <div className="flex justify-between"><span>Uploading receipt...</span><span>{Math.round(screenshotProgress)}%</span></div>
                     </div>
                   )}
 

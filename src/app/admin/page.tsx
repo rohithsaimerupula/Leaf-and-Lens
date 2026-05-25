@@ -54,6 +54,7 @@ export default function Admin() {
   const [resultDate, setResultDate] = useState('');
   const [resultsPublic, setResultsPublic] = useState(false);
   const [timerDuration, setTimerDuration] = useState('3');
+  const [maxTeams, setMaxTeams] = useState('');
 
   // Active sub tab
   const [activeTab, setActiveTab] = useState<'submissions' | 'winners' | 'timers'>('submissions');
@@ -67,8 +68,7 @@ export default function Admin() {
     rejected: 0,
     photos: 0,
     reels: 0,
-    both: 0,
-    revenue: 0
+    both: 0
   });
 
   useEffect(() => {
@@ -96,6 +96,7 @@ export default function Admin() {
     setRegEndDate(s.regEndDate);
     setResultDate(s.resultDate);
     setResultsPublic(s.resultsPublic);
+    setMaxTeams(s.maxTeams ? String(s.maxTeams) : '');
 
     const w = await db.getWinners();
     setWinners(w);
@@ -109,23 +110,14 @@ export default function Admin() {
     const reels = approvedSubs.filter(x => x.participationType === 'Reel' || x.participationType === 'Both').length;
     const both = approvedSubs.filter(x => x.participationType === 'Both').length;
 
-    // Calculate total collection
-    let revenue = 0;
-    subs.forEach(x => {
-      if (x.status === 'approved') {
-        revenue += x.participationType === 'Both' ? 50 : 30;
-      }
-    });
-
     setStats({
-      total: approved,
+      total: subs.length,
       pending,
       approved,
       rejected,
       photos,
       reels,
-      both,
-      revenue
+      both
     });
   };
 
@@ -177,7 +169,8 @@ export default function Admin() {
       regStartDate,
       regEndDate,
       resultDate,
-      resultsPublic
+      resultsPublic,
+      maxTeams: maxTeams ? parseInt(maxTeams) : undefined
     };
     await db.saveSettings(updated);
     setSettings(updated);
@@ -208,7 +201,8 @@ export default function Admin() {
       resultDate: resultStr,
       resultsPublic: false,
       competitionActive: true,
-      timerStarted: true
+      timerStarted: true,
+      maxTeams: maxTeams ? parseInt(maxTeams) : undefined
     };
 
     // 5. Save settings directly
@@ -411,7 +405,7 @@ export default function Admin() {
             
             <div className="space-y-4">
               {[
-                { label: 'Total Submissions', count: stats.total, color: 'text-white' },
+                { label: 'Total Registered', count: stats.total, color: 'text-white' },
                 { label: 'Awaiting Review', count: stats.pending, color: 'text-amber-400' },
                 { label: 'Approved Entries', count: stats.approved, color: 'text-emerald-400' },
                 { label: 'Rejected Entries', count: stats.rejected, color: 'text-rose-400' },
@@ -425,10 +419,26 @@ export default function Admin() {
               ))}
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-900">
-              <span className="text-[10px] uppercase font-mono tracking-widest text-slate-500 block">Estimated Fees Collected</span>
-              <span className="text-3xl font-black font-outfit text-neon neon-text-glow">₹{stats.revenue}</span>
-            </div>
+            {settings.maxTeams && (
+              <div className="mt-4 pt-4 border-t border-slate-900">
+                <span className="text-[10px] uppercase font-mono tracking-widest text-slate-500 block mb-2">Registration Capacity</span>
+                <div className="flex items-end justify-between mb-1.5">
+                  <span className="text-2xl font-black font-outfit text-neon neon-text-glow">{stats.total}</span>
+                  <span className="text-sm font-mono text-slate-500">/ {settings.maxTeams}</span>
+                </div>
+                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-neon rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, (stats.total / settings.maxTeams) * 100)}%` }}
+                  />
+                </div>
+                <p className="text-[10px] font-mono text-slate-500 mt-1">
+                  {settings.maxTeams - stats.total > 0
+                    ? `${settings.maxTeams - stats.total} slots remaining`
+                    : '🔴 Registration Full'}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* QUICK LINKS SECTION */}
@@ -613,16 +623,6 @@ export default function Admin() {
                               <Eye className="w-3.5 h-3.5" /> View Reel
                             </a>
                           )}
-                          {selectedSub.paymentScreenshotUrl && (
-                            <a
-                              href={selectedSub.paymentScreenshotUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-4 py-2 bg-neon/10 border border-neon/30 hover:bg-neon hover:text-black text-xs font-bold font-outfit uppercase tracking-wider rounded-xl flex items-center gap-1.5 transition-all"
-                            >
-                              <Eye className="w-3.5 h-3.5" /> Verify Receipt
-                            </a>
-                          )}
                         </div>
                       </div>
 
@@ -766,7 +766,7 @@ export default function Admin() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 items-end">
-                  <div className="w-full sm:w-1/2">
+                  <div className="w-full sm:w-1/3">
                     <label className="block text-[10px] uppercase font-mono tracking-widest text-emerald-400/50 mb-2">Timer Duration</label>
                     <select
                       className="w-full px-4 py-3 rounded-xl bg-black/40 border border-slate-800 focus:border-neon focus:outline-none text-white text-sm"
@@ -779,6 +779,18 @@ export default function Admin() {
                       <option value="7">7 Days (Full Week)</option>
                       <option value="10">10 Days</option>
                     </select>
+                  </div>
+
+                  <div className="w-full sm:w-1/3">
+                    <label className="block text-[10px] uppercase font-mono tracking-widest text-emerald-400/50 mb-2">Max Teams Allowed</label>
+                    <input
+                      type="number"
+                      min="1"
+                      className="w-full px-4 py-3 rounded-xl bg-black/40 border border-slate-800 focus:border-neon focus:outline-none text-white text-sm font-mono"
+                      placeholder="e.g. 50 (leave blank for unlimited)"
+                      value={maxTeams}
+                      onChange={(e) => setMaxTeams(e.target.value)}
+                    />
                   </div>
 
                   <div className="flex gap-3 w-full sm:w-1/2">
