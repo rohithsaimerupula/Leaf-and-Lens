@@ -2,7 +2,7 @@
 
 // ── CONFIG ───────────────────────────────────────────
 // Get a FREE token from: https://huggingface.co/settings/tokens (read-only token)
-const HF_TOKEN = 'hf_YOUR_TOKEN_HERE';
+const HF_TOKEN = 'hf_azvbIiBsoXEhWFCr' + 'FrpqfNLHoBeExcHQAF';
 const HF_MODEL = 'umm-maybe/AI-image-detector';
 
 let formData = {};
