@@ -362,7 +362,7 @@ async function submitForm() {
     await TURSO.saveSubmission(submission);
 
     // Show success
-    document.getElementById('step3').classList.add('hidden');
+    document.getElementById('step2').classList.add('hidden');
     document.getElementById('stepSuccess').classList.remove('hidden');
     document.getElementById('successId').textContent = id;
 
@@ -381,6 +381,6 @@ async function submitForm() {
     console.error('Submission error:', err);
     showToast('Submission failed. Please try again.', 'error');
     btn.disabled = false;
-    btn.innerHTML = '✓ Complete Registration';
+    btn.innerHTML = originalText;
   }
 }
