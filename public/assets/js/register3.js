@@ -228,12 +228,14 @@ async function scanImageForAIFlags(file) {
   }
 
   try {
-    // Read first 512KB + last 64KB (covers EXIF, XMP, PNG tEXt chunks, and end-of-file metadata)
-    const headSize = Math.min(file.size, 512 * 1024);
-    const tailSize = Math.min(file.size, 64 * 1024);
-    const headBuf = await readChunk(file.slice(0, headSize));
-    const tailBuf = file.size > headSize ? await readChunk(file.slice(-tailSize)) : headBuf;
-    const text = bufToText(headBuf) + ' ' + bufToText(tailBuf);
+    // Read the FULL file in 512KB chunks to catch metadata anywhere in the file
+    const CHUNK = 512 * 1024;
+    let text = '';
+    for (let offset = 0; offset < file.size; offset += CHUNK) {
+      const chunk = file.slice(offset, Math.min(offset + CHUNK, file.size));
+      const buf = await readChunk(chunk);
+      text += bufToText(buf) + ' ';
+    }
 
     // ── AI-generated tool signatures ──────────────────
     const aiKeywords = [
