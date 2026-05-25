@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (allSubs.length >= settings.regLimit) {
         isActive = false;
         document.querySelector('.cs-title').textContent = "Registrations Full";
-        document.querySelector('.cs-desc').textContent = "The registration limit for Leaf & Lens 2026 has been reached.";
+        document.querySelector('.cs-desc').textContent = "Limited registrations are completed so please contact student coordinator.";
       }
     }
 
