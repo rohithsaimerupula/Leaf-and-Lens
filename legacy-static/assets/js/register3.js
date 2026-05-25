@@ -387,6 +387,12 @@ function handleFile(type, input) {
     const statusEl = document.getElementById('photoName');
     statusEl.textContent = file.name + ' (' + mb.toFixed(1) + ' MB) · 🔍 Scanning...';
     formData.aiFlags = null; // reset
+    
+    const submitBtn = document.getElementById('btn2Next');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Scanning Image...';
+    }
 
     Promise.all([
       scanImageForAIFlags(file),
@@ -408,6 +414,11 @@ function handleFile(type, input) {
 
       const badge = finalFlag ? ' · ✏️ Edited' : ' · ✅ Looks Natural';
       statusEl.textContent = file.name + ' (' + mb.toFixed(1) + ' MB)' + badge;
+      
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Registration';
+      }
     });
   } else if (type === 'reel') {
     const isMkv = file.name.toLowerCase().endsWith('.mkv');
@@ -464,7 +475,13 @@ function clearFile(type) {
     paymentFile = null;
     document.getElementById('filePayment').value = '';
     document.getElementById('paymentInfo').classList.add('hidden');
-    document.getElementById('paymentDropBody').style.opacity = '';
+  }
+  
+  // If the file is cleared (e.g. because of AI block), ensure the submit button resets its state
+  const submitBtn = document.getElementById('btn2Next');
+  if (submitBtn && submitBtn.textContent === 'Scanning Image...') {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Registration';
   }
 }
 
