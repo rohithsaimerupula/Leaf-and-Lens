@@ -44,7 +44,7 @@
 
   <!-- STEP INDICATOR -->
   <div class="steps-bar">
-    <div class="step-item active" id="si-1">
+    <div class="step-item" id="si-1">
       <div class="step-num">1</div>
       <div class="step-lbl">Team Details</div>
     </div>
@@ -52,11 +52,6 @@
     <div class="step-item" id="si-2">
       <div class="step-num">2</div>
       <div class="step-lbl">Upload Files</div>
-    </div>
-    <div class="step-line"></div>
-    <div class="step-item" id="si-3">
-      <div class="step-num">3</div>
-      <div class="step-lbl">Payment</div>
     </div>
   </div>
 
@@ -176,7 +171,7 @@
         <div class="cat-inner">
           <div class="cat-icon">📷</div>
           <div class="cat-name">Photo Only</div>
-          <div class="cat-price">₹30</div>
+          <div class="cat-price">Free</div>
         </div>
       </label>
       <label class="cat-card" id="cc-Reel">
@@ -184,7 +179,7 @@
         <div class="cat-inner">
           <div class="cat-icon">🎬</div>
           <div class="cat-name">Reel Only</div>
-          <div class="cat-price">₹30</div>
+          <div class="cat-price">Free</div>
         </div>
       </label>
       <label class="cat-card" id="cc-Both">
@@ -192,7 +187,7 @@
         <div class="cat-inner">
           <div class="cat-icon">✨</div>
           <div class="cat-name">Photo + Reel</div>
-          <div class="cat-price">₹50</div>
+          <div class="cat-price">Free</div>
         </div>
       </label>
     </div>
@@ -259,70 +254,14 @@
 
     <div class="step-nav">
       <button class="btn-back" onclick="goStep(1)">← Back</button>
-      <button class="btn-next" onclick="step2Next()">
-        Next: Payment
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-      </button>
-    </div>
-  </div>
-
-  <!-- STEP 3: PAYMENT -->
-  <div class="step-panel hidden" id="step3">
-    <div class="panel-title">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-      Payment &amp; Confirmation
-    </div>
-
-    <div class="pay-box">
-      <div class="pay-amount-label">Amount to Pay</div>
-      <div class="pay-amount" id="payAmount">₹30</div>
-      <div class="pay-desc" id="payDesc">Photo / Reel category</div>
-
-      <div class="qr-wrap">
-        <div class="qr-loading" id="qrLoading">Loading QR code...</div>
-        <img id="qrImg" src="" alt="Payment QR" class="qr-img hidden" onclick="enlargeQR(this)" style="cursor:zoom-in;" title="Click to enlarge"/>
-        <div style="font-size:0.72rem;color:var(--text-muted,#aaa);text-align:center;margin-top:0.4rem;opacity:0.7;" id="qrClickHint" class="hidden">🔍 Tap to enlarge</div>
-        <div class="qr-noimg hidden" id="qrNoImg">⚠️ QR not set by admin yet. Please contact organizers.</div>
-      </div>
-
-      <!-- QR Lightbox -->
-      <div id="qrLightbox" onclick="this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;">
-        <img id="qrLightboxImg" src="" alt="QR Code" style="max-width:90vw;max-height:90vh;border-radius:12px;box-shadow:0 0 60px rgba(82,183,136,0.4);" />
-      </div>
-
-      <div class="pay-steps">
-        <div class="pay-step">1. Scan the QR above with any UPI app</div>
-        <div class="pay-step">2. Pay the exact amount shown</div>
-        <div class="pay-step">3. Screenshot the payment confirmation</div>
-        <div class="pay-step">4. Upload screenshot below &amp; submit</div>
-      </div>
-    </div>
-
-    <!-- Screenshot upload -->
-    <div class="upload-zone">
-      <div class="uz-label">📸 Payment Screenshot <span class="req">*</span></div>
-      <label class="drop-area">
-        <input type="file" id="filePayment" accept=".jpg,.jpeg,.png,image/jpeg,image/png" onchange="handleFile('payment', this)"/>
-        <div class="drop-body" id="paymentDropBody">
-          <div class="drop-icon">🧾</div>
-          <div class="drop-txt">Upload payment screenshot (JPG/PNG)</div>
-        </div>
-      </label>
-      <div class="file-info hidden" id="paymentInfo">
-        <span id="paymentName"></span>
-        <button type="button" onclick="clearFile('payment')" class="clr-btn">✕ Remove</button>
-      </div>
-      <span class="ferr" id="e-payment">Please upload payment screenshot</span>
-    </div>
-
-    <div class="step-nav">
-      <button class="btn-back" onclick="goStep(2)">← Back</button>
-      <button class="btn-submit" id="btnSubmit" onclick="submitForm()">
+      <button class="btn-submit" id="btn2Next" onclick="submitForm()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
         Complete Registration
       </button>
     </div>
   </div>
+
+
 
   <!-- SUCCESS -->
   <div class="step-panel hidden" id="stepSuccess">

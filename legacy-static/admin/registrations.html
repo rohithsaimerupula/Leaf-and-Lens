@@ -71,34 +71,19 @@
     <!-- REGISTRATION CONTROL PANEL -->
     <div class="admin-table-wrap" style="padding:1.75rem;">
       <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--text-primary);margin-bottom:1.5rem;">🚀 Registration Control Panel</h3>
-      <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:2rem;">Configure the payment QR code and timeline for the competition. You must set both before activating registrations.</p>
+      <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:2rem;">Configure the timeline and limits for the free competition.</p>
 
-      <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:2rem;">
+      <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:2rem;">
 
-        <!-- 30rs QR Upload -->
+        <!-- Registration Limit -->
         <div>
-          <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.5rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">₹30 QR Code (Single) <span style="color:#e63946">*</span></div>
-          <div id="qrPreviewWrap30" style="margin-bottom:0.75rem;display:none;">
-            <img id="qrPreviewImg30" src="" alt="QR 30" style="width:140px;height:140px;object-fit:contain;border:2px solid var(--primary-light);border-radius:8px;"/>
+          <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.5rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Registration Limit (Total) <span style="color:#e63946">*</span></div>
+          <div style="display:flex;flex-direction:column;gap:1rem;">
+            <div>
+              <label style="font-size:0.75rem;color:var(--text-muted);">Max Teams</label>
+              <input type="number" id="regLimit" class="table-search" style="width:100%;margin-top:0.25rem;background:rgba(5,15,8,0.5);" placeholder="e.g. 200" />
+            </div>
           </div>
-          <label style="display:block;background:rgba(82,183,136,0.06);border:2px dashed var(--border);border-radius:8px;padding:1.5rem 1rem;text-align:center;cursor:pointer;font-size:0.82rem;color:var(--text-muted);transition:all 0.2s;">
-            <input type="file" accept="image/*" style="display:none" onchange="handleQRUpload(this, 30)"/>
-            📤 Upload ₹30 QR image
-          </label>
-          <div id="qrStatus30" style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;"></div>
-        </div>
-
-        <!-- 50rs QR Upload -->
-        <div>
-          <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.5rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">₹50 QR Code (Both) <span style="color:#e63946">*</span></div>
-          <div id="qrPreviewWrap50" style="margin-bottom:0.75rem;display:none;">
-            <img id="qrPreviewImg50" src="" alt="QR 50" style="width:140px;height:140px;object-fit:contain;border:2px solid var(--primary-light);border-radius:8px;"/>
-          </div>
-          <label style="display:block;background:rgba(82,183,136,0.06);border:2px dashed var(--border);border-radius:8px;padding:1.5rem 1rem;text-align:center;cursor:pointer;font-size:0.82rem;color:var(--text-muted);transition:all 0.2s;">
-            <input type="file" accept="image/*" style="display:none" onchange="handleQRUpload(this, 50)"/>
-            📤 Upload ₹50 QR image
-          </label>
-          <div id="qrStatus50" style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;"></div>
         </div>
 
         <!-- Timer -->
@@ -135,7 +120,7 @@
             ⏸ Stop Registration
           </button>
           <button class="btn btn-primary" style="padding:0.75rem 1.5rem;background:var(--grad-primary);" onclick="saveRegSettings()">
-            <i data-lucide="save" style="width:16px;height:16px;"></i> Save Dates & QR
+            <i data-lucide="save" style="width:16px;height:16px;"></i> Save Dates & Limits
           </button>
         </div>
       </div>
@@ -196,17 +181,7 @@ async function loadSettings() {
   
   if (currentSettings.regStartDate) document.getElementById('regStartDate').value = formatForDatetimeLocal(currentSettings.regStartDate);
   if (currentSettings.regEndDate)   document.getElementById('regEndDate').value   = formatForDatetimeLocal(currentSettings.regEndDate);
-  
-  if (currentSettings.qrImage30) {
-    document.getElementById('qrPreviewImg30').src = currentSettings.qrImage30;
-    document.getElementById('qrPreviewWrap30').style.display = 'block';
-    document.getElementById('qrStatus30').textContent = '✅ ₹30 QR loaded';
-  }
-  if (currentSettings.qrImage50) {
-    document.getElementById('qrPreviewImg50').src = currentSettings.qrImage50;
-    document.getElementById('qrPreviewWrap50').style.display = 'block';
-    document.getElementById('qrStatus50').textContent = '✅ ₹50 QR loaded';
-  }
+  if (currentSettings.regLimit)     document.getElementById('regLimit').value     = currentSettings.regLimit;
 
   updateStatusUI();
   startCountdown();
@@ -230,29 +205,13 @@ function updateStatusUI() {
   }
 }
 
-function handleQRUpload(input, type) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const b64 = e.target.result;
-    document.getElementById(`qrPreviewImg${type}`).src = b64;
-    document.getElementById(`qrPreviewWrap${type}`).style.display = 'block';
-    document.getElementById(`qrStatus${type}`).textContent = '✅ QR ready — click Save';
-    if (!window._pendingQR) window._pendingQR = {};
-    window._pendingQR[type] = b64;
-  };
-  reader.readAsDataURL(file);
-}
-
 async function changeRegStatus(isActive) {
   const startDate = document.getElementById('regStartDate').value;
   const endDate = document.getElementById('regEndDate').value;
-  const hasQR30 = currentSettings.qrImage30 || (window._pendingQR && window._pendingQR[30]);
-  const hasQR50 = currentSettings.qrImage50 || (window._pendingQR && window._pendingQR[50]);
+  const limit = document.getElementById('regLimit').value;
 
-  if (isActive && (!startDate || !endDate || !hasQR30 || !hasQR50)) {
-    showToast('❌ Cannot start: Please set BOTH QR Codes and both dates first.', 'error');
+  if (isActive && (!startDate || !endDate || !limit)) {
+    showToast('❌ Cannot start: Please set dates and registration limit first.', 'error');
     return;
   }
 
@@ -267,12 +226,7 @@ async function changeRegStatus(isActive) {
 async function saveRegSettings() {
   currentSettings.regStartDate = document.getElementById('regStartDate').value || currentSettings.regStartDate;
   currentSettings.regEndDate   = document.getElementById('regEndDate').value   || currentSettings.regEndDate;
-  
-  if (window._pendingQR) {
-    if (window._pendingQR[30]) currentSettings.qrImage30 = window._pendingQR[30];
-    if (window._pendingQR[50]) currentSettings.qrImage50 = window._pendingQR[50];
-    window._pendingQR = null;
-  }
+  currentSettings.regLimit     = document.getElementById('regLimit').value     || currentSettings.regLimit;
   
   await TURSO.saveSettings(currentSettings);
   showToast('🚀 Registration Settings saved!', 'success');

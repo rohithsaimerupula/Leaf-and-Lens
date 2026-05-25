@@ -19,6 +19,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (now < start || now > end) isActive = false;
     }
 
+    if (isActive && settings.regLimit) {
+      const allSubs = await TURSO.getSubmissions();
+      if (allSubs.length >= settings.regLimit) {
+        isActive = false;
+        document.querySelector('.cs-title').textContent = "Registrations Full";
+        document.querySelector('.cs-desc').textContent = "The registration limit for Leaf & Lens 2026 has been reached.";
+      }
+    }
+
     if (!isActive) {
       document.getElementById('closedScreen').style.display = 'flex';
       document.getElementById('regWrap').style.display = 'none';
@@ -43,35 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function loadQR(settings) {
-  const qrImg = document.getElementById('qrImg');
-  const qrLoading = document.getElementById('qrLoading');
-  const qrNoImg = document.getElementById('qrNoImg');
-  const payAmount = document.getElementById('payAmount');
-  const payDesc = document.getElementById('payDesc');
-
-  // Set amount based on category
-  const cat = formData.category;
-  if (cat === 'Both') {
-    payAmount.textContent = '₹50';
-    payDesc.textContent = 'Photo + Reel category';
-  } else {
-    payAmount.textContent = '₹30';
-    payDesc.textContent = (cat || 'Photo / Reel') + ' category';
-  }
-
-  // Load QR
-  const qrSrc = (cat === 'Both') ? settings.qrImage50 : settings.qrImage30;
-  
-  if (qrSrc) {
-    qrLoading.style.display = 'none';
-    qrImg.src = qrSrc;
-    qrImg.classList.remove('hidden');
-    const hint = document.getElementById('qrClickHint');
-    if (hint) hint.classList.remove('hidden');
-  } else {
-    qrLoading.style.display = 'none';
-    qrNoImg.classList.remove('hidden');
-  }
+  // Free competition: QR loading disabled.
 }
 
 function enlargeQR(img) {
@@ -89,11 +70,13 @@ function goStep(n) {
   el.classList.remove('hidden');
 
   // Update step bar
-  for (let i = 1; i <= 3; i++) {
+  for (let i = 1; i <= 2; i++) {
     const si = document.getElementById('si-' + i);
-    si.classList.remove('active', 'done');
-    if (i < currentStep) si.classList.add('done');
-    else if (i === currentStep) si.classList.add('active');
+    if(si) {
+      si.classList.remove('active', 'done');
+      if (i < currentStep) si.classList.add('done');
+      else if (i === currentStep) si.classList.add('active');
+    }
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -206,34 +189,11 @@ function setupUploadStep() {
 
 // ── STEP 2 VALIDATE & NEXT ───────────────────────────
 function step2Next() {
-  let valid = true;
-  const cat = formData.category;
-
-  if (cat === 'Photo' || cat === 'Both') {
-    const err = document.getElementById('e-photo');
-    if (!photoFile) { err.classList.add('show'); valid = false; }
-    else err.classList.remove('show');
-  }
-  if (cat === 'Reel' || cat === 'Both') {
-    const err = document.getElementById('e-reel');
-    if (!reelFile) { err.classList.add('show'); valid = false; }
-    else err.classList.remove('show');
-  }
-
-  if (!valid) { showToast('Please upload required files', 'error'); return; }
-
-  // Setup payment step
-  setupPaymentStep();
-  goStep(3);
+  submitForm();
 }
 
 async function setupPaymentStep() {
-  try {
-    const settings = await TURSO.getSettings();
-    loadQR(settings);
-  } catch (e) {
-    loadQR({});
-  }
+  // No longer used.
 }
 
 // ── FILE HANDLING ────────────────────────────────────
@@ -341,17 +301,27 @@ function clearFile(type) {
 
 // ── SUBMIT ───────────────────────────────────────────
 async function submitForm() {
-  // Validate payment screenshot
-  const errPay = document.getElementById('e-payment');
-  if (!paymentFile) { errPay.classList.add('show'); showToast('Please upload payment screenshot', 'error'); return; }
-  errPay.classList.remove('show');
+  const cat = formData.category;
+  let valid = true;
+  if (cat === 'Photo' || cat === 'Both') {
+    const err = document.getElementById('e-photo');
+    if (!photoFile) { err.classList.add('show'); valid = false; }
+    else err.classList.remove('show');
+  }
+  if (cat === 'Reel' || cat === 'Both') {
+    const err = document.getElementById('e-reel');
+    if (!reelFile) { err.classList.add('show'); valid = false; }
+    else err.classList.remove('show');
+  }
 
-  const btn = document.getElementById('btnSubmit');
+  if (!valid) { showToast('Please upload required files', 'error'); return; }
+
+  const btn = document.getElementById('btnSubmit') || document.getElementById('btn2Next');
+  const originalText = btn.innerHTML;
   btn.disabled = true;
   btn.textContent = 'Submitting...';
 
   try {
-    // Convert files to base64 for storage
     const toBase64 = f => new Promise((res, rej) => {
       const r = new FileReader();
       r.onload = () => res(r.result);
@@ -359,7 +329,6 @@ async function submitForm() {
       r.readAsDataURL(f);
     });
 
-    const paymentB64 = await toBase64(paymentFile);
     const photoB64   = photoFile   ? await toBase64(photoFile)   : null;
     const reelB64    = reelFile    ? await toBase64(reelFile)    : null;
 
@@ -384,7 +353,7 @@ async function submitForm() {
       member2Section: formData.s2Section || null,
       photoUrl:     photoB64,
       reelUrl:      reelB64,
-      paymentScreenshotUrl: paymentB64,
+      paymentScreenshotUrl: null,
       aiFlags:      formData.aiFlags || null,
       status:       'pending',
       submittedAt:  new Date().toISOString()
@@ -398,10 +367,12 @@ async function submitForm() {
     document.getElementById('successId').textContent = id;
 
     // Update step indicators all done
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i <= 2; i++) {
       const si = document.getElementById('si-' + i);
-      si.classList.remove('active');
-      si.classList.add('done');
+      if(si) {
+        si.classList.remove('active');
+        si.classList.add('done');
+      }
     }
 
     showToast('🎉 Registration successful!', 'success');
