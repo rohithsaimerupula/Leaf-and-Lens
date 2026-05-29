@@ -12,6 +12,7 @@ import {
 import confetti from 'canvas-confetti';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import jsPDF from 'jspdf';
 
 function getBranchFromRoll(roll: string | null | undefined): string {
   if (!roll || typeof roll !== 'string') return '';
@@ -357,6 +358,49 @@ export default function Admin() {
     }
   };
 
+  const handleDownloadPDF = async () => {
+    const approvedSubmissions = submissions.filter(s => s.status === 'approved' && s.paymentScreenshotUrl);
+    if (!approvedSubmissions.length) {
+      alert("No approved submissions with payment screenshots found.");
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      let isFirstPage = true;
+
+      for (const sub of approvedSubmissions) {
+        if (!isFirstPage) doc.addPage();
+        isFirstPage = false;
+        
+        doc.setFontSize(16);
+        doc.text(`Team: ${sub.teamName}`, 10, 20);
+        doc.setFontSize(12);
+        doc.text(`UTR Number: ${sub.transactionId || 'N/A'}`, 10, 30);
+        doc.text(`Category: ${sub.participationType}`, 10, 40);
+        doc.text(`Leader: ${sub.member1Name} (${sub.member1Roll})`, 10, 50);
+
+        const data = sub.paymentScreenshotUrl;
+        if (data && data.startsWith('data:image')) {
+          try {
+            const format = data.includes('image/png') ? 'PNG' : 'JPEG';
+            doc.addImage(data, format, 10, 60, 180, 200, undefined, 'FAST');
+          } catch (e) {
+            console.error("Failed to add image to PDF", e);
+            doc.text("Screenshot could not be rendered (unsupported format).", 10, 70);
+          }
+        } else {
+          doc.text("No valid screenshot data found.", 10, 70);
+        }
+      }
+
+      doc.save("approved_screenshots.pdf");
+    } catch (err) {
+      console.error("Failed to generate PDF", err);
+      alert("Failed to generate PDF file.");
+    }
+  };
+
   const openMediaInNewTab = async (dataUrl: string) => {
     if (!dataUrl) return;
     if (!dataUrl.startsWith('data:')) {
@@ -573,6 +617,12 @@ export default function Admin() {
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-black font-playfair uppercase tracking-tight text-white">Submissions</h2>
                 <div className="flex gap-2">
+                  <button
+                    onClick={handleDownloadPDF}
+                    className="px-4 py-2 rounded-xl bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500 hover:text-black text-purple-400 text-xs font-bold font-playfair uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Archive className="w-3.5 h-3.5" /> PDF Screenshots
+                  </button>
                   <button
                     onClick={handleDownloadZip}
                     className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500 hover:text-black text-emerald-400 text-xs font-bold font-playfair uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
