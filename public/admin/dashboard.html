@@ -149,7 +149,7 @@
         <div style="margin-top:1rem;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;">
           <div id="pledgeStatBar" style="height:100%;background:var(--grad-primary);border-radius:3px;width:0%;transition:width 1s ease;"></div>
         </div>
-        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;">Goal: 500 pledges</div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;" id="pledgeStatGoal">Goal: 500 pledges</div>
       </div>
 
       <div class="admin-table-wrap" style="padding:1.5rem;">
@@ -226,6 +226,10 @@ async function loadStats() {
   document.getElementById('sc-reels').textContent    = reels;
   document.getElementById('sbPendingBadge').textContent = pending;
   if (subs.length) document.getElementById('sc-total-delta').textContent = subs.length + ' total entries received';
+  
+  // Update Climate Pledge Stats based on all submissions
+  document.getElementById('pledgeStatNum').textContent = subs.length;
+  
   return subs;
 }
 
@@ -266,6 +270,16 @@ async function quickAction(id, status) {
 async function loadSettings() {
   const s = await TURSO.getSettings();
   document.getElementById('toggleResults').checked = !!s.resultsPublic;
+  
+  // Update Pledge Goal
+  const goal = s.regLimit || 500;
+  document.getElementById('pledgeStatGoal').textContent = `Goal: ${goal} pledges`;
+  
+  // Update Pledge Bar
+  const subs = await TURSO.getSubmissions();
+  const pledged = subs.length;
+  const percentage = Math.min(100, Math.round((pledged / goal) * 100));
+  document.getElementById('pledgeStatBar').style.width = percentage + '%';
 }
 
 async function updateSetting(key, val) {
