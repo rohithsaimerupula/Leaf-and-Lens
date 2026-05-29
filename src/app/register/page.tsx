@@ -43,10 +43,13 @@ export default function Register() {
   // Upload States
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [reelFile, setReelFile] = useState<File | null>(null);
+  const [paymentFile, setPaymentFile] = useState<File | null>(null);
+  const [transactionId, setTransactionId] = useState('');
   const [aiFlags, setAiFlags] = useState<string | null>(null);
 
   const [photoProgress, setPhotoProgress] = useState(0);
   const [reelProgress, setReelProgress] = useState(0);
+  const [paymentProgress, setPaymentProgress] = useState(0);
   const [creativeSummary, setCreativeSummary] = useState('');
 
   // Errors
@@ -130,6 +133,15 @@ export default function Register() {
       return;
     }
 
+    if (!transactionId.trim() || transactionId.length < 10) {
+      setValidationError('Please enter a valid PhonePe Transaction UTR number.');
+      return;
+    }
+    if (!paymentFile) {
+      setValidationError('Please upload the PhonePe payment screenshot.');
+      return;
+    }
+
     if (!creativeSummary.trim()) {
       setValidationError('Please add a creative summary describing what inspired you.');
       return;
@@ -141,12 +153,16 @@ export default function Register() {
       // 1. Upload files to direct database/storage base64
       let photoUrl = '';
       let reelUrl = '';
+      let paymentScreenshotUrl = '';
 
       if (photoFile) {
         photoUrl = await db.uploadFile(photoFile, 'submissions/photos', setPhotoProgress);
       }
       if (reelFile) {
         reelUrl = await db.uploadFile(reelFile, 'submissions/reels', setReelProgress);
+      }
+      if (paymentFile) {
+        paymentScreenshotUrl = await db.uploadFile(paymentFile, 'submissions/payments', setPaymentProgress);
       }
 
       // 2. Prepare payload
@@ -166,6 +182,8 @@ export default function Register() {
         }),
         photoUrl,
         reelUrl,
+        paymentScreenshotUrl,
+        transactionId,
         creativeSummary,
         aiFlags: aiFlags || undefined,
         status: 'pending',
@@ -268,6 +286,8 @@ export default function Register() {
                     setCreativeSummary('');
                     setPhotoFile(null);
                     setReelFile(null);
+                    setPaymentFile(null);
+                    setTransactionId('');
                   }}
                   className="px-6 py-2.5 bg-transparent text-slate-400 border border-slate-800 hover:text-white hover:border-white rounded-full font-outfit font-bold text-xs uppercase tracking-wider transition-all"
                 >
@@ -613,14 +633,57 @@ export default function Register() {
                     ></textarea>
                   </div>
 
-                  {/* Free Event Notice */}
-                  <div className="bg-neon/5 border border-neon/20 rounded-2xl p-5 flex items-center gap-4">
-                    <span className="text-3xl">🎉</span>
-                    <div>
-                      <h3 className="text-xs uppercase font-mono tracking-widest text-neon font-black mb-1">This Event is Free!</h3>
-                      <p className="text-slate-400 text-xs leading-relaxed">
-                        No registration fee required. Simply upload your submission files and hit submit. Good luck! 🌿
-                      </p>
+                  {/* Payment Gateway & Verification */}
+                  <div className="bg-black/30 border border-neon/20 rounded-2xl p-6 space-y-6 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-neon/5 rounded-bl-full pointer-events-none" />
+                    
+                    <div className="flex flex-col md:flex-row gap-6 items-start">
+                      {/* QR Code */}
+                      <div className="w-full md:w-1/3 flex flex-col items-center gap-3">
+                        <div className="bg-white p-3 rounded-xl">
+                          <img src="/qrcode.png" alt="PhonePe QR Code" className="w-32 h-32 object-contain" />
+                        </div>
+                        <span className="text-[10px] uppercase font-mono tracking-widest text-emerald-400 font-bold bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                          Scan & Pay (PhonePe)
+                        </span>
+                      </div>
+
+                      {/* Payment Fields */}
+                      <div className="w-full md:w-2/3 space-y-5">
+                        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-300 p-3 rounded-xl text-xs font-light">
+                          ⚠️ <strong>Strict Warning:</strong> By submitting, I agree that providing a fake UTR will lead to immediate cancellation and my HOD will be notified. All payments are audited by accounts.
+                        </div>
+
+                        <div>
+                          <label className="block text-xs uppercase font-mono tracking-widest text-emerald-400/60 mb-2">12-Digit PhonePe UTR Number</label>
+                          <input
+                            type="text"
+                            className="w-full px-4 py-3 rounded-xl bg-black/40 border border-slate-800 focus:border-neon focus:outline-none text-white text-sm font-mono placeholder:font-sans placeholder-slate-600"
+                            placeholder="e.g. 305123456789"
+                            value={transactionId}
+                            onChange={(e) => setTransactionId(e.target.value)}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs uppercase font-mono tracking-widest text-emerald-400/60 mb-2">Payment Screenshot</label>
+                          <div className="border-2 border-dashed border-slate-800 hover:border-emerald-500/50 rounded-xl p-4 flex flex-col items-center justify-center transition-all bg-black/20 relative cursor-pointer">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                setPaymentFile(file);
+                              }}
+                              className="absolute inset-0 opacity-0 cursor-pointer"
+                            />
+                            <Upload className="w-5 h-5 text-slate-500 mb-1" />
+                            <span className="text-xs font-outfit font-bold text-white uppercase truncate max-w-[200px]">
+                              {paymentFile ? paymentFile.name : 'Upload Screenshot'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -628,6 +691,7 @@ export default function Register() {
                     <div className="space-y-2 font-mono text-xs text-neon/70">
                       {photoFile && <div className="flex justify-between"><span>Uploading Photograph...</span><span>{Math.round(photoProgress)}%</span></div>}
                       {reelFile && <div className="flex justify-between"><span>Uploading Reel...</span><span>{Math.round(reelProgress)}%</span></div>}
+                      {paymentFile && <div className="flex justify-between"><span>Uploading Payment...</span><span>{Math.round(paymentProgress)}%</span></div>}
                     </div>
                   )}
 

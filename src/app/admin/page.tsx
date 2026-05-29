@@ -281,9 +281,9 @@ export default function Admin() {
   // Export Roster Roster to Excel/CSV structure
   const handleExportCSV = () => {
     if (!submissions.length) return;
-    const headers = 'ID,Team Name,Category,Member 1,Roll 1,Phone,Member 2,Roll 2,Status\n';
+    const headers = 'ID,Team Name,Category,Member 1,Roll 1,Phone,Member 2,Roll 2,Status,UTR Number\n';
     const rows = submissions.map(s => 
-      `"${s.id}","${s.teamName}","${s.participationType}","${s.member1Name}","${s.member1Roll}","${s.member1Phone}","${s.member2Name || ''}","${s.member2Roll || ''}","${s.status}"`
+      `"${s.id}","${s.teamName}","${s.participationType}","${s.member1Name}","${s.member1Roll}","${s.member1Phone}","${s.member2Name || ''}","${s.member2Roll || ''}","${s.status}","${s.transactionId || ''}"`
     ).join('\n');
 
     const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
@@ -580,6 +580,35 @@ export default function Admin() {
                                 })()} · {selectedSub.member2Phone}
                               </span>
                             </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Payment Verification Section */}
+                      <div className="space-y-3 pt-4 border-t border-slate-900">
+                        <h4 className="font-outfit font-black text-slate-400 uppercase tracking-wide flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Payment Verification
+                        </h4>
+                        <div className="bg-emerald-950/20 border border-emerald-500/20 p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                          <div>
+                            <span className="text-[10px] uppercase font-mono tracking-widest text-emerald-400/50 block mb-1">Transaction UTR Number</span>
+                            <span className="font-mono font-bold text-white text-lg tracking-wider bg-black/40 px-3 py-1.5 rounded-lg border border-slate-800">
+                              {selectedSub.transactionId || 'NOT PROVIDED'}
+                            </span>
+                          </div>
+                          {selectedSub.paymentScreenshotUrl ? (
+                            <a
+                              href={selectedSub.paymentScreenshotUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-4 py-2.5 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500 hover:text-black text-emerald-400 text-xs font-bold font-outfit uppercase tracking-wider rounded-xl flex items-center gap-1.5 transition-all"
+                            >
+                              <Eye className="w-4 h-4" /> View Payment Screenshot
+                            </a>
+                          ) : (
+                            <span className="text-xs font-mono text-rose-400 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20">
+                              No Screenshot
+                            </span>
                           )}
                         </div>
                       </div>

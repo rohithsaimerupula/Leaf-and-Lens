@@ -72,6 +72,7 @@ export interface Submission {
   photoUrl?: string;
   reelUrl?: string;
   paymentScreenshotUrl?: string;
+  transactionId?: string;
   status: 'pending' | 'approved' | 'rejected';
   submittedAt: string;
   branch?: string;
@@ -216,6 +217,7 @@ async function initTursoSchema() {
         photoUrl TEXT,
         reelUrl TEXT,
         paymentScreenshotUrl TEXT NOT NULL,
+        transactionId TEXT,
         status TEXT NOT NULL DEFAULT 'pending',
         submittedAt TEXT NOT NULL,
         branch TEXT,
@@ -236,7 +238,8 @@ async function initTursoSchema() {
       { name: 'member2Section', type: 'TEXT' },
       { name: 'aiFlags', type: 'TEXT' },
       { name: 'rating', type: 'REAL' },
-      { name: 'creativeSummary', type: 'TEXT' }
+      { name: 'creativeSummary', type: 'TEXT' },
+      { name: 'transactionId', type: 'TEXT' }
     ];
     for (const col of columns) {
       try {
@@ -301,6 +304,7 @@ export const db = {
           photoUrl: row.photoUrl || undefined,
           reelUrl: row.reelUrl || undefined,
           paymentScreenshotUrl: row.paymentScreenshotUrl,
+          transactionId: row.transactionId || undefined,
           status: row.status,
           submittedAt: row.submittedAt,
           branch: row.branch || undefined,
@@ -339,13 +343,13 @@ export const db = {
         await tursoClient.execute({
           sql: `INSERT OR REPLACE INTO submissions (
             id, teamName, participationType, member1Name, member1Roll, member1Email, member1Phone,
-            member2Name, member2Roll, member2Email, member2Phone, photoUrl, reelUrl, paymentScreenshotUrl, status, submittedAt,
+            member2Name, member2Roll, member2Email, member2Phone, photoUrl, reelUrl, paymentScreenshotUrl, transactionId, status, submittedAt,
             branch, section, member2Branch, member2Section, aiFlags, rating, creativeSummary
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           args: [
             sub.id, sub.teamName, sub.participationType, sub.member1Name, sub.member1Roll, sub.member1Email, sub.member1Phone,
             sub.member2Name || null, sub.member2Roll || null, sub.member2Email || null, sub.member2Phone || null,
-            sub.photoUrl || null, sub.reelUrl || null, sub.paymentScreenshotUrl, sub.status, sub.submittedAt,
+            sub.photoUrl || null, sub.reelUrl || null, sub.paymentScreenshotUrl, sub.transactionId || null, sub.status, sub.submittedAt,
             sub.branch || null, sub.section || null, sub.member2Branch || null, sub.member2Section || null, sub.aiFlags || null, sub.rating !== undefined ? sub.rating : null, sub.creativeSummary || null
           ]
         });
