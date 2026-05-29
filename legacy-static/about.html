@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>About — Leaf &amp; Lens 2026</title>
+<meta name="description" content="About Leaf &amp; Lens — a photo and reel competition for World Environment Day 2026."/>
+<link rel="stylesheet" href="assets/css/site.css"/>
+<style>
+.about-wrap{max-width:1100px;margin:0 auto;padding:4rem 2rem 6rem}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:3.5rem;align-items:center;margin-bottom:5rem}
+.split.rev{direction:rtl}.split.rev>*{direction:ltr}
+.split-img{border-radius:3px;overflow:hidden;border:1px solid var(--border);aspect-ratio:4/3}
+.split-img img{width:100%;height:100%;object-fit:cover;filter:brightness(.68) saturate(1.15);transition:.5s}
+.split-img:hover img{filter:brightness(.82) saturate(1.25);transform:scale(1.04)}
+.fact-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:2rem 0}
+.fact-card{background:var(--glass);border:1px solid var(--border);border-radius:2px;padding:1.5rem 1rem;text-align:center;transition:.3s}
+.fact-card:hover{border-color:rgba(201,168,76,.3);transform:translateY(-4px)}
+.wed-banner-block{position:relative;border-radius:3px;overflow:hidden;margin-bottom:5rem}
+.wed-banner-block img{width:100%;height:280px;object-fit:cover;display:block;filter:brightness(.45) saturate(1.2)}
+.wed-banner-grade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(4,8,5,.92) 100%)}
+.wed-banner-body{position:absolute;bottom:0;left:0;right:0;padding:2rem 2.5rem}
+.pledge-visual{background:var(--glass);border:1px solid var(--border);border-radius:3px;padding:2.5rem;display:flex;flex-direction:column;align-items:center;gap:.75rem;text-align:center}
+.pledge-visual img{width:100%;height:180px;object-fit:cover;filter:brightness(.6) saturate(1.1);border-radius:2px;margin-bottom:.5rem}
+.pledge-big-num{font-family:'Cormorant Garamond',serif;font-size:3.5rem;font-weight:600;color:var(--gold-lt);line-height:1}
+.org-card{background:var(--glass);border:1px solid var(--border);border-radius:3px;overflow:hidden}
+.org-card-img{width:100%;height:200px;object-fit:cover;filter:brightness(.5) saturate(1.2)}
+.org-card-body{display:flex;gap:2rem;align-items:flex-start;padding:2rem;flex-wrap:wrap}
+.org-avatar{width:72px;height:72px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid rgba(201,168,76,.3)}
+.org-avatar img{width:100%;height:100%;object-fit:cover;filter:saturate(.9)}
+.jury-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem}
+.jury-card{background:var(--glass);border:1px solid var(--border);border-radius:3px;overflow:hidden;transition:.35s}
+.jury-card:hover{border-color:rgba(201,168,76,.3);transform:translateY(-5px)}
+.jury-card-img{width:100%;height:140px;object-fit:cover;filter:brightness(.55) saturate(1.1)}
+.jury-card-body{padding:1.4rem 1.5rem;text-align:center}
+.jury-initials{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--forest),var(--sage));display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700;color:var(--cream);margin:0 auto 1rem;border:2px solid rgba(201,168,76,.3)}
+.jury-name{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;font-style:italic;color:var(--cream);margin-bottom:.3rem}
+.jury-role{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem}
+.jury-dept{font-size:.82rem;color:var(--cream3);line-height:1.6}
+@media(max-width:860px){.split,.split.rev{grid-template-columns:1fr;direction:ltr}.fact-grid{grid-template-columns:1fr 1fr}.jury-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.fact-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="site-bg"></div><div class="site-bg-ov"></div><div class="site-grain"></div>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <img class="page-hero-img" src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=1600&q=70" alt="About Leaf Lens"/>
+  <div class="page-hero-grade"></div>
+  <div class="page-hero-nav wrap">
+    <a href="home.html" class="page-back">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      Home
+    </a>
+    <a href="register.html" class="nav-cta">Register Now</a>
+  </div>
+  <div class="page-hero-eyebrow">About the Competition</div>
+  <h1 class="page-hero h1" style="position:relative;z-index:2">About <em class="em-gold">Leaf &amp; Lens</em></h1>
+  <p style="position:relative;z-index:2;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.05rem;color:var(--cream3)">A celebration of nature, photography, and climate action</p>
+  <div class="page-hero-line"></div>
+</div>
+
+<div class="about-wrap">
+
+  <!-- WORLD ENVIRONMENT DAY BANNER -->
+  <div class="wed-banner-block reveal">
+    <img src="https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?w=1400&q=70" alt="World Environment Day"/>
+    <div class="wed-banner-grade"></div>
+    <div class="wed-banner-body">
+      <div class="eyebrow">World Environment Day — June 5, 2026</div>
+      <h2 class="h2" style="margin-bottom:.75rem">52 Years of Global Action</h2>
+      <p class="prose" style="max-width:680px;margin-bottom:1.2rem">World Environment Day is the UN's principal vehicle for encouraging awareness and action for the protection of our environment. Since 1974, it has been celebrated every year on June 5th, engaging governments, businesses, and citizens to focus their efforts on pressing environmental issues.</p>
+      <div class="fact-grid" style="margin:0">
+        <div class="fact-card"><div class="stat-num">52</div><div class="stat-lbl">Years of WED</div></div>
+        <div class="fact-card"><div class="stat-num">143+</div><div class="stat-lbl">Countries Participate</div></div>
+        <div class="fact-card"><div class="stat-num">1.8B</div><div class="stat-lbl">People Reached</div></div>
+        <div class="fact-card"><div class="stat-num">2026</div><div class="stat-lbl">Year of Action</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHY LEAF & LENS -->
+  <div class="split reveal">
+    <div>
+      <div class="eyebrow">The Competition</div>
+      <h2 class="h2" style="margin-bottom:1.2rem">Why <em class="em-gold">Leaf &amp; Lens?</em></h2>
+      <p class="prose" style="margin-bottom:1rem">We believe a single photograph can change how someone sees the world. Leaf &amp; Lens was born from the idea that the most powerful environmental advocacy doesn't always come from statistics — it comes from a stunning image that makes you stop and feel.</p>
+      <p class="prose" style="margin-bottom:1rem">Our theme, <strong>"Urban Green Pockets"</strong>, asks you to find the small, hidden pockets of nature that exist even in the most urbanised environments — proof that life persists and that we must protect it.</p>
+      <p class="prose">This is not just a competition. It is a call to action.</p>
+      <a href="register.html" class="btn btn-gold" style="margin-top:1.8rem">Join the Movement</a>
+    </div>
+    <div class="split-img"><img src="https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=800&q=75" alt="Photography activism"/></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- CLIMATE ACTION -->
+  <div class="split rev reveal">
+    <div>
+      <div class="eyebrow">Climate Action</div>
+      <h2 class="h2" style="margin-bottom:1.2rem">The Urgency of <em class="em-gold">Now</em></h2>
+      <p class="prose" style="margin-bottom:1rem">The science is clear. Global temperatures have risen by 1.2°C. Rainforests are being lost at 18 million acres per year. A million species face extinction. Climate action requires all of us.</p>
+      <p class="prose" style="margin-bottom:1rem">Your participation in Leaf &amp; Lens is a statement: you see the world differently, and you want others to see it too. Every participant who signs the Climate Action Pledge commits to meaningful environmental action.</p>
+      <div class="pledge-visual" style="margin-top:1.5rem">
+        <img src="https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=65" alt="Pledge nature"/>
+        <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.95rem;color:var(--cream3);max-width:380px">"I pledge to take meaningful action for the environment and spread awareness about climate change in my community."</p>
+        <div class="pledge-big-num" id="aboutPledgeCount">127</div>
+        <div style="font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--cream3)">participants have pledged</div>
+      </div>
+    </div>
+    <div class="split-img"><img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=75" alt="Climate forest"/></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ORGANISER -->
+  <div class="eyebrow center reveal" style="justify-content:center">The Team</div>
+  <h2 class="h2 reveal" style="text-align:center;margin-bottom:1.8rem">Meet the <em class="em-gold">Organiser</em></h2>
+  <div class="org-card reveal">
+    <img class="org-card-img" src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1400&q=65" alt="Organising committee"/>
+    <div class="org-card-body">
+      <div class="org-avatar"><img src="https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=200&q=60" alt="Organiser"/></div>
+      <div style="flex:1">
+        <h3 class="h3" style="margin-bottom:.75rem">Green Club &amp; BS&amp;H Department</h3>
+        <p class="prose" style="margin-bottom:1.2rem">Leaf &amp; Lens is proudly conducted by the <strong>Green Club</strong> in association with the <strong>Department of Basic Science &amp; Humanities (BS&amp;H)</strong>. Our joint committee of passionate students, educators, and environmentalists is dedicated to providing a platform that celebrates both artistic expression and environmental consciousness among first-year students.</p>
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+          <a href="mailto:rohithsaimerupula01@gmail.com" class="btn btn-ghost" style="font-size:.75rem;padding:.6rem 1.2rem">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            Email Us
+          </a>
+          <a href="https://wa.me/919014123748" class="btn btn-ghost" style="font-size:.75rem;padding:.6rem 1.2rem">WhatsApp 9014123748</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- FINAL CTA -->
+  <!-- COORDINATORS SECTION -->
+  <div style="margin-bottom:4rem;" class="reveal" id="coordinators">
+    <div class="eyebrow center" style="justify-content:center;margin-bottom:0.5rem;">Meet the Team</div>
+    <h2 class="h2" style="text-align:center;margin-bottom:0.5rem;">Event <em class="em-gold">Coordinators</em></h2>
+    <p class="prose" style="text-align:center;max-width:540px;margin:0 auto 2.5rem;">Guiding this competition with passion and purpose.</p>
+
+    <!-- Faculty Coordinators -->
+    <div class="eyebrow" style="margin-bottom:1rem;font-size:0.7rem;letter-spacing:0.15em;">Faculty Coordinators</div>
+    <div id="facultyCoordinatorsContainer" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.25rem;margin-bottom:2.5rem;">
+      <div style="font-size:0.8rem;color:var(--cream3);">Loading coordinators...</div>
+    </div>
+
+    <!-- Student Coordinators -->
+    <div class="eyebrow" style="margin-bottom:1rem;font-size:0.7rem;letter-spacing:0.15em;">Student Coordinators</div>
+    <div id="studentCoordinatorsContainer" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;">
+      <div style="font-size:0.8rem;color:var(--cream3);">Loading coordinators...</div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div style="text-align:center;padding:3rem 0 0" class="reveal">
+    <div class="eyebrow center" style="justify-content:center">Join the Movement</div>
+    <h2 class="h2" style="margin-bottom:1rem">Ready to Make Your <em class="em-gold">Mark?</em></h2>
+    <p class="prose" style="margin-bottom:2rem;max-width:540px;margin-left:auto;margin-right:auto">Registrations are currently open for 1st year students. Don't miss your chance to be part of this global celebration of nature and climate action.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+      <a href="register.html" class="btn btn-gold">Register &amp; Submit Now</a>
+      <a href="rules.html" class="btn btn-ghost">Read the Rules</a>
+    </div>
+  </div>
+
+</div>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-inner">
+      <div>
+        <a href="index.html" class="footer-logo" style="text-decoration:none; color:inherit;"><svg class="footer-logo-leaf" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>Leaf &amp; Lens</a>
+        <div class="footer-tagline">Capture the Green. Change the World.</div>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col"><h4>Navigation</h4><a href="home.html">Home</a><a href="rules.html">Rules</a><a href="about.html">About</a><a href="register.html">Register</a></div>
+        <div class="footer-col"><h4>Contact</h4><a href="mailto:rohithsaimerupula01@gmail.com">rohithsaimerupula01@gmail.com</a><a href="https://wa.me/919014123748">WhatsApp 9014123748</a></div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-copy">© 2026 Leaf &amp; Lens · Conducted by the Green Club in association with the Department of Basic Science &amp; Humanities · World Environment Day</span>
+      <a href="admin/login.html" class="admin-link" title="Admin">⚙</a>
+    </div>
+  </div>
+</footer>
+
+<div id="toast-container"></div>
+<script src="assets/js/turso.js?v=1.0.3"></script>
+<script src="assets/js/main.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async ()=>{
+  const els=document.querySelectorAll('.reveal,.reveal-l,.reveal-r');
+  const obs=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('visible');obs.unobserve(x.target)}}),{threshold:.1});
+  els.forEach(el=>obs.observe(el));
+  const el=document.getElementById('aboutPledgeCount');
+  if(el && window.TURSO) {
+    try {
+      const subs = await TURSO.getSubmissions();
+      // Count all active submissions (approved, rejected, or pending) as pledges
+      el.textContent = subs.length > 0 ? subs.length : 127;
+    } catch(e) {
+      el.textContent = 127;
+    }
+  }
+
+  if(window.TURSO) {
+    const coords = await TURSO.getCoordinators();
+    
+    const facContainer = document.getElementById('facultyCoordinatorsContainer');
+    if(facContainer && coords.faculty.length > 0) {
+      facContainer.innerHTML = coords.faculty.map(c => `
+        <div style="background:var(--glass);border:1px solid rgba(201,168,76,0.2);border-radius:4px;padding:1.75rem;display:flex;align-items:center;gap:1.25rem;transition:.3s;" onmouseenter="this.style.borderColor='rgba(201,168,76,0.5)';this.style.transform='translateY(-4px)'" onmouseleave="this.style.borderColor='rgba(201,168,76,0.2)';this.style.transform=''">
+          <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#1a4f2a,#3a7d52);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700;color:var(--cream);flex-shrink:0;border:2px solid rgba(201,168,76,0.3);">${c.initials}</div>
+          <div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--cream);margin-bottom:0.2rem;">${c.name}</div>
+            <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:0.4rem;">${c.role}</div>
+            <a href="tel:${c.phone}" style="font-size:0.82rem;color:var(--cream3);text-decoration:none;display:flex;align-items:center;gap:0.4rem;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              ${c.phone}
+            </a>
+          </div>
+        </div>
+      `).join('');
+    } else if (facContainer) { facContainer.innerHTML = '<div style="font-size:0.8rem;color:var(--cream3);">No coordinators available.</div>'; }
+
+    const stuContainer = document.getElementById('studentCoordinatorsContainer');
+    if(stuContainer && coords.student.length > 0) {
+      stuContainer.innerHTML = coords.student.map(c => `
+        <div style="background:var(--glass);border:1px solid rgba(82,183,136,0.2);border-radius:4px;padding:1.5rem;text-align:center;transition:.3s;" onmouseenter="this.style.borderColor='rgba(82,183,136,0.5)';this.style.transform='translateY(-4px)'" onmouseleave="this.style.borderColor='rgba(82,183,136,0.2)';this.style.transform=''">
+          <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#0d3b24,#1a6640);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:700;color:var(--cream);margin:0 auto 0.75rem;border:2px solid rgba(82,183,136,0.3);">${c.initials}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;color:var(--cream);margin-bottom:0.2rem;">${c.name}</div>
+          <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--sage);margin-bottom:0.5rem;">${c.role}</div>
+          <a href="tel:${c.phone}" style="font-size:0.8rem;color:var(--cream3);text-decoration:none;">📞 ${c.phone}</a>
+        </div>
+      `).join('');
+    } else if (stuContainer) { stuContainer.innerHTML = '<div style="font-size:0.8rem;color:var(--cream3);">No coordinators available.</div>'; }
+  }
+});
+</script>
+</body>
+</html>
