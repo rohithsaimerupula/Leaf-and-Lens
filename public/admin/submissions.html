@@ -354,6 +354,7 @@ function viewSubmission(id) {
   prev.innerHTML = mediaHTML;
   document.getElementById('modalDetail').innerHTML = `
     <div class="detail-row"><span class="detail-label">Name</span><span class="detail-value">${s.member1Name || s.teamName}</span></div>
+    <div class="detail-row"><span class="detail-label">PhonePe UTR</span><span class="detail-value" style="font-family:var(--font-mono);color:var(--gold-lt);font-weight:600;letter-spacing:1px;">${s.transactionId || 'Not provided'}</span></div>
     <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${s.member1Email || '—'}</span></div>
     <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">${s.member1Phone || '—'}</span></div>
     <div class="detail-row"><span class="detail-label">Roll No</span><span class="detail-value" style="color:var(--primary-light);font-weight:600;">${s.member1Roll || '—'}</span></div>

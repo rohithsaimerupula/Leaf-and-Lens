@@ -277,6 +277,7 @@ function viewParticipant(id) {
            </div>`
         : '<span style="color:var(--text-muted);font-size:0.85rem;">No payment screenshot attached</span>'}
     </div>
+    <div class="detail-row"><span class="detail-label">PhonePe UTR</span><span class="detail-value" style="font-family:var(--font-mono);color:var(--gold-lt);font-weight:600;letter-spacing:1px;">${s.transactionId || 'Not provided'}</span></div>
     <div class="detail-row"><span class="detail-label">Submission ID</span><span class="detail-value td-id">${s.id}</span></div>
     <div class="detail-row"><span class="detail-label">Full Name</span><span class="detail-value">${s.member1Name || s.teamName}</span></div>
     <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${s.member1Email || '—'}</span></div>
