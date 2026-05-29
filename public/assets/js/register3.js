@@ -14,6 +14,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Check if registration is open
   try {
     const settings = await TURSO.getSettings();
+    
+    // Apply dynamic QR Code if uploaded by admin
+    if (settings && settings.qrCodeB64) {
+      const qrImg = document.querySelector('img[alt="Scan to Pay"]');
+      if (qrImg) qrImg.src = settings.qrCodeB64;
+    }
+
     const now = new Date();
     let isActive = !!settings.competitionActive;
 
@@ -497,7 +504,7 @@ function clearFile(type) {
 }
 
 // ── SUBMIT ───────────────────────────────────────────
-async function submitForm() {
+function step2Next() {
   const cat = formData.category;
   let valid = true;
   if (cat === 'Photo' || cat === 'Both') {
@@ -516,6 +523,18 @@ async function submitForm() {
   if (!csEl.value.trim()) { csErr.classList.add('show'); valid = false; }
   else { csErr.classList.remove('show'); formData.creativeSummary = csEl.value.trim(); }
 
+  if (!valid) { showToast('Please complete all required fields and upload files', 'error'); return; }
+
+  const amtDisplay = document.getElementById('paymentAmountDisplay');
+  if (amtDisplay) {
+    amtDisplay.textContent = (cat === 'Both') ? '₹50' : '₹30';
+  }
+
+  goStep(3);
+}
+
+async function submitForm() {
+  let valid = true;
   const utrEl = document.getElementById('transactionId');
   const utrErr = document.getElementById('e-transactionId');
   if (!utrEl || !utrEl.value.trim() || utrEl.value.trim().length < 12) { utrErr.classList.add('show'); valid = false; }
@@ -526,9 +545,9 @@ async function submitForm() {
   if (!payFileEl || !payFileEl.files || payFileEl.files.length === 0) { payErr.classList.add('show'); valid = false; }
   else { payErr.classList.remove('show'); }
 
-  if (!valid) { showToast('Please complete all required fields and upload files', 'error'); return; }
+  if (!valid) { showToast('Please complete payment details', 'error'); return; }
 
-  const btn = document.getElementById('btnSubmit') || document.getElementById('btn2Next');
+  const btn = document.getElementById('btnSubmit');
   if (btn.disabled) return;
   const originalText = btn.innerHTML;
   btn.disabled = true;
@@ -596,12 +615,12 @@ async function submitForm() {
     }
 
     // Show success
-    document.getElementById('step2').classList.add('hidden');
+    document.getElementById('step3').classList.add('hidden');
     document.getElementById('stepSuccess').classList.remove('hidden');
     document.getElementById('successId').textContent = id;
 
     // Update step indicators all done
-    for (let i = 1; i <= 2; i++) {
+    for (let i = 1; i <= 3; i++) {
       const si = document.getElementById('si-' + i);
       if(si) {
         si.classList.remove('active');
@@ -610,10 +629,9 @@ async function submitForm() {
     }
 
     showToast('🎉 Registration successful!', 'success');
-
   } catch (err) {
-    console.error('Submission error:', err);
-    showToast('Submission failed. Please try again.', 'error');
+    console.error(err);
+    showToast(err.message || 'Error submitting registration.', 'error');
     btn.disabled = false;
     btn.innerHTML = originalText;
   }

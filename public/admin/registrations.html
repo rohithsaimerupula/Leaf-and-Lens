@@ -105,6 +105,20 @@
           </div>
         </div>
       </div>
+      
+      <div style="margin-top:2rem;">
+        <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.5rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Payment QR Code <span style="color:#e63946">*</span></div>
+        <div style="display:flex;flex-direction:row;gap:1.5rem;align-items:center;background:rgba(5,15,8,0.5);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+          <img id="currentQrImg" src="../qrcode.png" alt="QR Preview" style="width:100px;height:100px;object-fit:contain;background:#fff;border-radius:4px;padding:4px;" />
+          <div style="display:flex;flex-direction:column;gap:0.75rem;flex-grow:1;">
+            <label style="font-size:0.75rem;color:var(--text-muted);">Upload New QR Code (PNG/JPG, Max 100KB)</label>
+            <div style="display:flex;gap:1rem;align-items:center;">
+              <input type="file" id="qrUploadInput" accept="image/png, image/jpeg" class="table-search" style="flex-grow:1;" />
+              <button class="btn btn-outline" style="padding:0.6rem 1.25rem;white-space:nowrap;" onclick="uploadNewQr()">Update QR Code</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Actions Row -->
       <div style="display:flex;gap:1rem;margin-top:2rem;flex-wrap:wrap;align-items:center;border-top:1px solid var(--border);padding-top:1.5rem;">
@@ -182,6 +196,7 @@ async function loadSettings() {
   if (currentSettings.regStartDate) document.getElementById('regStartDate').value = formatForDatetimeLocal(currentSettings.regStartDate);
   if (currentSettings.regEndDate)   document.getElementById('regEndDate').value   = formatForDatetimeLocal(currentSettings.regEndDate);
   if (currentSettings.regLimit)     document.getElementById('regLimit').value     = currentSettings.regLimit;
+  if (currentSettings.qrCodeB64)    document.getElementById('currentQrImg').src   = currentSettings.qrCodeB64;
 
   updateStatusUI();
   startCountdown();
@@ -284,6 +299,28 @@ function startCountdown() {
 
   tick();
   timerInterval = setInterval(tick, 1000);
+}
+
+async function uploadNewQr() {
+  const fileInput = document.getElementById('qrUploadInput');
+  if (!fileInput.files || fileInput.files.length === 0) {
+    showToast('Please select an image file first.', 'error');
+    return;
+  }
+  const file = fileInput.files[0];
+  if (file.size > 100 * 1024) {
+    showToast('QR Code image must be smaller than 100KB.', 'error');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    currentSettings.qrCodeB64 = e.target.result;
+    document.getElementById('currentQrImg').src = currentSettings.qrCodeB64;
+    await TURSO.saveSettings(currentSettings);
+    showToast('✅ QR Code Updated Successfully!', 'success');
+  };
+  reader.readAsDataURL(file);
 }
 </script>
 </body>

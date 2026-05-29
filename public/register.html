@@ -56,6 +56,11 @@
       <div class="step-num">2</div>
       <div class="step-lbl">Upload Files</div>
     </div>
+    <div class="step-line"></div>
+    <div class="step-item" id="si-3">
+      <div class="step-num">3</div>
+      <div class="step-lbl">Payment</div>
+    </div>
   </div>
 
   <!-- STEP 1: TEAM DETAILS -->
@@ -174,7 +179,7 @@
         <div class="cat-inner">
           <div class="cat-icon">📷</div>
           <div class="cat-name">Photo Only</div>
-          <div class="cat-price">₹50</div>
+          <div class="cat-price">₹30</div>
         </div>
       </label>
       <label class="cat-card" id="cc-Reel">
@@ -182,7 +187,7 @@
         <div class="cat-inner">
           <div class="cat-icon">🎬</div>
           <div class="cat-name">Reel Only</div>
-          <div class="cat-price">₹50</div>
+          <div class="cat-price">₹30</div>
         </div>
       </label>
       <label class="cat-card" id="cc-Both">
@@ -255,6 +260,34 @@
       <span class="ferr" id="e-reel">Please upload a video (MP4/MKV)</span>
     </div>
 
+    <!-- Creative Summary -->
+    <div class="fg" style="margin-top:1.5rem">
+      <label style="font-weight:600;margin-bottom:0.5rem;display:block;">✨ Creative Summary <span class="req">*</span></label>
+      <textarea id="creativeSummary" class="fi" rows="4" placeholder="Describe what inspired your submission..." style="resize:vertical;font-family:inherit;width:100%"></textarea>
+      <span class="ferr" id="e-creativeSummary">Please add a creative summary describing what inspired you</span>
+    </div>
+
+    <div class="step-nav">
+      <button class="btn-back" onclick="goStep(1)">← Back</button>
+      <button class="btn-next" id="btn2Next" onclick="step2Next()">
+        Next: Payment
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP 3: PAYMENT -->
+  <div class="step-panel hidden" id="step3">
+    <div class="panel-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+      Payment Verification
+    </div>
+
+    <div style="text-align:center; margin-bottom:1.5rem; padding:1.5rem; background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.2); border-radius:4px;">
+      <div style="font-size:0.85rem; color:var(--cream3); margin-bottom:0.3rem; text-transform:uppercase; font-weight:600; letter-spacing:1px;">Amount to Pay</div>
+      <div id="paymentAmountDisplay" style="font-family:var(--font-serif); font-size:2.5rem; font-weight:700; color:var(--gold-lt); line-height:1;">₹30</div>
+    </div>
+
     <!-- Payment Section -->
     <div class="fg" style="margin-top:1.5rem; background:rgba(10,25,15,0.4); border:1px solid var(--border); padding:1.5rem; border-radius:3px;">
       <div style="display:flex; align-items:flex-start; gap:1.5rem; flex-wrap:wrap;">
@@ -280,16 +313,9 @@
       </div>
     </div>
 
-    <!-- Creative Summary -->
-    <div class="fg" style="margin-top:1.5rem">
-      <label style="font-weight:600;margin-bottom:0.5rem;display:block;">✨ Creative Summary <span class="req">*</span></label>
-      <textarea id="creativeSummary" class="fi" rows="4" placeholder="Describe what inspired your submission..." style="resize:vertical;font-family:inherit;width:100%"></textarea>
-      <span class="ferr" id="e-creativeSummary">Please add a creative summary describing what inspired you</span>
-    </div>
-
-    <div class="step-nav">
-      <button class="btn-back" onclick="goStep(1)">← Back</button>
-      <button class="btn-submit" id="btn2Next" onclick="submitForm()">
+    <div class="step-nav" style="margin-top:2rem;">
+      <button class="btn-back" onclick="goStep(2)">← Back</button>
+      <button class="btn-submit" id="btnSubmit" onclick="submitForm()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
         Complete Registration
       </button>
