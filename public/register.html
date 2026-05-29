@@ -174,7 +174,7 @@
         <div class="cat-inner">
           <div class="cat-icon">📷</div>
           <div class="cat-name">Photo Only</div>
-          <div class="cat-price">Free</div>
+          <div class="cat-price">₹50</div>
         </div>
       </label>
       <label class="cat-card" id="cc-Reel">
@@ -182,7 +182,7 @@
         <div class="cat-inner">
           <div class="cat-icon">🎬</div>
           <div class="cat-name">Reel Only</div>
-          <div class="cat-price">Free</div>
+          <div class="cat-price">₹50</div>
         </div>
       </label>
       <label class="cat-card" id="cc-Both">
@@ -190,7 +190,7 @@
         <div class="cat-inner">
           <div class="cat-icon">✨</div>
           <div class="cat-name">Photo + Reel</div>
-          <div class="cat-price">Free</div>
+          <div class="cat-price">₹80</div>
         </div>
       </label>
     </div>
@@ -253,6 +253,31 @@
         <button type="button" onclick="clearFile('reel')" class="clr-btn">✕ Remove</button>
       </div>
       <span class="ferr" id="e-reel">Please upload a video (MP4/MKV)</span>
+    </div>
+
+    <!-- Payment Section -->
+    <div class="fg" style="margin-top:1.5rem; background:rgba(10,25,15,0.4); border:1px solid var(--border); padding:1.5rem; border-radius:3px;">
+      <div style="display:flex; align-items:flex-start; gap:1.5rem; flex-wrap:wrap;">
+        <div style="flex-shrink:0; text-align:center;">
+          <img src="qrcode.png" alt="Scan to Pay" style="width:120px; height:120px; object-fit:contain; background:#fff; padding:8px; border-radius:4px; margin-bottom:0.5rem;" />
+          <div style="font-size:0.75rem; color:var(--cream3); font-family:var(--font-mono); text-transform:uppercase; font-weight:600;">Scan & Pay (PhonePe)</div>
+        </div>
+        <div style="flex-grow:1; display:flex; flex-direction:column; gap:1rem; min-width:200px;">
+          <div>
+            <label style="font-weight:600;margin-bottom:0.5rem;display:block;">12-Digit PhonePe UTR Number <span class="req">*</span></label>
+            <input type="text" id="transactionId" class="fi" placeholder="e.g. 312345678901" maxlength="12" />
+            <span class="ferr" id="e-transactionId">Please enter valid 12-digit UTR</span>
+          </div>
+          <div>
+            <label style="font-weight:600;margin-bottom:0.5rem;display:block;">Payment Screenshot <span class="req">*</span></label>
+            <input type="file" id="filePayment" accept=".jpg,.jpeg,.png,image/jpeg,image/png" class="fi" style="padding:0.5rem;" />
+            <span class="ferr" id="e-paymentFile">Please upload payment screenshot</span>
+          </div>
+          <div style="font-size:0.75rem; color:var(--gold-lt); background:rgba(201,168,76,0.1); padding:0.5rem; border-radius:2px;">
+            ⚠️ Fake UTRs will lead to immediate cancellation. All payments are strictly audited.
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Creative Summary -->

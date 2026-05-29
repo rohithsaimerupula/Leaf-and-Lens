@@ -516,6 +516,16 @@ async function submitForm() {
   if (!csEl.value.trim()) { csErr.classList.add('show'); valid = false; }
   else { csErr.classList.remove('show'); formData.creativeSummary = csEl.value.trim(); }
 
+  const utrEl = document.getElementById('transactionId');
+  const utrErr = document.getElementById('e-transactionId');
+  if (!utrEl || !utrEl.value.trim() || utrEl.value.trim().length < 12) { utrErr.classList.add('show'); valid = false; }
+  else { utrErr.classList.remove('show'); }
+
+  const payFileEl = document.getElementById('filePayment');
+  const payErr = document.getElementById('e-paymentFile');
+  if (!payFileEl || !payFileEl.files || payFileEl.files.length === 0) { payErr.classList.add('show'); valid = false; }
+  else { payErr.classList.remove('show'); }
+
   if (!valid) { showToast('Please complete all required fields and upload files', 'error'); return; }
 
   const btn = document.getElementById('btnSubmit') || document.getElementById('btn2Next');
@@ -543,6 +553,7 @@ async function submitForm() {
 
     const photoB64   = photoFile   ? await toBase64(photoFile)   : null;
     const reelB64    = reelFile    ? await toBase64(reelFile)    : null;
+    const paymentB64 = (payFileEl && payFileEl.files[0]) ? await toBase64(payFileEl.files[0]) : null;
 
     // Generate submission ID
     const id = 'LL-2026-' + Date.now().toString(36).toUpperCase();
@@ -566,7 +577,8 @@ async function submitForm() {
       photoUrl:     photoB64,
       reelUrl:      reelB64,
       creativeSummary: formData.creativeSummary,
-      paymentScreenshotUrl: null,
+      paymentScreenshotUrl: paymentB64,
+      transactionId: utrEl ? utrEl.value.trim() : null,
       aiFlags:      formData.aiFlags || null,
       status:       'pending',
       submittedAt:  new Date().toISOString()
