@@ -7,9 +7,11 @@ import CursorTrail from '@/components/CursorTrail';
 import AmbientMusic from '@/components/AmbientMusic';
 import { 
   Users, CheckCircle2, XCircle, Clock, Calendar, Globe, Save, Trash2, 
-  Download, Eye, KeyRound, LogOut, ArrowLeft, RefreshCw, BarChart2, ShieldAlert
+  Download, Eye, KeyRound, LogOut, ArrowLeft, RefreshCw, BarChart2, ShieldAlert, Archive
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 function getBranchFromRoll(roll: string | null | undefined): string {
   if (!roll || typeof roll !== 'string') return '';
@@ -310,11 +312,49 @@ export default function Admin() {
     const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'leaf_lens_participant_roster.csv');
-    document.body.appendChild(link);
+    link.href = url;
+    link.download = 'leaf-lens-roster.csv';
     link.click();
-    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadZip = async () => {
+    const approvedSubmissions = submissions.filter(s => s.status === 'approved' && s.paymentScreenshotUrl);
+    if (!approvedSubmissions.length) {
+      alert("No approved submissions with payment screenshots found.");
+      return;
+    }
+
+    const zip = new JSZip();
+    const folder = zip.folder("approved_screenshots");
+    if (!folder) return;
+
+    for (const sub of approvedSubmissions) {
+      let data = sub.paymentScreenshotUrl;
+      const fileName = `${sub.transactionId || 'NO_UTR'}_${sub.teamName.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+      if (!data) continue;
+      
+      if (data.startsWith('data:image')) {
+        const base64Data = data.split(',')[1];
+        folder.file(fileName, base64Data, { base64: true });
+      } else {
+        try {
+          const res = await fetch(data);
+          const blob = await res.blob();
+          folder.file(fileName, blob);
+        } catch (e) {
+          console.error(`Failed to fetch ${fileName}`, e);
+        }
+      }
+    }
+
+    try {
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, "approved_screenshots.zip");
+    } catch (e) {
+      console.error("Failed to generate zip", e);
+      alert("Failed to generate zip file.");
+    }
   };
 
   if (!isLoggedIn) {
@@ -508,6 +548,12 @@ export default function Admin() {
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-black font-outfit uppercase tracking-tight text-white">Submissions</h2>
                 <div className="flex gap-2">
+                  <button
+                    onClick={handleDownloadZip}
+                    className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500 hover:text-black text-emerald-400 text-xs font-bold font-outfit uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Archive className="w-3.5 h-3.5" /> ZIP Screenshots
+                  </button>
                   <button
                     onClick={handleExportCSV}
                     className="px-4 py-2 rounded-xl bg-black/40 border border-slate-800 hover:border-white text-xs font-bold font-outfit uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
