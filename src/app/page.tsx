@@ -223,6 +223,12 @@ export default function Home() {
 
           <div className="flex items-center gap-4">
             <Link
+              href="/status"
+              className="hidden md:flex px-4 py-2.5 rounded-full border border-slate-800 text-slate-300 hover:text-white hover:border-slate-500 font-outfit text-xs font-bold uppercase tracking-wider transition-all duration-300 items-center gap-1.5"
+            >
+              <CheckCircle className="w-3.5 h-3.5" /> Check Status
+            </Link>
+            <Link
               href="/register"
               className={`px-5 py-2.5 rounded-full font-outfit text-xs font-bold uppercase tracking-wider transition-all duration-300 border ${
                 status?.isLive 
@@ -724,6 +730,7 @@ export default function Home() {
               <a href="#about" className="hover:text-white transition-colors">About the Event</a>
               <a href="#rules" className="hover:text-white transition-colors">Photography Rules</a>
               <a href="#timeline" className="hover:text-white transition-colors">Timeline Schedule</a>
+              <Link href="/status" className="hover:text-white transition-colors">Check Registration Status</Link>
               <Link href="/admin" className="hover:text-neon transition-colors text-neon/80 flex items-center gap-1">
                 ⚙️ Admin Login
               </Link>
