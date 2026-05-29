@@ -598,7 +598,7 @@ async function submitForm() {
     const compressVideo = async (file) => {
       btn.textContent = 'Loading video compressor (may take a moment)...';
       const { FFmpeg } = window.FFmpegWASM;
-      const { fetchFile, toBlobURL } = window.FFmpegUtil;
+      const { fetchFile } = window.FFmpegUtil;
       const ffmpeg = new FFmpeg();
       
       ffmpeg.on('progress', ({ progress }) => {
@@ -608,10 +608,10 @@ async function submitForm() {
         btn.textContent = `Compressing video: ${pct}%... Please do not close.`;
       });
       
-      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+      const baseURL = '/assets/js/ffmpeg';
       await ffmpeg.load({
-          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm')
+          coreURL: `${baseURL}/ffmpeg-core.js`,
+          wasmURL: `${baseURL}/ffmpeg-core.wasm`
       });
       
       btn.textContent = 'Reading video file...';
