@@ -7,6 +7,32 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="assets/css/main.css"/>
 <link rel="stylesheet" href="assets/css/register3.css"/>
+<style>
+  .qr-modal {
+    position: fixed; inset: 0; z-index: 99999;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 1rem;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s;
+  }
+  .qr-modal.show {
+    opacity: 1; pointer-events: auto;
+  }
+  .qr-modal-img {
+    max-width: 90%; max-height: 70vh; border-radius: 12px;
+    box-shadow: 0 0 50px rgba(201,168,76,0.3);
+    border: 2px solid var(--gold-lt);
+    background: #fff; padding: 1rem;
+    transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .qr-modal.show .qr-modal-img {
+    transform: scale(1);
+  }
+  .qr-modal-close {
+    position: absolute; top: 1.5rem; right: 1.5rem;
+    color: #fff; background: none; border: none; font-size: 2.5rem; cursor: pointer; line-height: 1;
+  }
+</style>
 </head>
 <body>
 <div class="reg-bg"></div>
@@ -292,7 +318,7 @@
     <div class="fg" style="margin-top:1.5rem; background:rgba(10,25,15,0.4); border:1px solid var(--border); padding:1.5rem; border-radius:3px;">
       <div style="display:flex; align-items:flex-start; gap:1.5rem; flex-wrap:wrap;">
         <div style="flex-shrink:0; text-align:center;">
-          <img src="qrcode.png" alt="Scan to Pay" style="width:120px; height:120px; object-fit:contain; background:#fff; padding:8px; border-radius:4px; margin-bottom:0.5rem;" />
+          <img id="mainQrImg" src="qrcode.png" alt="Scan to Pay" onclick="openQrModal()" style="width:120px; height:120px; object-fit:contain; background:#fff; padding:8px; border-radius:4px; margin-bottom:0.5rem; cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" title="Tap to enlarge" />
           <div style="font-size:0.75rem; color:var(--cream3); font-family:var(--font-mono); text-transform:uppercase; font-weight:600;">Scan & Pay (PhonePe)</div>
         </div>
         <div style="flex-grow:1; display:flex; flex-direction:column; gap:1rem; min-width:200px;">
@@ -338,7 +364,24 @@
 
 </div><!-- /reg-wrap -->
 
+  <!-- QR FULLSCREEN MODAL -->
+  <div id="qrModal" class="qr-modal" onclick="closeQrModal()">
+    <button class="qr-modal-close">&times;</button>
+    <img id="qrModalImg" class="qr-modal-img" src="qrcode.png" alt="QR Code Fullscreen" />
+    <div style="color: var(--gold-lt); font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase;">Tap anywhere to close</div>
+  </div>
+
 <div id="toast-container"></div>
+<script>
+  function openQrModal() {
+    const mainQr = document.getElementById('mainQrImg');
+    if(mainQr) document.getElementById('qrModalImg').src = mainQr.src;
+    document.getElementById('qrModal').classList.add('show');
+  }
+  function closeQrModal() {
+    document.getElementById('qrModal').classList.remove('show');
+  }
+</script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/turso.js?v=1.0.3"></script>
 <script src="assets/js/register3.js"></script>
