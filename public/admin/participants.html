@@ -241,17 +241,46 @@ function renderTable() {
   if (window.lucide) lucide.createIcons();
 }
 
+async function notifyParticipant(id, status, reason = '') {
+  const s = _allSubs.find(x => x.id === id);
+  if (s && s.member1Email) {
+    try {
+      await fetch('/api/send-status-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: s.member1Email, name: s.member1Name || s.teamName, status, reason, id })
+      });
+    } catch (e) {
+      console.error('Failed to notify participant', e);
+    }
+  }
+}
+
 async function setStatus(id, status) {
+  let reason = '';
+  if (status === 'rejected') {
+    reason = prompt("Reason for rejection (this will be emailed to the participant):");
+    if (reason === null) return; // Admin cancelled the prompt
+  }
+  
   await TURSO.updateSubmissionStatus(id, status);
   const idx = _allSubs.findIndex(s => s.id === id);
   if (idx > -1) _allSubs[idx].status = status;
+  
   showToast(status === 'approved' ? '✅ Approved!' : '❌ Rejected', status === 'approved' ? 'success' : 'error');
   renderTable();
   if (document.getElementById('detailModal').classList.contains('open')) viewParticipant(id);
+  
+  // Notify
+  await notifyParticipant(id, status, reason);
 }
 
 async function deleteSub(id) {
   if (!confirm('Delete this registration permanently?')) return;
+  const reason = prompt("Reason for removal (this will be emailed to the participant):") || 'No specific reason provided by the admin.';
+  
+  await notifyParticipant(id, 'removed', reason);
+  
   await TURSO.deleteSubmission(id);
   _allSubs = _allSubs.filter(s => s.id !== id);
   showToast('Registration removed', 'info');

@@ -261,8 +261,30 @@ async function loadRecentTable() {
 }
 
 async function quickAction(id, status) {
+  let reason = '';
+  if (status === 'rejected') {
+    reason = prompt("Reason for rejection (this will be emailed to the participant):");
+    if (reason === null) return; // Admin cancelled the prompt
+  }
+  
   await TURSO.updateSubmissionStatus(id, status);
   showToast(status === 'approved' ? '✅ Approved!' : '❌ Rejected', status === 'approved' ? 'success' : 'error');
+  
+  // Send email notification
+  const allSubs = await TURSO.getSubmissions();
+  const s = allSubs.find(x => x.id === id);
+  if (s && s.member1Email) {
+    try {
+      await fetch('/api/send-status-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: s.member1Email, name: s.member1Name || s.teamName, status, reason, id })
+      });
+    } catch (e) {
+      console.error('Failed to notify participant', e);
+    }
+  }
+
   await loadStats();
   await loadRecentTable();
 }
