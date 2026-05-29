@@ -597,7 +597,7 @@ async function submitForm() {
 
     const compressVideo = async (file) => {
       btn.textContent = 'Loading video compressor (may take a moment)...';
-      const { FFmpeg } = window.FFmpeg;
+      const { FFmpeg } = window.FFmpegWASM;
       const { fetchFile } = window.FFmpegUtil;
       const ffmpeg = new FFmpeg();
       
