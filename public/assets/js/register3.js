@@ -376,7 +376,7 @@ function handleFile(type, input) {
   const file = input.files[0];
   if (!file) return;
 
-  const limits = { photo: 10, reel: 50, payment: 5 };
+  const limits = { photo: 10, reel: 4, payment: 5 };
   const mb = file.size / 1024 / 1024;
   if (mb > limits[type]) {
     showToast(`File too large! Max ${limits[type]} MB for ${type}`, 'error');
@@ -570,9 +570,34 @@ async function submitForm() {
       r.readAsDataURL(f);
     });
 
-    const photoB64   = photoFile   ? await toBase64(photoFile)   : null;
+    const compressImage = (file, maxWidth, quality) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = event => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = error => reject(error);
+      };
+      reader.onerror = error => reject(error);
+    });
+
+    const photoB64   = photoFile   ? await compressImage(photoFile, 1200, 0.7)   : null;
     const reelB64    = reelFile    ? await toBase64(reelFile)    : null;
-    const paymentB64 = (payFileEl && payFileEl.files[0]) ? await toBase64(payFileEl.files[0]) : null;
+    const paymentB64 = (payFileEl && payFileEl.files[0]) ? await compressImage(payFileEl.files[0], 1000, 0.7) : null;
 
     // Generate submission ID
     const id = 'LL-2026-' + Date.now().toString(36).toUpperCase();
@@ -610,7 +635,15 @@ async function submitForm() {
     });
     
     if (!response.ok) {
-      const errData = await response.json();
+      let errData = {};
+      try {
+        errData = await response.json();
+      } catch (e) {
+        if (response.status === 413) {
+          throw new Error('Upload size limit exceeded. Please reduce file sizes (e.g. compress video/photo).');
+        }
+        throw new Error(`Server error (${response.status}): Could not process this request.`);
+      }
       throw new Error(errData.error || 'Failed to submit registration');
     }
 
