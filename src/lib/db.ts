@@ -37,9 +37,9 @@ if (isFirebaseConfigured) {
   }
 }
 
-// Turso Connection configuration
-const tursoUrl = process.env.NEXT_PUBLIC_TURSO_DATABASE_URL || "";
-const tursoToken = process.env.NEXT_PUBLIC_TURSO_AUTH_TOKEN || "";
+// Turso Connection configuration (Fallback to hardcoded for Vercel if env is missing)
+const tursoUrl = process.env.NEXT_PUBLIC_TURSO_DATABASE_URL || "libsql://leaf-and-lens-tharunmerupula.aws-ap-south-1.turso.io";
+const tursoToken = process.env.NEXT_PUBLIC_TURSO_AUTH_TOKEN || "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NzkxOTA0NzQsImlkIjoiMDE5ZTNmZmQtM2QwMS03OGMyLTlmNTAtZThiYmJjMmY3N2QzIiwicmlkIjoiZTkwMDMyNTQtMzIwZi00YTJhLWFhYTQtMjM2NzQ0Mjg4OGI1In0.fv4NNmBZhf2nwtdxUnM8dCjBeHQsP8BXvZBHlcjdDumt8wl6RiCSOFFAvqzwnhBQY1deZCXNppT8TfPtrkLzAA";
 const isTursoConfigured = !!(tursoUrl && tursoToken);
 
 let tursoClient: any = null;
