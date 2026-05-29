@@ -376,7 +376,7 @@ function handleFile(type, input) {
   const file = input.files[0];
   if (!file) return;
 
-  const limits = { photo: 10, reel: 4, payment: 5 };
+  const limits = { photo: 10, reel: 50, payment: 5 };
   const mb = file.size / 1024 / 1024;
   if (mb > limits[type]) {
     showToast(`File too large! Max ${limits[type]} MB for ${type}`, 'error');
@@ -595,9 +595,53 @@ async function submitForm() {
       reader.onerror = error => reject(error);
     });
 
+    const compressVideo = async (file) => {
+      btn.textContent = 'Loading video compressor (may take a moment)...';
+      const { FFmpeg } = window.FFmpeg;
+      const { fetchFile } = window.FFmpegUtil;
+      const ffmpeg = new FFmpeg();
+      
+      ffmpeg.on('progress', ({ progress }) => {
+        let pct = Math.round(progress * 100);
+        if (pct < 0) pct = 0;
+        if (pct > 100) pct = 100;
+        btn.textContent = `Compressing video: ${pct}%... Please do not close.`;
+      });
+      
+      await ffmpeg.load({
+          coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
+          wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm'
+      });
+      
+      btn.textContent = 'Reading video file...';
+      const inputName = file.name.replace(/\s+/g, '_');
+      await ffmpeg.writeFile(inputName, await fetchFile(file));
+      
+      btn.textContent = 'Starting video compression...';
+      // Compress strongly to fit under 4.5MB API limit: 480p, very fast preset, CRF 35
+      await ffmpeg.exec(['-i', inputName, '-vcodec', 'libx264', '-preset', 'ultrafast', '-crf', '35', '-vf', 'scale=-2:480', '-b:a', '48k', 'output.mp4']);
+      
+      btn.textContent = 'Finalizing video...';
+      const data = await ffmpeg.readFile('output.mp4');
+      
+      return new Promise((resolve) => {
+        const blob = new Blob([data.buffer], { type: 'video/mp4' });
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+    };
+
+    btn.textContent = 'Processing Photo...';
     const photoB64   = photoFile   ? await compressImage(photoFile, 1200, 0.7)   : null;
-    const reelB64    = reelFile    ? await toBase64(reelFile)    : null;
+    
+    btn.textContent = 'Processing Video (This will take a few minutes)...';
+    const reelB64    = reelFile    ? await compressVideo(reelFile)    : null;
+    
+    btn.textContent = 'Processing Payment Screenshot...';
     const paymentB64 = (payFileEl && payFileEl.files[0]) ? await compressImage(payFileEl.files[0], 1000, 0.7) : null;
+    
+    btn.textContent = 'Submitting...';
 
     // Generate submission ID
     const id = 'LL-2026-' + Date.now().toString(36).toUpperCase();
