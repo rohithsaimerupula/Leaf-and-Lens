@@ -357,6 +357,23 @@ export default function Admin() {
     }
   };
 
+  const openMediaInNewTab = async (dataUrl: string) => {
+    if (!dataUrl) return;
+    if (!dataUrl.startsWith('data:')) {
+      window.open(dataUrl, '_blank');
+      return;
+    }
+    try {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+    } catch (err) {
+      console.error('Error opening media:', err);
+      alert('Could not open media file.');
+    }
+  };
+
   if (!isLoggedIn) {
     return (
       <div className="relative min-h-screen bg-bg-dark text-slate-100 flex flex-col items-center justify-center py-16 px-6 font-sans">
@@ -664,14 +681,12 @@ export default function Admin() {
                             </span>
                           </div>
                           {selectedSub.paymentScreenshotUrl ? (
-                            <a
-                              href={selectedSub.paymentScreenshotUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-4 py-2.5 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500 hover:text-black text-emerald-400 text-xs font-bold font-outfit uppercase tracking-wider rounded-xl flex items-center gap-1.5 transition-all"
+                            <button
+                              onClick={() => openMediaInNewTab(selectedSub.paymentScreenshotUrl!)}
+                              className="px-4 py-2.5 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500 hover:text-black text-emerald-400 text-xs font-bold font-outfit uppercase tracking-wider rounded-xl flex items-center gap-1.5 transition-all cursor-pointer"
                             >
                               <Eye className="w-4 h-4" /> View Payment Screenshot
-                            </a>
+                            </button>
                           ) : (
                             <span className="text-xs font-mono text-rose-400 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20">
                               No Screenshot
@@ -709,24 +724,20 @@ export default function Admin() {
                         
                         <div className="flex flex-wrap gap-3">
                           {selectedSub.photoUrl && (
-                            <a
-                              href={selectedSub.photoUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-4 py-2 bg-black/40 border border-slate-800 hover:border-white text-xs font-bold font-outfit uppercase tracking-wider rounded-xl flex items-center gap-1.5"
+                            <button
+                              onClick={() => openMediaInNewTab(selectedSub.photoUrl!)}
+                              className="px-4 py-2 bg-black/40 border border-slate-800 hover:border-white text-xs font-bold font-outfit uppercase tracking-wider rounded-xl flex items-center gap-1.5 cursor-pointer"
                             >
                               <Eye className="w-3.5 h-3.5" /> View Photo
-                            </a>
+                            </button>
                           )}
                           {selectedSub.reelUrl && (
-                            <a
-                              href={selectedSub.reelUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-4 py-2 bg-black/40 border border-slate-800 hover:border-white text-xs font-bold font-outfit uppercase tracking-wider rounded-xl flex items-center gap-1.5"
+                            <button
+                              onClick={() => openMediaInNewTab(selectedSub.reelUrl!)}
+                              className="px-4 py-2 bg-black/40 border border-slate-800 hover:border-white text-xs font-bold font-outfit uppercase tracking-wider rounded-xl flex items-center gap-1.5 cursor-pointer"
                             >
                               <Eye className="w-3.5 h-3.5" /> View Reel
-                            </a>
+                            </button>
                           )}
                         </div>
                       </div>
