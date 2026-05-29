@@ -224,7 +224,7 @@ export default function Home() {
           <div className="flex items-center gap-4">
             <Link
               href="/status"
-              className="hidden md:flex px-4 py-2.5 rounded-full border border-slate-800 text-slate-300 hover:text-white hover:border-slate-500 font-outfit text-xs font-bold uppercase tracking-wider transition-all duration-300 items-center gap-1.5"
+              className="flex px-4 py-2.5 rounded-full border border-slate-800 text-slate-300 hover:text-white hover:border-slate-500 font-outfit text-xs font-bold uppercase tracking-wider transition-all duration-300 items-center gap-1.5"
             >
               <CheckCircle className="w-3.5 h-3.5" /> Check Status
             </Link>
