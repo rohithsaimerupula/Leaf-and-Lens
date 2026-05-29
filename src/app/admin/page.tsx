@@ -144,6 +144,13 @@ export default function Admin() {
       setSelectedSub(updated);
     }
     loadAllData();
+    
+    // Trigger email notification
+    fetch('/api/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: sub.member1Email, name: sub.member1Name, status: 'approved', id: sub.id })
+    }).catch(console.error);
   };
 
   const handleReject = async (sub: Submission) => {
@@ -153,13 +160,27 @@ export default function Admin() {
       setSelectedSub(updated);
     }
     loadAllData();
+
+    // Trigger email notification
+    fetch('/api/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: sub.member1Email, name: sub.member1Name, status: 'rejected', id: sub.id })
+    }).catch(console.error);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (sub: Submission) => {
     if (confirm('Permanently delete this entry? This action cannot be undone.')) {
-      await db.deleteSubmission(id);
+      await db.deleteSubmission(sub.id);
       setSelectedSub(null);
       loadAllData();
+
+      // Trigger email notification
+      fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: sub.member1Email, name: sub.member1Name, status: 'deleted', id: sub.id })
+      }).catch(console.error);
     }
   };
 
@@ -680,7 +701,7 @@ export default function Admin() {
                           <XCircle className="w-4 h-4" /> Reject Entry
                         </button>
                         <button
-                          onClick={() => handleDelete(selectedSub.id)}
+                          onClick={() => handleDelete(selectedSub)}
                           className="px-4 py-3 bg-transparent border border-slate-800 text-slate-500 hover:text-rose-500 hover:border-rose-500/30 rounded-xl transition-all flex items-center justify-center cursor-pointer"
                           title="Delete submission permanently"
                         >
