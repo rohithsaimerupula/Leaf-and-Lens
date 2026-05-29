@@ -376,7 +376,7 @@ function handleFile(type, input) {
   const file = input.files[0];
   if (!file) return;
 
-  const limits = { photo: 10, reel: 50, payment: 5 };
+  const limits = { photo: 10, reel: 4, payment: 5 };
   const mb = file.size / 1024 / 1024;
   if (mb > limits[type]) {
     showToast(`File too large! Max ${limits[type]} MB for ${type}`, 'error');
@@ -563,36 +563,41 @@ async function submitForm() {
       return;
     }
 
-    const uploadToFirebase = async (file, path) => {
-      if (!file) return null;
-      return new Promise((resolve, reject) => {
-        const storageRef = window.fbStorage.ref().child(`${path}/${Date.now()}_${file.name}`);
-        const task = storageRef.put(file);
-        
-        task.on('state_changed', 
-          (snapshot) => {
-            const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-            btn.textContent = `Uploading ${path}... ${pct}%`;
-          },
-          (err) => reject(err),
-          async () => {
-            const url = await task.snapshot.ref.getDownloadURL();
-            resolve(url);
-          }
-        );
-      });
-    };
+    const toBase64 = f => new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = rej;
+      r.readAsDataURL(f);
+    });
 
-    btn.textContent = 'Uploading Photo...';
-    const photoB64   = photoFile   ? await uploadToFirebase(photoFile, 'photos')   : null;
-    
-    btn.textContent = 'Uploading Video...';
-    const reelB64    = reelFile    ? await uploadToFirebase(reelFile, 'reels')    : null;
-    
-    btn.textContent = 'Uploading Payment...';
-    const paymentB64 = (payFileEl && payFileEl.files[0]) ? await uploadToFirebase(payFileEl.files[0], 'payments') : null;
-    
-    btn.textContent = 'Submitting Data...';
+    const compressImage = (file, maxWidth, quality) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = event => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = error => reject(error);
+      };
+      reader.onerror = error => reject(error);
+    });
+
+    const photoB64   = photoFile   ? await compressImage(photoFile, 1200, 0.7)   : null;
+    const reelB64    = reelFile    ? await toBase64(reelFile)    : null;
+    const paymentB64 = (payFileEl && payFileEl.files[0]) ? await compressImage(payFileEl.files[0], 1000, 0.7) : null;
 
     // Generate submission ID
     const id = 'LL-2026-' + Date.now().toString(36).toUpperCase();

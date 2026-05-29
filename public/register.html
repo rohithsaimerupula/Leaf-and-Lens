@@ -271,7 +271,7 @@
 
     <!-- Reel Upload -->
     <div class="upload-zone" id="reelZone">
-      <div class="uz-label">🎬 Reel / Video <span class="req">*</span> <span class="uz-hint">MP4 / MKV · 30-60 sec · Max 50 MB</span></div>
+      <div class="uz-label">🎬 Reel / Video <span class="req">*</span> <span class="uz-hint">MP4 / MKV · 30-60 sec · Max 4 MB</span></div>
       <label class="drop-area" id="reelDropArea">
         <input type="file" id="fileReel" accept=".mp4,.mkv,video/mp4,video/x-matroska" onchange="handleFile('reel', this)"/>
         <div class="drop-body" id="reelDropBody">
@@ -381,20 +381,6 @@
   function closeQrModal() {
     document.getElementById('qrModal').classList.remove('show');
   }
-</script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyCiYALWnrdf8gKrzMtWmWVBo5iK-9TrK2g",
-    authDomain: "afww-d28fc.firebaseapp.com",
-    projectId: "afww-d28fc",
-    storageBucket: "afww-d28fc.firebasestorage.app",
-    messagingSenderId: "79467294495",
-    appId: "1:79467294495:web:a06f4a42aa30a39b410a2a"
-  };
-  firebase.initializeApp(firebaseConfig);
-  window.fbStorage = firebase.storage();
 </script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/turso.js?v=1.0.3"></script>
