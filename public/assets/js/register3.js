@@ -572,7 +572,16 @@ async function submitForm() {
       submittedAt:  new Date().toISOString()
     };
 
-    await TURSO.saveSubmission(submission);
+    const response = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(submission)
+    });
+    
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.error || 'Failed to submit registration');
+    }
 
     // Show success
     document.getElementById('step2').classList.add('hidden');

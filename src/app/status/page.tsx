@@ -58,7 +58,7 @@ export default function CheckStatus() {
       <div className="w-full max-w-xl relative z-10">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors duration-300 font-outfit text-sm font-semibold mb-8 group"
+          className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors duration-300 font-playfair text-sm font-semibold mb-8 group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Portal Home
         </Link>
@@ -66,7 +66,7 @@ export default function CheckStatus() {
         <div className="glass-panel border-neon/10 rounded-3xl p-8 md:p-12 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
           <div className="text-center mb-8">
             <span className="text-[10px] uppercase font-mono tracking-widest text-neon font-black">Track Application</span>
-            <h1 className="text-3xl font-black font-outfit text-white uppercase tracking-tight mt-1">
+            <h1 className="text-3xl font-black font-playfair text-white uppercase tracking-tight mt-1">
               Check Status
             </h1>
             <p className="text-sm font-light text-slate-400 mt-2">
@@ -90,7 +90,7 @@ export default function CheckStatus() {
             <button
               type="submit"
               disabled={loading || !query.trim()}
-              className="w-full py-4 mt-4 bg-neon text-black rounded-xl font-outfit font-bold uppercase tracking-wider transition-all duration-300 border border-neon hover:bg-transparent hover:text-neon flex items-center justify-center gap-2 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+              className="w-full py-4 mt-4 bg-neon text-black rounded-xl font-playfair font-bold uppercase tracking-wider transition-all duration-300 border border-neon hover:bg-transparent hover:text-neon flex items-center justify-center gap-2 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
             >
               {loading ? (
                 <><Loader2 className="w-5 h-5 animate-spin" /> Searching...</>
@@ -112,7 +112,7 @@ export default function CheckStatus() {
               <div className="flex justify-between items-start mb-6 border-b border-slate-900 pb-4">
                 <div>
                   <span className="text-[10px] font-mono tracking-widest text-slate-500 uppercase block mb-1">Registration ID: {result.id}</span>
-                  <h3 className="text-xl font-black font-outfit text-white uppercase">{result.teamName}</h3>
+                  <h3 className="text-xl font-black font-playfair text-white uppercase">{result.teamName}</h3>
                   <span className="text-sm text-slate-400">{result.member1Name}</span>
                 </div>
                 

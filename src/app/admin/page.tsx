@@ -366,7 +366,7 @@ export default function Admin() {
         <div className="w-full max-w-md relative z-10">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors duration-300 font-outfit text-sm font-semibold mb-8 group"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors duration-300 font-playfair text-sm font-semibold mb-8 group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Public Portal Home
           </Link>
@@ -376,7 +376,7 @@ export default function Admin() {
               <KeyRound className="w-8 h-8" />
             </div>
 
-            <h1 className="text-3xl font-black font-outfit uppercase tracking-tight text-white mb-1">
+            <h1 className="text-3xl font-black font-playfair uppercase tracking-tight text-white mb-1">
               Jury Control
             </h1>
             <p className="text-xs font-mono text-emerald-400/60 uppercase tracking-widest mb-8">
@@ -417,7 +417,7 @@ export default function Admin() {
 
               <button
                 type="submit"
-                className="w-full py-3.5 mt-4 bg-neon text-black rounded-xl font-outfit font-bold uppercase tracking-wider text-xs transition-all hover:bg-transparent hover:text-neon border border-neon hover:shadow-[0_0_20px_rgba(74,222,128,0.25)] cursor-pointer"
+                className="w-full py-3.5 mt-4 bg-neon text-black rounded-xl font-playfair font-bold uppercase tracking-wider text-xs transition-all hover:bg-transparent hover:text-neon border border-neon hover:shadow-[0_0_20px_rgba(74,222,128,0.25)] cursor-pointer"
               >
                 Access Dashboard
               </button>
@@ -439,7 +439,7 @@ export default function Admin() {
           <div className="flex items-center gap-3">
             <span className="text-2xl">⚙️</span>
             <div>
-              <h1 className="font-outfit font-black text-lg text-white uppercase leading-none">Leaf & Lens Admin</h1>
+              <h1 className="font-playfair font-black text-lg text-white uppercase leading-none">Leaf & Lens Admin</h1>
               <span className="text-[10px] font-mono tracking-widest text-neon uppercase mt-0.5 block">BS&H DEPT · VIIT</span>
             </div>
           </div>
@@ -447,7 +447,7 @@ export default function Admin() {
           <div className="flex items-center gap-4">
             <button
               onClick={handleLogout}
-              className="px-4 py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-black font-outfit text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-black font-playfair text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" /> Sign Out
             </button>
@@ -460,7 +460,7 @@ export default function Admin() {
         {/* STATS OVERVIEW HEADER COLUMN */}
         <div className="lg:col-span-1 flex flex-col gap-6">
           <div className="glass-panel border-neon/10 rounded-2xl p-6">
-            <h3 className="font-outfit font-black text-sm uppercase tracking-wider text-white mb-4 flex items-center gap-2 border-b border-slate-900 pb-2">
+            <h3 className="font-playfair font-black text-sm uppercase tracking-wider text-white mb-4 flex items-center gap-2 border-b border-slate-900 pb-2">
               <BarChart2 className="w-4 h-4 text-neon" /> Analytics Snapshot
             </h3>
             
@@ -484,7 +484,7 @@ export default function Admin() {
               <div className="mt-4 pt-4 border-t border-slate-900">
                 <span className="text-[10px] uppercase font-mono tracking-widest text-slate-500 block mb-2">Registration Capacity</span>
                 <div className="flex items-end justify-between mb-1.5">
-                  <span className="text-2xl font-black font-outfit text-neon neon-text-glow">{stats.total}</span>
+                  <span className="text-2xl font-black font-playfair text-neon neon-text-glow">{stats.total}</span>
                   <span className="text-sm font-mono text-slate-500">/ {settings.maxTeams}</span>
                 </div>
                 <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
@@ -506,7 +506,7 @@ export default function Admin() {
           <div className="glass-panel border-neon/10 rounded-2xl p-6 flex flex-col gap-3">
             <button
               onClick={() => setActiveTab('submissions')}
-              className={`w-full py-2.5 rounded-xl font-outfit text-xs font-bold uppercase tracking-wider transition-all border text-left px-4 flex items-center justify-between cursor-pointer ${
+              className={`w-full py-2.5 rounded-xl font-playfair text-xs font-bold uppercase tracking-wider transition-all border text-left px-4 flex items-center justify-between cursor-pointer ${
                 activeTab === 'submissions'
                   ? 'bg-neon/10 border-neon text-white shadow-[0_0_10px_rgba(74,222,128,0.05)]'
                   : 'bg-black/10 border-slate-800 text-slate-400 hover:border-slate-700'
@@ -517,7 +517,7 @@ export default function Admin() {
             </button>
             <button
               onClick={() => setActiveTab('winners')}
-              className={`w-full py-2.5 rounded-xl font-outfit text-xs font-bold uppercase tracking-wider transition-all border text-left px-4 flex items-center justify-between cursor-pointer ${
+              className={`w-full py-2.5 rounded-xl font-playfair text-xs font-bold uppercase tracking-wider transition-all border text-left px-4 flex items-center justify-between cursor-pointer ${
                 activeTab === 'winners'
                   ? 'bg-neon/10 border-neon text-white'
                   : 'bg-black/10 border-slate-800 text-slate-400 hover:border-slate-700'
@@ -528,7 +528,7 @@ export default function Admin() {
             </button>
             <button
               onClick={() => setActiveTab('timers')}
-              className={`w-full py-2.5 rounded-xl font-outfit text-xs font-bold uppercase tracking-wider transition-all border text-left px-4 flex items-center justify-between cursor-pointer ${
+              className={`w-full py-2.5 rounded-xl font-playfair text-xs font-bold uppercase tracking-wider transition-all border text-left px-4 flex items-center justify-between cursor-pointer ${
                 activeTab === 'timers'
                   ? 'bg-neon/10 border-neon text-white'
                   : 'bg-black/10 border-slate-800 text-slate-400 hover:border-slate-700'
@@ -546,23 +546,23 @@ export default function Admin() {
           {activeTab === 'submissions' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-black font-outfit uppercase tracking-tight text-white">Submissions</h2>
+                <h2 className="text-2xl font-black font-playfair uppercase tracking-tight text-white">Submissions</h2>
                 <div className="flex gap-2">
                   <button
                     onClick={handleDownloadZip}
-                    className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500 hover:text-black text-emerald-400 text-xs font-bold font-outfit uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500 hover:text-black text-emerald-400 text-xs font-bold font-playfair uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     <Archive className="w-3.5 h-3.5" /> ZIP Screenshots
                   </button>
                   <button
                     onClick={handleExportCSV}
-                    className="px-4 py-2 rounded-xl bg-black/40 border border-slate-800 hover:border-white text-xs font-bold font-outfit uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-black/40 border border-slate-800 hover:border-white text-xs font-bold font-playfair uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" /> Export Roster
                   </button>
                   <button
                     onClick={loadAllData}
-                    className="px-4 py-2 rounded-xl bg-black/40 border border-slate-800 hover:border-white text-xs font-bold font-outfit uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-black/40 border border-slate-800 hover:border-white text-xs font-bold font-playfair uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     <RefreshCw className="w-3.5 h-3.5" /> Refresh
                   </button>
@@ -589,7 +589,7 @@ export default function Admin() {
                           }`}
                         >
                           <div className="flex justify-between items-center mb-1">
-                            <span className="font-outfit font-black text-white text-sm uppercase">{sub.teamName}</span>
+                            <span className="font-playfair font-black text-white text-sm uppercase">{sub.teamName}</span>
                             <span className={`px-2 py-0.5 text-[8px] font-mono tracking-widest uppercase rounded ${
                               sub.status === 'approved' 
                                 ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' 
