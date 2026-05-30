@@ -383,28 +383,69 @@ function downloadPaymentsCSV() {
     alert("No approved submissions with payment screenshots found.");
     return;
   }
-  let csv = "Team Name,Category (Photo/Reel/Both),Team Lead Name & Registration Number,Team Lead Phone Number,UTR Number,Payment Screenshot image\n";
+  
   const baseUrl = window.location.origin;
   
+  let html = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta charset="utf-8" />
+      <style>
+        table { border-collapse: collapse; font-family: Arial, sans-serif; }
+        th { background-color: #f2f2f2; font-weight: bold; padding: 10px; border: 1px solid #ddd; text-align: left; }
+        td { padding: 10px; border: 1px solid #ddd; vertical-align: middle; }
+        img { max-height: 200px; max-width: 200px; object-fit: contain; }
+      </style>
+    </head>
+    <body>
+      <table>
+        <thead>
+          <tr>
+            <th>Team Name</th>
+            <th>Category (Photo/Reel/Both)</th>
+            <th>Team Lead Name & Registration Number</th>
+            <th>Team Lead Phone Number</th>
+            <th>UTR Number</th>
+            <th>Payment Screenshot image</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+  
   approved.forEach(s => {
-    const tName = `"${(s.teamName || '').replace(/"/g, '""')}"`;
-    const cat = `"${s.participationType || ''}"`;
-    const leadDetails = `"${(s.member1Name || '').replace(/"/g, '""')} (${s.member1Roll || ''})"`;
-    const phone = `"${s.member1Phone || ''}"`;
-    const utr = `"${(s.transactionId || '').replace(/"/g, '""')}"`;
+    const tName = s.teamName || '';
+    const cat = s.participationType || '';
+    const leadDetails = `${s.member1Name || ''} (${s.member1Roll || ''})`;
+    const phone = s.member1Phone || '';
+    const utr = s.transactionId || '';
     
-    // Google Sheets uses =IMAGE("URL"). We now have an API to serve the Base64 as an actual public image!
     const imageUrl = s.paymentScreenshotUrl && s.paymentScreenshotUrl.length > 10 ? `${baseUrl}/api/image/${s.id}` : '';
-    const imgFormula = imageUrl ? `"=IMAGE(""${imageUrl}"")"` : '""';
+    const imgHtml = imageUrl ? `<img src="${imageUrl}" />` : 'No Image';
     
-    csv += `${tName},${cat},${leadDetails},${phone},${utr},${imgFormula}\n`;
+    html += `
+          <tr>
+            <td>${tName}</td>
+            <td>${cat}</td>
+            <td>${leadDetails}</td>
+            <td>${phone}</td>
+            <td style="mso-number-format:'\\@';">${utr}</td>
+            <td style="height:210px; text-align:center;">${imgHtml}</td>
+          </tr>
+    `;
   });
   
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  html += `
+        </tbody>
+      </table>
+    </body>
+    </html>
+  `;
+  
+  const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'approved_payments.csv';
+  a.download = 'approved_payments.xls';
   a.click();
   URL.revokeObjectURL(url);
 }
