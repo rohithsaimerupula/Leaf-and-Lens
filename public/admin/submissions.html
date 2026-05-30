@@ -365,6 +365,33 @@ function viewSubmission(id) {
         return b ? (sec ? `${b}-${sec}`.toUpperCase() : b.toUpperCase()) : '—';
       })()}
     </span></div>
+    ${(() => {
+      if (s.member2Name && s.member2Name.trim() !== '') {
+        const m1Branch = s.branch || getBranchFromRoll(s.member1Roll);
+        const m1Sec = s.section || '';
+        const m2Branch = s.member2Branch || getBranchFromRoll(s.member2Roll);
+        const m2Sec = s.member2Section || '';
+        
+        let m2BranchText = '';
+        if (m1Branch === m2Branch && m1Sec === m2Sec) {
+          m2BranchText = ''; 
+        } else {
+          m2BranchText = m2Branch ? (m2Sec ? `${m2Branch}-${m2Sec}`.toUpperCase() : m2Branch.toUpperCase()) : '';
+        }
+        
+        return `
+          <div class="detail-row" style="margin-top:1rem;border-top:1px dashed var(--border);padding-top:1rem;">
+            <span class="detail-label" style="color:var(--primary-light);">Member 2</span>
+            <span class="detail-value">
+              <strong>${s.member2Name}</strong><br/>
+              <span style="font-size:0.8rem;color:var(--text-muted);">${s.member2Roll || ''}</span>
+              ${m2BranchText ? `<br/><span style="font-size:0.8rem;color:var(--text-muted);">${m2BranchText}</span>` : ''}
+            </span>
+          </div>
+        `;
+      }
+      return '';
+    })()}
     <div class="detail-row"><span class="detail-label">Category</span><span class="detail-value">${s.participationType}</span></div>
     <div class="detail-row" style="align-items:flex-start;"><span class="detail-label" style="padding-top:4px;">Creative Summary</span><span class="detail-value" style="white-space:pre-wrap;font-style:italic;line-height:1.5;">${s.creativeSummary || '—'}</span></div>
     <div class="detail-row">

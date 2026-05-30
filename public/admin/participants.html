@@ -73,6 +73,9 @@
         <button class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;margin-left:auto;" onclick="exportAllCSV()">
           <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
         </button>
+        <button class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;" onclick="downloadPaymentsCSV()">
+          <i data-lucide="archive" style="width:14px;height:14px;"></i> Download Payments
+        </button>
       </div>
     </div>
 
@@ -319,6 +322,33 @@ function viewParticipant(id) {
         return b ? (sec ? `${b}-${sec}`.toUpperCase() : b.toUpperCase()) : '—';
       })()}
     </span></div>
+    ${(() => {
+      if (s.member2Name && s.member2Name.trim() !== '') {
+        const m1Branch = s.branch || getBranchFromRoll(s.member1Roll);
+        const m1Sec = s.section || '';
+        const m2Branch = s.member2Branch || getBranchFromRoll(s.member2Roll);
+        const m2Sec = s.member2Section || '';
+        
+        let m2BranchText = '';
+        if (m1Branch === m2Branch && m1Sec === m2Sec) {
+          m2BranchText = ''; 
+        } else {
+          m2BranchText = m2Branch ? (m2Sec ? `${m2Branch}-${m2Sec}`.toUpperCase() : m2Branch.toUpperCase()) : '';
+        }
+        
+        return `
+          <div class="detail-row" style="margin-top:1rem;border-top:1px dashed var(--border);padding-top:1rem;">
+            <span class="detail-label" style="color:var(--primary-light);">Member 2</span>
+            <span class="detail-value">
+              <strong>${s.member2Name}</strong><br/>
+              <span style="font-size:0.8rem;color:var(--text-muted);">${s.member2Roll || ''}</span>
+              ${m2BranchText ? `<br/><span style="font-size:0.8rem;color:var(--text-muted);">${m2BranchText}</span>` : ''}
+            </span>
+          </div>
+        `;
+      }
+      return '';
+    })()}
     <div class="detail-row"><span class="detail-label">Category</span><span class="detail-value">${s.participationType}</span></div>
     <div class="detail-row">
       <span class="detail-label">AI Analysis</span>
@@ -345,6 +375,32 @@ function viewParticipant(id) {
 
 async function exportAllCSV() {
   exportCSV(_allSubs, 'leaf_lens_participants.csv');
+}
+
+function downloadPaymentsCSV() {
+  const approved = _allSubs.filter(s => s.status === 'approved' && s.paymentScreenshotUrl && s.paymentScreenshotUrl !== 'null' && s.paymentScreenshotUrl !== 'undefined');
+  if (!approved.length) {
+    alert("No approved submissions with payment screenshots found.");
+    return;
+  }
+  let csv = "Team Name,Team Lead Name,Team Lead Registration Number,Phone Number,Category (Photo/Reel/Both),Payment Screenshot Link\n";
+  approved.forEach(s => {
+    const tName = `"${(s.teamName || '').replace(/"/g, '""')}"`;
+    const lName = `"${(s.member1Name || '').replace(/"/g, '""')}"`;
+    const lReg = `"${s.member1Roll || ''}"`;
+    const phone = `"${s.member1Phone || ''}"`;
+    const cat = `"${s.participationType || ''}"`;
+    const link = `"${s.paymentScreenshotUrl || ''}"`;
+    csv += `${tName},${lName},${lReg},${phone},${cat},${link}\n`;
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'approved_payments.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 document.getElementById('detailModal').addEventListener('click', e => {
