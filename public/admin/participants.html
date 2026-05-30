@@ -305,7 +305,7 @@ function viewParticipant(id) {
              <span style="display:none;color:var(--text-muted);font-size:0.8rem;">⚠️ Image could not be displayed (stored as external URL)</span>
            </a>
            <div style="margin-top:0.5rem;">
-             <a href="${s.paymentScreenshotUrl}" target="_blank" class="btn btn-outline" style="font-size:0.75rem;padding:0.3rem 0.8rem;">🔗 Open Screenshot</a>
+             <button onclick="openImage(this.dataset.img)" data-img="${s.paymentScreenshotUrl}" class="btn btn-outline" style="font-size:0.75rem;padding:0.3rem 0.8rem;">🔗 Open Screenshot</button>
            </div>`
         : '<span style="color:var(--text-muted);font-size:0.85rem;">No payment screenshot attached</span>'}
     </div>
@@ -410,6 +410,11 @@ function downloadPaymentsCSV() {
 document.getElementById('detailModal').addEventListener('click', e => {
   if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
 });
+
+function openImage(dataUri) {
+  const w = window.open("");
+  w.document.write(`<title>Payment Screenshot</title><body style="margin:0;display:flex;justify-content:center;align-items:center;background:#111;"><img src="${dataUri}" style="max-width:100%;max-height:100vh;object-fit:contain;" /></body>`);
+}
 </script>
 </body>
 </html>
