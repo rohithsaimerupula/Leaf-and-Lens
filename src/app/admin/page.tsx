@@ -378,7 +378,7 @@ export default function Admin() {
         doc.setFontSize(12);
         doc.text(`UTR Number: ${sub.transactionId || 'N/A'}`, 10, 30);
         doc.text(`Category: ${sub.participationType}`, 10, 40);
-        doc.text(`Leader: ${sub.member1Name} (${sub.member1Roll})`, 10, 50);
+        doc.text(`Leader: ${sub.member1Name} (${sub.member1Roll}) | Ph: ${sub.member1Phone}`, 10, 50);
 
         const data = sub.paymentScreenshotUrl;
         if (data && data.startsWith('data:image')) {
@@ -621,7 +621,7 @@ export default function Admin() {
                     onClick={handleDownloadPDF}
                     className="px-4 py-2 rounded-xl bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500 hover:text-black text-purple-400 text-xs font-bold font-playfair uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Archive className="w-3.5 h-3.5" /> PDF Screenshots
+                    <Archive className="w-3.5 h-3.5" /> Download Payments
                   </button>
                   <button
                     onClick={handleDownloadZip}
