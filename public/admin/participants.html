@@ -78,8 +78,11 @@
         <button id="downloadZipBtn" class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;" onclick="downloadScreenshotsZip()">
           <i data-lucide="image" style="width:14px;height:14px;"></i> Download Screenshots
         </button>
-        <button class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;" onclick="downloadPaymentsCSV()">
-          <i data-lucide="archive" style="width:14px;height:14px;"></i> Download Payments
+        <button class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem; border-color:var(--primary-light); color:var(--primary-light);" onclick="downloadPaymentsGoogleSheets()">
+          <i data-lucide="file-spreadsheet" style="width:14px;height:14px;"></i> Google Sheets Export
+        </button>
+        <button class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;" onclick="downloadPaymentsExcel()">
+          <i data-lucide="table" style="width:14px;height:14px;"></i> Excel Export
         </button>
       </div>
     </div>
@@ -383,7 +386,38 @@ async function exportAllCSV() {
   exportCSV(_allSubs, 'leaf_lens_participants.csv');
 }
 
-function downloadPaymentsCSV() {
+function downloadPaymentsGoogleSheets() {
+  const approved = _allSubs.filter(s => s.status === 'approved' && s.paymentScreenshotUrl && s.paymentScreenshotUrl.length > 20);
+  if (!approved.length) {
+    alert("No approved submissions with payment screenshots found.");
+    return;
+  }
+  let csv = "Team Name,Category (Photo/Reel/Both),Team Lead Name & Registration Number,Team Lead Phone Number,UTR Number,Payment Screenshot image\n";
+  const baseUrl = window.location.origin;
+  
+  approved.forEach(s => {
+    const tName = `"${(s.teamName || '').replace(/"/g, '""')}"`;
+    const cat = `"${s.participationType || ''}"`;
+    const leadDetails = `"${(s.member1Name || '').replace(/"/g, '""')} (${s.member1Roll || ''})"`;
+    const phone = `"${s.member1Phone || ''}"`;
+    const utr = `"${(s.transactionId || '').replace(/"/g, '""')}"`;
+    
+    const imageUrl = `${baseUrl}/api/image/${s.id}`;
+    const imgFormula = `"=IMAGE(""${imageUrl}"")"`;
+    
+    csv += `${tName},${cat},${leadDetails},${phone},${utr},${imgFormula}\n`;
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'google_sheets_payments.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadPaymentsExcel() {
   const approved = _allSubs.filter(s => s.status === 'approved' && s.paymentScreenshotUrl && s.paymentScreenshotUrl !== 'null' && s.paymentScreenshotUrl !== 'undefined');
   if (!approved.length) {
     alert("No approved submissions with payment screenshots found.");
