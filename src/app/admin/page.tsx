@@ -374,23 +374,24 @@ export default function Admin() {
         isFirstPage = false;
         
         doc.setFontSize(16);
-        doc.text(`Team: ${sub.teamName}`, 10, 20);
+        doc.text(`Team Name: ${sub.teamName}`, 10, 20);
         doc.setFontSize(12);
-        doc.text(`UTR Number: ${sub.transactionId || 'N/A'}`, 10, 30);
-        doc.text(`Category: ${sub.participationType}`, 10, 40);
-        doc.text(`Leader: ${sub.member1Name} (${sub.member1Roll}) | Ph: ${sub.member1Phone}`, 10, 50);
+        doc.text(`Team Lead Name: ${sub.member1Name}`, 10, 30);
+        doc.text(`Team Lead Registration Number: ${sub.member1Roll}`, 10, 40);
+        doc.text(`Phone Number: ${sub.member1Phone}`, 10, 50);
+        doc.text(`Category (Photo/Reel/Both): ${sub.participationType}`, 10, 60);
 
         const data = sub.paymentScreenshotUrl;
         if (data && data.startsWith('data:image')) {
           try {
             const format = data.includes('image/png') ? 'PNG' : 'JPEG';
-            doc.addImage(data, format, 10, 60, 180, 200, undefined, 'FAST');
+            doc.addImage(data, format, 10, 70, 180, 200, undefined, 'FAST');
           } catch (e) {
             console.error("Failed to add image to PDF", e);
-            doc.text("Screenshot could not be rendered (unsupported format).", 10, 70);
+            doc.text("Screenshot could not be rendered (unsupported format).", 10, 80);
           }
         } else {
-          doc.text("No valid screenshot data found.", 10, 70);
+          doc.text("No valid screenshot data found.", 10, 80);
         }
       }
 
