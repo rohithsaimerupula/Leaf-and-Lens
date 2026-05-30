@@ -5,8 +5,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
   try {
     const { id } = await params;
     const db = createClient({
-      url: process.env.NEXT_PUBLIC_TURSO_DATABASE_URL!,
-      authToken: process.env.NEXT_PUBLIC_TURSO_AUTH_TOKEN!
+      url: 'libsql://leaf-and-lens-tharunmerupula.aws-ap-south-1.turso.io',
+      authToken: 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NzkxOTA0NzQsImlkIjoiMDE5ZTNmZmQtM2QwMS03OGMyLTlmNTAtZThiYmJjMmY3N2QzIiwicmlkIjoiZTkwMDMyNTQtMzIwZi00YTJhLWFhYTQtMjM2NzQ0Mjg4OGI1In0.fv4NNmBZhf2nwtdxUnM8dCjBeHQsP8BXvZBHlcjdDumt8wl6RiCSOFFAvqzwnhBQY1deZCXNppT8TfPtrkLzAA'
     });
 
     const rs = await db.execute({
