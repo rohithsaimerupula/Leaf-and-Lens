@@ -8,6 +8,8 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <link rel="stylesheet" href="../assets/css/main.css" />
   <link rel="stylesheet" href="../assets/css/admin.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <script src="../assets/js/turso.js?v=1.0.3"></script>
 </head>
 <body class="admin-body">
@@ -72,6 +74,9 @@
         </select>
         <button class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;margin-left:auto;" onclick="exportAllCSV()">
           <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
+        </button>
+        <button id="downloadZipBtn" class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;" onclick="downloadScreenshotsZip()">
+          <i data-lucide="image" style="width:14px;height:14px;"></i> Download Screenshots
         </button>
         <button class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;" onclick="downloadPaymentsCSV()">
           <i data-lucide="archive" style="width:14px;height:14px;"></i> Download Payments
@@ -304,8 +309,9 @@ function viewParticipant(id) {
                onerror="this.style.display='none';this.nextSibling.style.display='block';" />
              <span style="display:none;color:var(--text-muted);font-size:0.8rem;">⚠️ Image could not be displayed (stored as external URL)</span>
            </a>
-           <div style="margin-top:0.5rem;">
-             <button onclick="openImage(this.dataset.img)" data-img="${s.paymentScreenshotUrl}" class="btn btn-outline" style="font-size:0.75rem;padding:0.3rem 0.8rem;">🔗 Open Screenshot</button>
+           <div style="margin-top:0.5rem; display:flex; gap:0.5rem; justify-content:center;">
+             <button onclick="openImage(this.dataset.img)" data-img="${s.paymentScreenshotUrl}" class="btn btn-outline" style="font-size:0.75rem;padding:0.3rem 0.8rem;">🔗 Open</button>
+             <button onclick="downloadSingleImage(this.dataset.img, '${(s.teamName || s.member1Name || 'Participant').replace(/'/g, "\\'")}')" data-img="${s.paymentScreenshotUrl}" class="btn btn-outline" style="font-size:0.75rem;padding:0.3rem 0.8rem;">📥 Download</button>
            </div>`
         : '<span style="color:var(--text-muted);font-size:0.85rem;">No payment screenshot attached</span>'}
     </div>
@@ -457,6 +463,60 @@ document.getElementById('detailModal').addEventListener('click', e => {
 function openImage(dataUri) {
   const w = window.open("");
   w.document.write(`<title>Payment Screenshot</title><body style="margin:0;display:flex;justify-content:center;align-items:center;background:#111;"><img src="${dataUri}" style="max-width:100%;max-height:100vh;object-fit:contain;" /></body>`);
+}
+
+function downloadSingleImage(dataUri, teamName) {
+  const matches = dataUri.match(/^data:(image\/[a-zA-Z]+);base64,(.+)$/);
+  if (!matches) { alert("Invalid image data"); return; }
+  const ext = matches[1] === 'image/png' ? '.png' : '.jpg';
+  const fileName = (teamName.replace(/[^a-zA-Z0-9 -]/g, "").trim() || "Participant") + "_Payment" + ext;
+  
+  const a = document.createElement('a');
+  a.href = dataUri;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+async function downloadScreenshotsZip() {
+  if (typeof JSZip === 'undefined' || typeof saveAs === 'undefined') {
+    alert("ZIP libraries are still loading. Please try again in a few seconds.");
+    return;
+  }
+  const approved = _allSubs.filter(s => s.status === 'approved' && s.paymentScreenshotUrl && s.paymentScreenshotUrl.length > 20);
+  if (!approved.length) {
+    alert("No approved submissions with payment screenshots found.");
+    return;
+  }
+  
+  const btn = document.getElementById('downloadZipBtn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = `<i data-lucide="loader" class="spin" style="width:14px;height:14px;"></i> Zipping...`;
+  btn.disabled = true;
+
+  try {
+    const zip = new JSZip();
+    approved.forEach((s, index) => {
+      let tName = s.teamName || s.member1Name || `Team_${index}`;
+      tName = tName.replace(/[^a-zA-Z0-9 -]/g, "").trim(); 
+      const dataUri = s.paymentScreenshotUrl;
+      const matches = dataUri.match(/^data:(image\/[a-zA-Z]+);base64,(.+)$/);
+      if (matches && matches.length === 3) {
+        const ext = matches[1] === 'image/png' ? '.png' : '.jpg';
+        const base64Data = matches[2];
+        zip.file(`${tName}${ext}`, base64Data, { base64: true });
+      }
+    });
+    const content = await zip.generateAsync({ type: "blob" });
+    saveAs(content, "Payment_Screenshots.zip");
+  } catch(e) {
+    console.error(e);
+    alert("Failed to create ZIP.");
+  }
+  btn.innerHTML = originalText;
+  btn.disabled = false;
+  lucide.createIcons();
 }
 </script>
 </body>
