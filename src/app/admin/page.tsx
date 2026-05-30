@@ -716,10 +716,16 @@ export default function Admin() {
                               <span className="block font-outfit font-bold text-white text-sm mt-0.5">{selectedSub.member2Name}</span>
                               <span className="block font-mono text-[10px] text-slate-500 mt-1">
                                 {selectedSub.member2Roll} · {(() => {
-                                  const b = selectedSub.member2Branch || getBranchFromRoll(selectedSub.member2Roll);
-                                  const sec = selectedSub.member2Section;
-                                  return b ? (sec ? `${b}-${sec}`.toUpperCase() : b.toUpperCase()) : '—';
-                                })()} · {selectedSub.member2Phone}
+                                  const b1 = selectedSub.branch || getBranchFromRoll(selectedSub.member1Roll);
+                                  const sec1 = selectedSub.section;
+                                  const str1 = b1 ? (sec1 ? `${b1}-${sec1}`.toUpperCase() : b1.toUpperCase()) : '—';
+
+                                  const b2 = selectedSub.member2Branch || getBranchFromRoll(selectedSub.member2Roll);
+                                  const sec2 = selectedSub.member2Section;
+                                  const str2 = b2 ? (sec2 ? `${b2}-${sec2}`.toUpperCase() : b2.toUpperCase()) : '—';
+
+                                  return (str1 !== '—' && str1 === str2) ? '' : `${str2} · `;
+                                })()}{selectedSub.member2Phone}
                               </span>
                             </div>
                           )}
