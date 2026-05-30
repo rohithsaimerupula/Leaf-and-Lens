@@ -36,8 +36,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
         'Cache-Control': 'public, max-age=86400'
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    return new NextResponse('Internal error', { status: 500 });
+    return new NextResponse('Internal error: ' + (error?.message || String(error)), { status: 500 });
   }
 }
