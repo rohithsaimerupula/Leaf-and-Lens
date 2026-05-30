@@ -384,6 +384,8 @@ function downloadPaymentsCSV() {
     return;
   }
   let csv = "Team Name,Category (Photo/Reel/Both),Team Lead Name & Registration Number,Team Lead Phone Number,UTR Number,Payment Screenshot image\n";
+  const baseUrl = window.location.origin;
+  
   approved.forEach(s => {
     const tName = `"${(s.teamName || '').replace(/"/g, '""')}"`;
     const cat = `"${s.participationType || ''}"`;
@@ -391,8 +393,8 @@ function downloadPaymentsCSV() {
     const phone = `"${s.member1Phone || ''}"`;
     const utr = `"${(s.transactionId || '').replace(/"/g, '""')}"`;
     
-    // Google Sheets uses =IMAGE("URL") to embed images directly into the cell
-    const imageUrl = s.paymentScreenshotUrl ? s.paymentScreenshotUrl.trim() : '';
+    // Google Sheets uses =IMAGE("URL"). We now have an API to serve the Base64 as an actual public image!
+    const imageUrl = s.paymentScreenshotUrl && s.paymentScreenshotUrl.length > 10 ? `${baseUrl}/api/image/${s.id}` : '';
     const imgFormula = imageUrl ? `"=IMAGE(""${imageUrl}"")"` : '""';
     
     csv += `${tName},${cat},${leadDetails},${phone},${utr},${imgFormula}\n`;
