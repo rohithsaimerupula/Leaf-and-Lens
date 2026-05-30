@@ -383,15 +383,19 @@ function downloadPaymentsCSV() {
     alert("No approved submissions with payment screenshots found.");
     return;
   }
-  let csv = "Team Name,Team Lead Name,Team Lead Registration Number,Phone Number,Category (Photo/Reel/Both),Payment Screenshot Link\n";
+  let csv = "Team Name,Category (Photo/Reel/Both),Team Lead Name & Registration Number,Team Lead Phone Number,UTR Number,Payment Screenshot image\n";
   approved.forEach(s => {
     const tName = `"${(s.teamName || '').replace(/"/g, '""')}"`;
-    const lName = `"${(s.member1Name || '').replace(/"/g, '""')}"`;
-    const lReg = `"${s.member1Roll || ''}"`;
-    const phone = `"${s.member1Phone || ''}"`;
     const cat = `"${s.participationType || ''}"`;
-    const link = `"${s.paymentScreenshotUrl || ''}"`;
-    csv += `${tName},${lName},${lReg},${phone},${cat},${link}\n`;
+    const leadDetails = `"${(s.member1Name || '').replace(/"/g, '""')} (${s.member1Roll || ''})"`;
+    const phone = `"${s.member1Phone || ''}"`;
+    const utr = `"${(s.transactionId || '').replace(/"/g, '""')}"`;
+    
+    // Google Sheets uses =IMAGE("URL") to embed images directly into the cell
+    const imageUrl = s.paymentScreenshotUrl ? s.paymentScreenshotUrl.trim() : '';
+    const imgFormula = imageUrl ? `"=IMAGE(""${imageUrl}"")"` : '""';
+    
+    csv += `${tName},${cat},${leadDetails},${phone},${utr},${imgFormula}\n`;
   });
   
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
