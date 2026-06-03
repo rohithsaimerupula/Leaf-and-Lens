@@ -11,7 +11,12 @@ let photoFile = null, reelFile = null, paymentFile = null;
 
 // ── INIT ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  // Check if registration is open
+  // Optimistically show the registration form immediately to prevent blank screen delay
+  const regWrap = document.getElementById('regWrap');
+  const closedScreen = document.getElementById('closedScreen');
+  regWrap.style.display = 'block';
+
+  // Check if registration is open in the background
   try {
     const settings = await TURSO.getSettings();
     
@@ -41,17 +46,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (!isActive) {
-      document.getElementById('closedScreen').style.display = 'flex';
-      document.getElementById('regWrap').style.display = 'none';
+      regWrap.style.display = 'none';
+      closedScreen.style.display = 'flex';
       return;
-    } else {
-      document.getElementById('regWrap').style.display = 'block';
     }
     // Load QR code
     loadQR(settings);
   } catch (e) {
     console.warn('Could not load settings:', e);
-    document.getElementById('regWrap').style.display = 'block'; // Fallback
+    // Fallback keeps regWrap visible
   }
 
   // Category card click updates highlight
@@ -590,47 +593,52 @@ async function submitForm() {
           ctx.drawImage(img, 0, 0, width, height);
           resolve(canvas.toDataURL('image/jpeg', quality));
         };
-        img.onerror = error => reject(error);
+        img.onerror = error => reject(new Error('Failed to process image. It may be corrupted or unsupported.'));
       };
-      reader.onerror = error => reject(error);
+      reader.onerror = error => reject(new Error('Failed to read image file.'));
     });
 
     const compressVideo = async (file) => {
-      btn.textContent = 'Loading video compressor (may take a moment)...';
-      const { FFmpeg } = window.FFmpegWASM;
-      const { fetchFile } = window.FFmpegUtil;
-      const ffmpeg = new FFmpeg();
-      
-      ffmpeg.on('progress', ({ progress }) => {
-        let pct = Math.round(progress * 100);
-        if (pct < 0) pct = 0;
-        if (pct > 100) pct = 100;
-        btn.textContent = `Compressing video: ${pct}%... Please do not close.`;
-      });
-      
-      const baseURL = '/assets/js/ffmpeg';
-      await ffmpeg.load({
-          coreURL: `${baseURL}/ffmpeg-core.js`,
-          wasmURL: `${baseURL}/ffmpeg-core.wasm`
-      });
-      
-      btn.textContent = 'Reading video file...';
-      const inputName = file.name.replace(/\s+/g, '_');
-      await ffmpeg.writeFile(inputName, await fetchFile(file));
-      
-      btn.textContent = 'Starting video compression...';
-      // Compress strongly to fit under 4.5MB API limit: 480p, very fast preset, CRF 35
-      await ffmpeg.exec(['-i', inputName, '-vcodec', 'libx264', '-preset', 'ultrafast', '-crf', '35', '-vf', 'scale=-2:480', '-b:a', '48k', 'output.mp4']);
-      
-      btn.textContent = 'Finalizing video...';
-      const data = await ffmpeg.readFile('output.mp4');
-      
-      return new Promise((resolve) => {
-        const blob = new Blob([data.buffer], { type: 'video/mp4' });
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.readAsDataURL(blob);
-      });
+      try {
+        btn.textContent = 'Loading video compressor (may take a moment)...';
+        const { FFmpeg } = window.FFmpegWASM;
+        const { fetchFile } = window.FFmpegUtil;
+        const ffmpeg = new FFmpeg();
+        
+        ffmpeg.on('progress', ({ progress }) => {
+          let pct = Math.round(progress * 100);
+          if (pct < 0) pct = 0;
+          if (pct > 100) pct = 100;
+          btn.textContent = `Compressing video: ${pct}%... Please do not close.`;
+        });
+        
+        const baseURL = '/assets/js/ffmpeg';
+        await ffmpeg.load({
+            coreURL: `${baseURL}/ffmpeg-core.js`,
+            wasmURL: `${baseURL}/ffmpeg-core.wasm`
+        });
+        
+        btn.textContent = 'Reading video file...';
+        const inputName = file.name.replace(/\s+/g, '_');
+        await ffmpeg.writeFile(inputName, await fetchFile(file));
+        
+        btn.textContent = 'Starting video compression...';
+        // Compress strongly to fit under 4.5MB API limit: 480p, very fast preset, CRF 35
+        await ffmpeg.exec(['-i', inputName, '-vcodec', 'libx264', '-preset', 'ultrafast', '-crf', '35', '-vf', 'scale=-2:480', '-b:a', '48k', 'output.mp4']);
+        
+        btn.textContent = 'Finalizing video...';
+        const data = await ffmpeg.readFile('output.mp4');
+        
+        return new Promise((resolve, reject) => {
+          const blob = new Blob([data.buffer], { type: 'video/mp4' });
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error('Failed to read compressed video file.'));
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) {
+        throw new Error(e.message || 'Failed to compress video. Your browser may be out of memory or unsupported.');
+      }
     };
 
     btn.textContent = 'Processing Photo...';
@@ -709,7 +717,8 @@ async function submitForm() {
     showToast('🎉 Registration successful!', 'success');
   } catch (err) {
     console.error(err);
-    showToast(err.message || 'Error submitting registration.', 'error');
+    const errMsg = err.message || (typeof err === 'string' ? err : 'Error submitting registration. Please check your network or try again.');
+    showToast(errMsg, 'error');
     btn.disabled = false;
     btn.innerHTML = originalText;
   }
