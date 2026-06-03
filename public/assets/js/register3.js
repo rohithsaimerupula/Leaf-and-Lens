@@ -574,28 +574,32 @@ async function submitForm() {
     });
 
     const compressImage = (file, maxWidth, quality) => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = event => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', quality));
-        };
-        img.onerror = error => reject(new Error('Failed to process image. It may be corrupted or unsupported.'));
+      if (!file) return resolve(null);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(img.src);
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
       };
-      reader.onerror = error => reject(new Error('Failed to read image file.'));
+      img.onerror = () => {
+        URL.revokeObjectURL(img.src);
+        reject(new Error('Failed to process image. It may be corrupted or unsupported.'));
+      };
+      try {
+        img.src = URL.createObjectURL(file);
+      } catch (e) {
+        reject(new Error('Failed to read image file.'));
+      }
     });
 
     const compressVideo = async (file) => {
