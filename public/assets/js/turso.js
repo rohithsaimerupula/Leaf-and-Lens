@@ -82,14 +82,38 @@ const TURSO = (() => {
   }
 
   // ── SUBMISSIONS ──────────────────────────────────
-  async function getSubmissions() {
+  async function getSubmissions(includeMedia = false) {
     try {
-      const result = await query("SELECT * FROM submissions ORDER BY submittedAt DESC");
+      const sql = includeMedia 
+        ? "SELECT * FROM submissions ORDER BY submittedAt DESC"
+        : "SELECT id, teamName, participationType, member1Name, member1Roll, member1Email, member1Phone, member2Name, member2Roll, member2Email, member2Phone, status, submittedAt, branch, section, member2Branch, member2Section, aiFlags, rating, creativeSummary, transactionId FROM submissions ORDER BY submittedAt DESC";
+      const result = await query(sql);
       return parseRows(result);
     } catch (e) {
       console.warn("Turso getSubmissions failed, using LocalStorage fallback:", e);
       try { return JSON.parse(localStorage.getItem('ll_submissions')) || []; }
       catch { return []; }
+    }
+  }
+
+  async function getSubmissionMedia(id) {
+    try {
+      const result = await query("SELECT photoUrl, reelUrl, paymentScreenshotUrl FROM submissions WHERE id = ?", [id]);
+      const rows = parseRows(result);
+      return rows.length > 0 ? rows[0] : null;
+    } catch (e) {
+      console.warn("Turso getSubmissionMedia failed:", e);
+      return null;
+    }
+  }
+
+  async function getAllApprovedMedia() {
+    try {
+      const result = await query("SELECT id, photoUrl, reelUrl, paymentScreenshotUrl FROM submissions WHERE status = 'approved'");
+      return parseRows(result);
+    } catch (e) {
+      console.warn("Turso getAllApprovedMedia failed:", e);
+      return [];
     }
   }
 
@@ -230,7 +254,7 @@ const TURSO = (() => {
     }
   }
 
-  return { getSettings, saveSettings, getSubmissions, saveSubmission, updateSubmissionStatus, updateSubmissionRating, deleteSubmission, getWinners, saveWinner, getAdminCreds, saveAdminCreds, getCoordinators, saveCoordinators };
+  return { getSettings, saveSettings, getSubmissions, getSubmissionMedia, getAllApprovedMedia, saveSubmission, updateSubmissionStatus, updateSubmissionRating, deleteSubmission, getWinners, saveWinner, getAdminCreds, saveAdminCreds, getCoordinators, saveCoordinators };
 })();
 
 window.TURSO = TURSO;

@@ -163,11 +163,8 @@ function renderGallery(mode) {
 
   grid.innerHTML = subs.map(s => `
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;display:flex;flex-direction:column;">
-      <div style="height:200px;background:#000;display:flex;align-items:center;justify-content:center;">
-        ${mode === 'reels' && s.reelUrl 
-          ? `<video src="${s.reelUrl}" controls style="max-height:100%;max-width:100%;"></video>` 
-          : `<img src="${s.photoUrl}" style="max-height:100%;max-width:100%;object-fit:contain;" />`
-        }
+      <div id="gal-media-${s.id}" style="height:200px;background:#000;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.9rem;">
+        Loading media...
       </div>
       <div style="padding:1rem;flex:1;display:flex;flex-direction:column;gap:0.5rem;">
         <div style="font-weight:600;font-size:1.05rem;">${s.member1Name || s.teamName} <span style="font-size:0.75rem;color:var(--text-muted);font-weight:normal;">(Leader)</span></div>
@@ -182,6 +179,30 @@ function renderGallery(mode) {
       </div>
     </div>
   `).join('');
+
+  // Dynamically load the media for each card
+  subs.forEach(async (s) => {
+    if (s.photoUrl === undefined && s.reelUrl === undefined) {
+      const media = await TURSO.getSubmissionMedia(s.id);
+      if (media) {
+        s.photoUrl = media.photoUrl;
+        s.reelUrl = media.reelUrl;
+      } else {
+        s.photoUrl = null;
+        s.reelUrl = null;
+      }
+    }
+    const el = document.getElementById(`gal-media-${s.id}`);
+    if (el) {
+      if (mode === 'reels' && s.reelUrl) {
+        el.innerHTML = `<video src="${s.reelUrl}" controls style="max-height:100%;max-width:100%;"></video>`;
+      } else if (mode === 'photos' && s.photoUrl) {
+        el.innerHTML = `<img src="${s.photoUrl}" style="max-height:100%;max-width:100%;object-fit:contain;" />`;
+      } else {
+        el.innerHTML = 'Media not found';
+      }
+    }
+  });
 }
 
 async function saveRating(id) {
@@ -313,11 +334,27 @@ function renderTable() {
 
 
 
-function viewSubmission(id) {
+async function viewSubmission(id) {
   const s = _allSubs.find(x => x.id === id);
   if (!s) return;
   document.getElementById('modalTitle').textContent = s.id + ' — ' + (s.member1Name || s.teamName);
   const prev = document.getElementById('modalPreview');
+  
+  prev.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--text-muted);background:var(--bg-deep);border-radius:var(--radius-md);">Loading media...</div>`;
+  
+  if (s.photoUrl === undefined && s.reelUrl === undefined) {
+    const media = await TURSO.getSubmissionMedia(s.id);
+    if (media) {
+      s.photoUrl = media.photoUrl;
+      s.reelUrl = media.reelUrl;
+      s.paymentScreenshotUrl = media.paymentScreenshotUrl;
+    } else {
+      s.photoUrl = null;
+      s.reelUrl = null;
+      s.paymentScreenshotUrl = null;
+    }
+  }
+
   let mediaHTML = '';
   const isPhoto = s.participationType === 'Photo' || s.participationType === 'Both';
   const isReel = s.participationType === 'Reel' || s.participationType === 'Both';

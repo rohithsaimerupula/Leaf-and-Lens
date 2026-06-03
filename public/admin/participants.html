@@ -292,10 +292,26 @@ async function deleteSub(id) {
   renderTable();
 }
 
-function viewParticipant(id) {
+async function viewParticipant(id) {
   const s = _allSubs.find(x => x.id === id);
   if (!s) return;
   document.getElementById('detailTitle').textContent = s.member1Name || s.teamName;
+  document.getElementById('detailBody').innerHTML = `<div style="padding:2rem;text-align:center;color:var(--text-muted);">Loading details...</div>`;
+  document.getElementById('detailModal').classList.add('open');
+
+  if (s.paymentScreenshotUrl === undefined) {
+    const media = await TURSO.getSubmissionMedia(s.id);
+    if (media) {
+      s.photoUrl = media.photoUrl;
+      s.reelUrl = media.reelUrl;
+      s.paymentScreenshotUrl = media.paymentScreenshotUrl;
+    } else {
+      s.photoUrl = null;
+      s.reelUrl = null;
+      s.paymentScreenshotUrl = null;
+    }
+  }
+
   document.getElementById('detailBody').innerHTML = `
     <div style="text-align:center;margin-bottom:1rem;background:var(--bg-deep);padding:1rem;border-radius:var(--radius-md);">
       <div style="margin-bottom:0.5rem;font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;">Payment Screenshot</div>
@@ -412,76 +428,87 @@ function downloadPaymentsGoogleSheets() {
 }
 
 function downloadPaymentsExcel() {
-  const approved = _allSubs.filter(s => s.status === 'approved' && s.paymentScreenshotUrl && s.paymentScreenshotUrl !== 'null' && s.paymentScreenshotUrl !== 'undefined');
-  if (!approved.length) {
-    alert("No approved submissions with payment screenshots found.");
-    return;
-  }
-  
-  const baseUrl = window.location.origin;
-  
-  let html = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-    <head>
-      <meta charset="utf-8" />
-      <style>
-        table { border-collapse: collapse; font-family: Arial, sans-serif; }
-        th { background-color: #f2f2f2; font-weight: bold; padding: 10px; border: 1px solid #ddd; text-align: left; }
-        td { padding: 10px; border: 1px solid #ddd; vertical-align: middle; }
-        img { max-height: 200px; max-width: 200px; object-fit: contain; }
-      </style>
-    </head>
-    <body>
-      <table>
-        <thead>
-          <tr>
-            <th>Team Name</th>
-            <th>Category (Photo/Reel/Both)</th>
-            <th>Team Lead Name & Registration Number</th>
-            <th>Team Lead Phone Number</th>
-            <th>UTR Number</th>
-            <th>Payment Screenshot image</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-  
-  approved.forEach(s => {
-    const tName = s.teamName || '';
-    const cat = s.participationType || '';
-    const leadDetails = `${s.member1Name || ''} (${s.member1Roll || ''})`;
-    const phone = s.member1Phone || '';
-    const utr = s.transactionId || '';
+  TURSO.getAllApprovedMedia().then(allMedia => {
+    allMedia.forEach(m => {
+      const s = _allSubs.find(x => x.id === m.id);
+      if (s) {
+        s.photoUrl = m.photoUrl;
+        s.reelUrl = m.reelUrl;
+        s.paymentScreenshotUrl = m.paymentScreenshotUrl;
+      }
+    });
+
+    const approved = _allSubs.filter(s => s.status === 'approved' && s.paymentScreenshotUrl && s.paymentScreenshotUrl !== 'null' && s.paymentScreenshotUrl !== 'undefined');
+    if (!approved.length) {
+      alert("No approved submissions with payment screenshots found.");
+      return;
+    }
     
-    const imageUrl = s.paymentScreenshotUrl && s.paymentScreenshotUrl.length > 10 ? `${baseUrl}/api/image/${s.id}` : '';
-    const imgHtml = imageUrl ? `<img src="${imageUrl}" />` : 'No Image';
+    const baseUrl = window.location.origin;
+    
+    let html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8" />
+        <style>
+          table { border-collapse: collapse; font-family: Arial, sans-serif; }
+          th { background-color: #f2f2f2; font-weight: bold; padding: 10px; border: 1px solid #ddd; text-align: left; }
+          td { padding: 10px; border: 1px solid #ddd; vertical-align: middle; }
+          img { max-height: 200px; max-width: 200px; object-fit: contain; }
+        </style>
+      </head>
+      <body>
+        <table>
+          <thead>
+            <tr>
+              <th>Team Name</th>
+              <th>Category (Photo/Reel/Both)</th>
+              <th>Team Lead Name & Registration Number</th>
+              <th>Team Lead Phone Number</th>
+              <th>UTR Number</th>
+              <th>Payment Screenshot image</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    
+    approved.forEach(s => {
+      const tName = s.teamName || '';
+      const cat = s.participationType || '';
+      const leadDetails = `${s.member1Name || ''} (${s.member1Roll || ''})`;
+      const phone = s.member1Phone || '';
+      const utr = s.transactionId || '';
+      
+      const imageUrl = s.paymentScreenshotUrl && s.paymentScreenshotUrl.length > 10 ? `${baseUrl}/api/image/${s.id}` : '';
+      const imgHtml = imageUrl ? `<img src="${imageUrl}" />` : 'No Image';
+      
+      html += `
+            <tr>
+              <td>${tName}</td>
+              <td>${cat}</td>
+              <td>${leadDetails}</td>
+              <td>${phone}</td>
+              <td style="mso-number-format:'\\@';">${utr}</td>
+              <td style="height:210px; text-align:center;">${imgHtml}</td>
+            </tr>
+      `;
+    });
     
     html += `
-          <tr>
-            <td>${tName}</td>
-            <td>${cat}</td>
-            <td>${leadDetails}</td>
-            <td>${phone}</td>
-            <td style="mso-number-format:'\\@';">${utr}</td>
-            <td style="height:210px; text-align:center;">${imgHtml}</td>
-          </tr>
+          </tbody>
+        </table>
+      </body>
+      </html>
     `;
+    
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'approved_payments.xls';
+    a.click();
+    URL.revokeObjectURL(url);
   });
-  
-  html += `
-        </tbody>
-      </table>
-    </body>
-    </html>
-  `;
-  
-  const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'approved_payments.xls';
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 document.getElementById('detailModal').addEventListener('click', e => {
@@ -512,16 +539,31 @@ async function downloadScreenshotsZip() {
     alert("ZIP libraries are still loading. Please try again in a few seconds.");
     return;
   }
+  const btn = document.getElementById('downloadZipBtn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = `<i data-lucide="loader" class="spin" style="width:14px;height:14px;"></i> Fetching data...`;
+  btn.disabled = true;
+
+  const allMedia = await TURSO.getAllApprovedMedia();
+  allMedia.forEach(m => {
+    const s = _allSubs.find(x => x.id === m.id);
+    if (s) {
+      s.photoUrl = m.photoUrl;
+      s.reelUrl = m.reelUrl;
+      s.paymentScreenshotUrl = m.paymentScreenshotUrl;
+    }
+  });
+
   const approved = _allSubs.filter(s => s.status === 'approved' && s.paymentScreenshotUrl && s.paymentScreenshotUrl.length > 20);
   if (!approved.length) {
     alert("No approved submissions with payment screenshots found.");
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    lucide.createIcons();
     return;
   }
   
-  const btn = document.getElementById('downloadZipBtn');
-  const originalText = btn.innerHTML;
   btn.innerHTML = `<i data-lucide="loader" class="spin" style="width:14px;height:14px;"></i> Zipping...`;
-  btn.disabled = true;
 
   try {
     const zip = new JSZip();
