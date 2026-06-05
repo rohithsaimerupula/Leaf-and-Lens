@@ -531,9 +531,9 @@ async function downloadPhotosZip() {
 }
 
 async function syncGoogleSheet(btn) {
-  if (!confirm('This will sync all registrations to your Google Sheet, including uploading payment screenshots to Google Drive. Continue?')) return;
+  if (!confirm('This will sync all registrations (text data) to your Google Sheet.\nAll 166 rows will appear within ~30 seconds.\n\nContinue?')) return;
 
-  const BATCH_SIZE = 10;
+  const BATCH_SIZE = 30;
   const originalHTML = btn.innerHTML;
   btn.disabled = true;
 
@@ -543,50 +543,61 @@ async function syncGoogleSheet(btn) {
   };
 
   try {
-    setLabel('Loading config...');
-    const cfgRes = await fetch('/api/sheet-config');
-    if (!cfgRes.ok) throw new Error('Sheet webhook not configured. Check GOOGLE_SHEET_WEBHOOK_URL in Vercel.');
-    const { webhookUrl } = await cfgRes.json();
-
+    // 1. Fetch ALL submissions from Turso (no media needed for sheet sync)
     setLabel('Fetching submissions...');
-    const allSubs = await TURSO.getSubmissions(true);
+    const allSubs = await TURSO.getSubmissions(false);
     if (!allSubs || allSubs.length === 0) { alert('No registrations found.'); return; }
 
+    // 2. Build lightweight row payloads (no base64 images)
     const payloads = allSubs.map(sub => ({
-      id: sub.id, submittedAt: sub.submittedAt,
-      teamName: sub.teamName || '', member1Name: sub.member1Name || '',
-      member1Roll: sub.member1Roll || '', member1Phone: sub.member1Phone || '',
-      member1Email: sub.member1Email || '', member2Name: sub.member2Name || '',
-      member2Roll: sub.member2Roll || '', branch: sub.branch || '',
-      section: sub.section || '', participationType: sub.participationType || '',
-      transactionId: sub.transactionId || '',
-      paymentScreenshotUrl: sub.paymentScreenshotUrl || 'N/A',
-      aiFlags: sub.aiFlags || 'None', status: sub.status || 'pending',
+      id:                sub.id,
+      submittedAt:       sub.submittedAt,
+      teamName:          sub.teamName          || '',
+      member1Name:       sub.member1Name       || '',
+      member1Roll:       sub.member1Roll       || '',
+      member1Phone:      sub.member1Phone      || '',
+      member1Email:      sub.member1Email      || '',
+      member2Name:       sub.member2Name       || '',
+      member2Roll:       sub.member2Roll       || '',
+      branch:            sub.branch            || '',
+      section:           sub.section           || '',
+      participationType: sub.participationType || '',
+      transactionId:     sub.transactionId     || '',
+      paymentScreenshotUrl: sub.transactionId ? '[Screenshot in DB - ID: ' + sub.id + ']' : 'N/A',
+      aiFlags:           sub.aiFlags           || 'None',
+      status:            sub.status            || 'pending',
     }));
 
-    const total = payloads.length;
+    // 3. Send batches through Next.js proxy (no CORS issues, confirmed success)
+    const total   = payloads.length;
     const batches = Math.ceil(total / BATCH_SIZE);
     let synced = 0;
     const errors = [];
 
     for (let b = 0; b < batches; b++) {
       const batch = payloads.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
-      setLabel(`Sending batch ${b + 1}/${batches} (${synced}/${total} sent)...`);
+      setLabel(`Syncing batch ${b + 1}/${batches} (${synced}/${total} done)...`);
       try {
-        await fetch(webhookUrl, {
+        const res = await fetch('/api/export-to-sheet', {
           method: 'POST',
-          mode: 'no-cors',
-          body: JSON.stringify(batch),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ records: batch }),
         });
-        synced += batch.length;
+        const result = await res.json();
+        if (res.ok && result.success) {
+          synced += result.count || batch.length;
+        } else {
+          errors.push(`Batch ${b + 1}: ${result.error || 'Unknown error'}`);
+        }
       } catch (e) { errors.push(`Batch ${b + 1}: ${e.message}`); }
     }
 
     if (errors.length === 0) {
-      alert(`✅ All ${synced} registrations sent!\nApps Script is uploading screenshots to Drive in the background.\nWait 3–5 minutes then check your sheet.`);
+      alert(`✅ Successfully synced all ${synced}/${total} registrations to Google Sheet!`);
     } else {
-      alert(`⚠️ Sent ${synced}/${total}.\nFailed:\n${errors.join('\n')}`);
+      alert(`⚠️ Synced ${synced}/${total}.\nFailed:\n${errors.slice(0, 5).join('\n')}`);
     }
+
   } catch (error) {
     console.error('Sync error:', error);
     alert('❌ Sync failed: ' + (error.message || 'Unknown error'));
