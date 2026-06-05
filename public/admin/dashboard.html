@@ -116,6 +116,9 @@
       <a href="results.html" class="btn btn-gold">
         <i data-lucide="trophy" style="width:16px;height:16px;"></i> Declare Winners
       </a>
+      <button id="syncGoogleSheetBtn" class="btn btn-outline" style="background:rgba(82,183,136,0.1);color:var(--primary-light);border-color:var(--primary-light);cursor:pointer;" onclick="syncGoogleSheet(this)">
+        <i data-lucide="refresh-cw" style="width:16px;height:16px;"></i> Sync to Google Sheet
+      </button>
     </div>
 
     <!-- RECENT REGISTRATIONS (PENDING) -->
@@ -321,6 +324,39 @@ async function changeAdminPassword() {
   creds.password = newPass;
   await TURSO.saveAdminCreds(creds);
   showToast('Password updated successfully!', 'success');
+}
+
+async function syncGoogleSheet(btn) {
+  if (!confirm('This will send all existing registrations to your Google Sheet. It may take a minute or two depending on the number of registrations. Continue?')) {
+    return;
+  }
+  
+  const originalText = btn.innerHTML;
+  btn.innerHTML = `<i data-lucide="refresh-cw" style="width:16px;height:16px;animation:spin 1s linear infinite;margin-right:6px;"></i> Syncing...`;
+  btn.disabled = true;
+  if (window.lucide) lucide.createIcons();
+
+  try {
+    const res = await fetch('/api/export-to-sheet', { method: 'POST' });
+    const data = await res.json();
+    
+    if (!res.ok) throw new Error(data.error || 'Failed to export to Google Sheet');
+    
+    if (data.success) {
+      if (data.exported > 0) {
+        alert(`Successfully synced ${data.exported} out of ${data.total} registrations to your Google Sheet!${data.failed > 0 ? `\\nFailed to sync ${data.failed} registrations.` : ''}`);
+      } else {
+        alert(data.message || 'No registrations found or all were successfully synced previously.');
+      }
+    }
+  } catch (error) {
+    console.error(error);
+    alert(error.message || 'An error occurred during sync.');
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    if (window.lucide) lucide.createIcons();
+  }
 }
 </script>
 

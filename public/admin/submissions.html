@@ -85,6 +85,9 @@
           <button id="downloadPhotosZipBtn" class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;" onclick="downloadPhotosZip()">
             <i data-lucide="archive" style="width:14px;height:14px;"></i> ZIP Submissions (Photos)
           </button>
+          <button id="syncGoogleSheetBtn" class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;background:rgba(82,183,136,0.1);color:var(--primary-light);border-color:var(--primary-light);cursor:pointer;" onclick="syncGoogleSheet(this)">
+            <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Sync to Google Sheet
+          </button>
         </div>
       </div>
     </div>
@@ -525,6 +528,39 @@ async function downloadPhotosZip() {
   btn.innerHTML = originalText;
   btn.disabled = false;
   lucide.createIcons();
+}
+
+async function syncGoogleSheet(btn) {
+  if (!confirm('This will send all existing registrations to your Google Sheet. It may take a minute or two depending on the number of registrations. Continue?')) {
+    return;
+  }
+  
+  const originalText = btn.innerHTML;
+  btn.innerHTML = `<i data-lucide="refresh-cw" style="width:14px;height:14px;animation:spin 1s linear infinite;margin-right:6px;"></i> Syncing...`;
+  btn.disabled = true;
+  if (window.lucide) lucide.createIcons();
+
+  try {
+    const res = await fetch('/api/export-to-sheet', { method: 'POST' });
+    const data = await res.json();
+    
+    if (!res.ok) throw new Error(data.error || 'Failed to export to Google Sheet');
+    
+    if (data.success) {
+      if (data.exported > 0) {
+        alert(`Successfully synced ${data.exported} out of ${data.total} registrations to your Google Sheet!${data.failed > 0 ? `\\nFailed to sync ${data.failed} registrations.` : ''}`);
+      } else {
+        alert(data.message || 'No registrations found or all were successfully synced previously.');
+      }
+    }
+  } catch (error) {
+    console.error(error);
+    alert(error.message || 'An error occurred during sync.');
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    if (window.lucide) lucide.createIcons();
+  }
 }
 </script>
 </body>
