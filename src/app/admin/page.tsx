@@ -61,6 +61,7 @@ export default function Admin() {
   // Active sub tab
   const [activeTab, setActiveTab] = useState<'submissions' | 'winners' | 'timers'>('submissions');
   const [selectedSub, setSelectedSub] = useState<Submission | null>(null);
+  const [exportingSheet, setExportingSheet] = useState(false);
 
   // Stats Counters
   const [stats, setStats] = useState({
@@ -318,7 +319,80 @@ export default function Admin() {
     URL.revokeObjectURL(url);
   };
 
-  const handleDownloadZip = async () => {
+  const handleExportToSheet = async () => {
+    if (!confirm('This will send all existing registrations to your Google Sheet. It may take a minute or two depending on the number of registrations. Continue?')) {
+      return;
+    }
+
+    setExportingSheet(true);
+    try {
+      const res = await fetch('/api/export-to-sheet', { method: 'POST' });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || 'Failed to export to Google Sheet');
+      
+      if (data.success) {
+        if (data.exported > 0) {
+          alert(`Successfully synced ${data.exported} out of ${data.total} registrations to your Google Sheet!${data.failed > 0 ? `\nFailed to sync ${data.failed} registrations.` : ''}`);
+        } else {
+          alert(data.message || 'No registrations found or all were successfully synced previously.');
+        }
+      }
+    } catch (error: any) {
+      console.error(error);
+      alert(error.message);
+    } finally {
+      setExportingSheet(false);
+    }
+  };
+
+  const handleDownloadPhotosZip = async () => {
+    const approvedSubmissions = submissions.filter(s => s.status === 'approved' && s.photoUrl);
+    if (!approvedSubmissions.length) {
+      alert("No approved submissions with photos found.");
+      return;
+    }
+
+    const zip = new JSZip();
+    const folder = zip.folder("submission_photos");
+    if (!folder) return;
+
+    // Add CSV for Submission Details
+    const headers = 'Team Name,Category,Member 1,Roll 1,Phone,Member 2,Roll 2\n';
+    const rows = approvedSubmissions.map(s => 
+      `"${s.teamName}","${s.participationType}","${s.member1Name}","${s.member1Roll}","${s.member1Phone}","${s.member2Name || ''}","${s.member2Roll || ''}"`
+    ).join('\n');
+    zip.file("submissions_details.csv", headers + rows);
+
+    for (const sub of approvedSubmissions) {
+      let data = sub.photoUrl;
+      const fileName = `${sub.teamName.replace(/[^a-zA-Z0-9]/g, '_')}_${sub.member1Name.replace(/[^a-zA-Z0-9]/g, '_')}.jpg`;
+      if (!data) continue;
+      
+      if (data.startsWith('data:image')) {
+        const base64Data = data.split(',')[1];
+        folder.file(fileName, base64Data, { base64: true });
+      } else {
+        try {
+          const res = await fetch(data);
+          const blob = await res.blob();
+          folder.file(fileName, blob);
+        } catch (e) {
+          console.error(`Failed to fetch ${fileName}`, e);
+        }
+      }
+    }
+
+    try {
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, "submission_photos.zip");
+    } catch (e) {
+      console.error("Failed to generate zip", e);
+      alert("Failed to generate zip file.");
+    }
+  };
+
+  const handleDownloadPaymentsZip = async () => {
     const approvedSubmissions = submissions.filter(s => s.status === 'approved' && s.paymentScreenshotUrl);
     if (!approvedSubmissions.length) {
       alert("No approved submissions with payment screenshots found.");
@@ -326,8 +400,21 @@ export default function Admin() {
     }
 
     const zip = new JSZip();
-    const folder = zip.folder("approved_screenshots");
+    const folder = zip.folder("participant_payments");
     if (!folder) return;
+
+    // Add CSV for Participant Details
+    const headers = 'Team Name,Team Lead Name,Team Lead Registration Number,Phone Number,Category,UTR Number\n';
+    const rows = approvedSubmissions.map(s => {
+      const teamName = `"${s.teamName.replace(/"/g, '""')}"`;
+      const leadName = `"${s.member1Name.replace(/"/g, '""')}"`;
+      const leadReg = `"${s.member1Roll}"`;
+      const phone = `"${s.member1Phone}"`;
+      const category = `"${s.participationType}"`;
+      const utr = `"${s.transactionId || ''}"`;
+      return `${teamName},${leadName},${leadReg},${phone},${category},${utr}`;
+    }).join('\n');
+    zip.file("participants_details.csv", headers + rows);
 
     for (const sub of approvedSubmissions) {
       let data = sub.paymentScreenshotUrl;
@@ -350,38 +437,11 @@ export default function Admin() {
 
     try {
       const content = await zip.generateAsync({ type: "blob" });
-      saveAs(content, "approved_screenshots.zip");
+      saveAs(content, "participant_payments.zip");
     } catch (e) {
       console.error("Failed to generate zip", e);
       alert("Failed to generate zip file.");
     }
-  };
-
-  const handleDownloadPaymentsCSV = () => {
-    const approvedSubmissions = submissions.filter(s => s.status === 'approved' && s.paymentScreenshotUrl);
-    if (!approvedSubmissions.length) {
-      alert("No approved submissions with payment screenshots found.");
-      return;
-    }
-
-    const headers = 'Team Name,Team Lead Name,Team Lead Registration Number,Phone Number,Category (Photo/Reel/Both),Payment Screenshot Link\n';
-    const rows = approvedSubmissions.map(s => {
-      const teamName = `"${s.teamName.replace(/"/g, '""')}"`;
-      const leadName = `"${s.member1Name.replace(/"/g, '""')}"`;
-      const leadReg = `"${s.member1Roll}"`;
-      const phone = `"${s.member1Phone}"`;
-      const category = `"${s.participationType}"`;
-      const screenshot = `"${s.paymentScreenshotUrl || ''}"`;
-      return `${teamName},${leadName},${leadReg},${phone},${category},${screenshot}`;
-    }).join('\n');
-
-    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'approved_payments.csv';
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
   const openMediaInNewTab = async (dataUrl: string) => {
@@ -601,22 +661,34 @@ export default function Admin() {
                 <h2 className="text-2xl font-black font-playfair uppercase tracking-tight text-white">Submissions</h2>
                 <div className="flex gap-2">
                   <button
-                    onClick={handleDownloadPaymentsCSV}
+                    onClick={handleDownloadPaymentsZip}
                     className="px-4 py-2 rounded-xl bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500 hover:text-black text-purple-400 text-xs font-bold font-playfair uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Archive className="w-3.5 h-3.5" /> Download Payments
+                    <Archive className="w-3.5 h-3.5" /> ZIP Participants (Payments)
                   </button>
                   <button
-                    onClick={handleDownloadZip}
+                    onClick={handleDownloadPhotosZip}
                     className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500 hover:text-black text-emerald-400 text-xs font-bold font-playfair uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Archive className="w-3.5 h-3.5" /> ZIP Screenshots
+                    <Archive className="w-3.5 h-3.5" /> ZIP Submissions (Photos)
                   </button>
                   <button
                     onClick={handleExportCSV}
                     className="px-4 py-2 rounded-xl bg-black/40 border border-slate-800 hover:border-white text-xs font-bold font-playfair uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" /> Export Roster
+                  </button>
+                  <button
+                    onClick={handleExportToSheet}
+                    disabled={exportingSheet}
+                    className="px-4 py-2 rounded-xl bg-green-600/20 border border-green-500/40 hover:bg-green-500 hover:text-black text-green-400 text-xs font-bold font-playfair uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Sync ALL registrations to Google Sheet"
+                  >
+                    {exportingSheet ? (
+                      <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Syncing...</>
+                    ) : (
+                      <><Download className="w-3.5 h-3.5" /> Sync to Google Sheet</>
+                    )}
                   </button>
                   <button
                     onClick={loadAllData}

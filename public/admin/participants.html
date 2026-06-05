@@ -73,7 +73,7 @@
           <option value="MECH">MECH</option><option value="EEE">EEE</option>
         </select>
         <button id="downloadZipBtn" class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;margin-left:auto;" onclick="downloadScreenshotsZip()">
-          <i data-lucide="image" style="width:14px;height:14px;"></i> Download Screenshots
+          <i data-lucide="archive" style="width:14px;height:14px;"></i> ZIP Participants (Payments)
         </button>
         <button class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;" onclick="downloadPaymentsExcel()">
           <i data-lucide="table" style="width:14px;height:14px;"></i> Excel Export
@@ -161,7 +161,9 @@ function getFiltered() {
     const email = (s.member1Email || '').toLowerCase();
     const id    = (s.id || '').toLowerCase();
     const phone = (s.member1Phone || '').toLowerCase();
-    const matchQ = !q || name.includes(q) || email.includes(q) || id.includes(q) || phone.includes(q);
+    const roll  = (s.member1Roll || '').toLowerCase();
+    const roll2 = (s.member2Roll || '').toLowerCase();
+    const matchQ = !q || name.includes(q) || email.includes(q) || id.includes(q) || phone.includes(q) || roll.includes(q) || roll2.includes(q);
     const matchC = cat === 'all' || s.participationType === cat;
     const activeBranch = s.branch || getBranchFromRoll(s.member1Roll);
     const matchB = branch === 'all' || activeBranch === branch;
@@ -567,19 +569,34 @@ async function downloadScreenshotsZip() {
 
   try {
     const zip = new JSZip();
+    
+    // Add CSV of Participant Details
+    const headers = 'Team Name,Team Lead Name,Team Lead Registration Number,Phone Number,Category,UTR Number\n';
+    const rows = approved.map(s => {
+      const teamName = `"${(s.teamName||'').replace(/"/g, '""')}"`;
+      const leadName = `"${(s.member1Name||'').replace(/"/g, '""')}"`;
+      const leadReg = `"${s.member1Roll||''}"`;
+      const phone = `"${s.member1Phone||''}"`;
+      const category = `"${s.participationType||''}"`;
+      const utr = `"${(s.transactionId || '').replace(/"/g, '""')}"`;
+      return `${teamName},${leadName},${leadReg},${phone},${category},${utr}`;
+    }).join('\n');
+    zip.file("participants_details.csv", headers + rows);
+
     approved.forEach((s, index) => {
       let tName = s.teamName || s.member1Name || `Team_${index}`;
       tName = tName.replace(/[^a-zA-Z0-9 -]/g, "").trim(); 
+      const utrStr = (s.transactionId || 'NO_UTR').replace(/[^a-zA-Z0-9]/g, "");
       const dataUri = s.paymentScreenshotUrl;
       const matches = dataUri.match(/^data:(image\/[a-zA-Z]+);base64,(.+)$/);
       if (matches && matches.length === 3) {
         const ext = matches[1] === 'image/png' ? '.png' : '.jpg';
         const base64Data = matches[2];
-        zip.file(`${tName}${ext}`, base64Data, { base64: true });
+        zip.file(`${utrStr}_${tName}${ext}`, base64Data, { base64: true });
       }
     });
     const content = await zip.generateAsync({ type: "blob" });
-    saveAs(content, "Payment_Screenshots.zip");
+    saveAs(content, "participant_payments.zip");
   } catch(e) {
     console.error(e);
     alert("Failed to create ZIP.");

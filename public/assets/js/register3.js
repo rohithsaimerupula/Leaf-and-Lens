@@ -11,10 +11,9 @@ let photoFile = null, reelFile = null, paymentFile = null;
 
 // ── INIT ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  // Optimistically show the registration form immediately to prevent blank screen delay
+  // Wait for settings to load before showing anything
   const regWrap = document.getElementById('regWrap');
   const closedScreen = document.getElementById('closedScreen');
-  regWrap.style.display = 'block';
 
   // Check if registration is open in the background
   try {
@@ -50,11 +49,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       closedScreen.style.display = 'flex';
       return;
     }
+    
+    // Show form if active
+    regWrap.style.display = 'block';
+    
     // Load QR code
     loadQR(settings);
   } catch (e) {
     console.warn('Could not load settings:', e);
     // Fallback keeps regWrap visible
+    regWrap.style.display = 'block';
   }
 
   // Category card click updates highlight
@@ -589,20 +593,47 @@ async function submitForm() {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
+        resolve(canvas.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', quality));
       };
       img.onerror = () => {
         URL.revokeObjectURL(img.src);
-        reject(new Error('Failed to process image. It may be corrupted or unsupported.'));
+        // Fallback for unsupported formats (HEIC, PDF) that browser can't render in <img>
+        if (file.size < 4.5 * 1024 * 1024) {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error('Failed to read file data.'));
+          reader.readAsDataURL(file);
+        } else {
+          reject(new Error(`File format unsupported (e.g. HEIC/PDF) and size (${(file.size/1024/1024).toFixed(1)}MB) is too large to bypass compression. Please upload a standard JPG/PNG under 4.5MB.`));
+        }
       };
       try {
         img.src = URL.createObjectURL(file);
       } catch (e) {
-        reject(new Error('Failed to read image file.'));
+        reject(new Error('Browser failed to read image file.'));
       }
     });
 
     const compressVideo = async (file) => {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      // On mobile, FFmpeg WASM frequently crashes the browser tab out of memory for large files.
+      // We must enforce a hard limit and ask them to compress manually using an app.
+      if (isMobile && file.size > 12 * 1024 * 1024) {
+        throw new Error('Video is too large. Mobile browsers do not have enough memory to compress large videos. Please use a "Video Compressor" app to reduce the size to under 12MB before uploading.');
+      }
+
+      // Bypass compression for files under 12MB to speed up small uploads and avoid timeouts.
+      if (file.size < 12 * 1024 * 1024) {
+        btn.textContent = 'Video size is acceptable. Preparing upload...';
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error('Failed to read video file.'));
+          reader.readAsDataURL(file);
+        });
+      }
+
       try {
         btn.textContent = 'Loading video compressor (may take a moment)...';
         const { FFmpeg } = window.FFmpegWASM;
@@ -613,22 +644,37 @@ async function submitForm() {
           let pct = Math.round(progress * 100);
           if (pct < 0) pct = 0;
           if (pct > 100) pct = 100;
-          btn.textContent = `Compressing video: ${pct}%... Please do not close.`;
+          btn.textContent = `Compressing video: ${pct}%... (May take 3-5 mins for large files, do not close)`;
         });
         
-        const baseURL = '/assets/js/ffmpeg';
-        await ffmpeg.load({
-            coreURL: `${baseURL}/ffmpeg-core.js`,
-            wasmURL: `${baseURL}/ffmpeg-core.wasm`
-        });
+        // Use single-threaded core to bypass SharedArrayBuffer issues on mobile webviews
+        const coreURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js';
+        const wasmURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm';
         
-        btn.textContent = 'Reading video file...';
+        const loadPromise = ffmpeg.load({ coreURL, wasmURL });
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Video compressor took too long to load. Please check your connection or compress the video manually to under 12MB.')), 60000);
+        });
+
+        await Promise.race([loadPromise, timeoutPromise]);
+        
+        btn.textContent = 'Reading video file (Please wait)...';
         const inputName = file.name.replace(/\s+/g, '_');
         await ffmpeg.writeFile(inputName, await fetchFile(file));
         
-        btn.textContent = 'Starting video compression...';
-        // Compress strongly to fit under 4.5MB API limit: 480p, very fast preset, CRF 35
-        await ffmpeg.exec(['-i', inputName, '-vcodec', 'libx264', '-preset', 'ultrafast', '-crf', '35', '-vf', 'scale=-2:480', '-b:a', '48k', 'output.mp4']);
+        btn.textContent = 'Starting video compression (Optimizing for mobile)...';
+        // Compress strongly with low memory footprint: 360p, 15fps, ultrafast, CRF 35
+        await ffmpeg.exec([
+            '-i', inputName,
+            '-vcodec', 'libx264',
+            '-preset', 'ultrafast',
+            '-crf', '35',
+            '-r', '15',
+            '-vf', 'scale=-2:360',
+            '-b:a', '48k',
+            '-max_muxing_queue_size', '1024',
+            'output.mp4'
+        ]);
         
         btn.textContent = 'Finalizing video...';
         const data = await ffmpeg.readFile('output.mp4');
@@ -654,8 +700,8 @@ async function submitForm() {
     btn.textContent = 'Processing Payment Screenshot...';
     const paymentB64 = (payFileEl && payFileEl.files[0]) ? await compressImage(payFileEl.files[0], 1000, 0.7) : null;
     
-    btn.textContent = 'Submitting...';
-
+    btn.textContent = 'Uploading to Database (This may take a few minutes on mobile data)...';
+    
     // Generate submission ID
     const id = 'LL-2026-' + Date.now().toString(36).toUpperCase();
 
@@ -685,23 +731,33 @@ async function submitForm() {
       submittedAt:  new Date().toISOString()
     };
 
-    const response = await fetch('/api/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(submission)
-    });
+    let response;
+    let fallbackSuccess = false;
+    
+    try {
+      response = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submission)
+      });
+    } catch (e) {
+      throw new Error('Network error. Please check your connection.');
+    }
     
     if (!response.ok) {
-      let errData = {};
-      try {
-        errData = await response.json();
-      } catch (e) {
-        if (response.status === 413) {
-          throw new Error('Upload size limit exceeded. Please reduce file sizes (e.g. compress video/photo).');
+      if (response.status === 413 && window.TURSO) {
+        console.log("Vercel payload too large, falling back to direct Turso DB connection.");
+        await window.TURSO.saveSubmission(submission);
+        fallbackSuccess = true;
+      } else {
+        let errData = {};
+        try {
+          errData = await response.json();
+        } catch (e) {
+          throw new Error(`Server error (${response.status}): Could not process this request.`);
         }
-        throw new Error(`Server error (${response.status}): Could not process this request.`);
+        throw new Error(errData.error || 'Failed to submit registration');
       }
-      throw new Error(errData.error || 'Failed to submit registration');
     }
 
     // Show success

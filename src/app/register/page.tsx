@@ -208,6 +208,19 @@ export default function Register() {
     }
   };
 
+  if (status === null) {
+    return (
+      <div className="relative min-h-screen bg-bg-dark text-slate-100 flex flex-col items-center justify-center py-16 px-6 font-sans">
+        <CursorTrail />
+        <AmbientMusic />
+        <div className="flex flex-col items-center gap-4 text-neon/50">
+          <RefreshCw className="w-8 h-8 animate-spin" />
+          <p className="font-mono text-sm tracking-widest uppercase">Loading Portal Data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-screen bg-bg-dark text-slate-100 flex flex-col items-center justify-center py-16 px-6 font-sans">
       <CursorTrail />
@@ -250,6 +263,7 @@ export default function Register() {
         )}
 
         {/* MAIN MULTI-STEP CARD */}
+        {(status.isLive || submitted) && (
         <div className="glass-panel border-neon/10 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
           {submitted ? (
             /* SUCCESS PANEL */
@@ -722,6 +736,7 @@ export default function Register() {
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   );

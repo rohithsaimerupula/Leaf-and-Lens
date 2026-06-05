@@ -8,6 +8,8 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <link rel="stylesheet" href="../assets/css/main.css" />
   <link rel="stylesheet" href="../assets/css/admin.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <script src="../assets/js/turso.js?v=1.0.3"></script>
 </head>
 <body class="admin-body">
@@ -71,7 +73,7 @@
       <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
         <div class="search-wrap">
           <i data-lucide="search" class="search-icon" style="width:14px;height:14px;"></i>
-          <input type="text" class="table-search" id="searchInput" placeholder="Search name, email, ID..." oninput="renderTable()" />
+          <input type="text" class="table-search" id="searchInput" placeholder="Search name, email, ID, roll no..." oninput="renderTable()" />
         </div>
         <select class="table-filter" id="filterCat" onchange="renderTable()">
           <option value="all">All Categories</option>
@@ -80,7 +82,9 @@
           <option value="Both">Both</option>
         </select>
         <div style="margin-left:auto;display:flex;gap:0.5rem;flex-wrap:wrap;">
-
+          <button id="downloadPhotosZipBtn" class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;" onclick="downloadPhotosZip()">
+            <i data-lucide="archive" style="width:14px;height:14px;"></i> ZIP Submissions (Photos)
+          </button>
         </div>
       </div>
     </div>
@@ -249,7 +253,9 @@ function getFiltered() {
     const name  = (s.member1Name || s.teamName || '').toLowerCase();
     const email = (s.member1Email || '').toLowerCase();
     const id    = (s.id || '').toLowerCase();
-    const matchQ = !q || name.includes(q) || email.includes(q) || id.includes(q);
+    const roll  = (s.member1Roll || '').toLowerCase();
+    const roll2 = (s.member2Roll || '').toLowerCase();
+    const matchQ = !q || name.includes(q) || email.includes(q) || id.includes(q) || roll.includes(q) || roll2.includes(q);
     const matchC = cat === 'all' || s.participationType === cat;
     return matchQ && matchC;
   });
@@ -457,6 +463,69 @@ async function exportAllCSV() {
 
 function closeModal() { document.getElementById('viewModal').classList.remove('open'); }
 document.getElementById('viewModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+async function downloadPhotosZip() {
+  if (typeof JSZip === 'undefined' || typeof saveAs === 'undefined') {
+    alert("ZIP libraries are still loading. Please try again in a few seconds.");
+    return;
+  }
+  const btn = document.getElementById('downloadPhotosZipBtn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = `<i data-lucide="loader" class="spin" style="width:14px;height:14px;"></i> Fetching data...`;
+  btn.disabled = true;
+
+  const allMedia = await TURSO.getAllApprovedMedia();
+  allMedia.forEach(m => {
+    const s = _allSubs.find(x => x.id === m.id);
+    if (s) {
+      s.photoUrl = m.photoUrl;
+      s.reelUrl = m.reelUrl;
+    }
+  });
+
+  const approved = _allSubs.filter(s => s.status === 'approved' && s.photoUrl && s.photoUrl.length > 20);
+  if (!approved.length) {
+    alert("No approved submissions with photos found.");
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    lucide.createIcons();
+    return;
+  }
+  
+  btn.innerHTML = `<i data-lucide="loader" class="spin" style="width:14px;height:14px;"></i> Zipping...`;
+
+  try {
+    const zip = new JSZip();
+    
+    // Add CSV of Submission Details
+    const headers = 'Team Name,Category,Member 1,Roll 1,Phone,Member 2,Roll 2\n';
+    const rows = approved.map(s => 
+      `"${s.teamName||''}","${s.participationType||''}","${s.member1Name||''}","${s.member1Roll||''}","${s.member1Phone||''}","${s.member2Name || ''}","${s.member2Roll || ''}"`
+    ).join('\n');
+    zip.file("submissions_details.csv", headers + rows);
+
+    approved.forEach((s, index) => {
+      let rollNo = s.member1Roll || s.teamName || `Team_${index}`;
+      rollNo = rollNo.replace(/[^a-zA-Z0-9 -]/g, "").trim().toUpperCase(); 
+      
+      const dataUri = s.photoUrl;
+      const matches = dataUri.match(/^data:(image\/[a-zA-Z]+);base64,(.+)$/);
+      if (matches && matches.length === 3) {
+        const ext = matches[1] === 'image/png' ? '.png' : '.jpg';
+        const base64Data = matches[2];
+        zip.file(`${rollNo}${ext}`, base64Data, { base64: true });
+      }
+    });
+    const content = await zip.generateAsync({ type: "blob" });
+    saveAs(content, "submission_photos.zip");
+  } catch(e) {
+    console.error(e);
+    alert("Failed to create ZIP.");
+  }
+  btn.innerHTML = originalText;
+  btn.disabled = false;
+  lucide.createIcons();
+}
 </script>
 </body>
 </html>
