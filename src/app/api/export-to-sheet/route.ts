@@ -21,70 +21,63 @@ export async function POST() {
       return NextResponse.json({ success: true, exported: 0, message: 'No registrations found.' });
     }
 
-    let exported = 0;
-    let failed = 0;
-    const errors: string[] = [];
+    const payloads = submissions.map(sub => {
+      const amount = sub.participationType === 'Both' ? 50 : 30;
+      return {
+        id:                   sub.id,
+        submittedAt:          sub.submittedAt,
+        teamName:             sub.teamName,
+        member1Name:          sub.member1Name,
+        member1Roll:          sub.member1Roll,
+        member1Phone:         sub.member1Phone   || '',
+        member1Email:         sub.member1Email   || '',
+        member2Name:          sub.member2Name    || '',
+        member2Roll:          sub.member2Roll    || '',
+        branch:               sub.branch         || '',
+        section:              sub.section        || '',
+        participationType:    sub.participationType,
+        amount,
+        transactionId:        sub.transactionId  || '',
+        paymentScreenshotUrl: sub.paymentScreenshotUrl
+          ? (sub.paymentScreenshotUrl.startsWith('data:image') ? '[Base64 Image Stored in DB]' : sub.paymentScreenshotUrl)
+          : 'Not provided',
+        aiFlags:              sub.aiFlags        || 'None',
+        status:               sub.status         || 'pending',
+      };
+    });
 
-    // Send each submission to the sheet sequentially (avoid rate limits)
-    for (const sub of submissions) {
-      try {
-        const amount = sub.participationType === 'Both' ? 50 : 30;
+    const res = await fetch(webhookUrl, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payloads),
+    });
 
-        const payload = {
-          id:                   sub.id,
-          submittedAt:          sub.submittedAt,
-          teamName:             sub.teamName,
-          member1Name:          sub.member1Name,
-          member1Roll:          sub.member1Roll,
-          member1Phone:         sub.member1Phone   || '',
-          member1Email:         sub.member1Email   || '',
-          member2Name:          sub.member2Name    || '',
-          member2Roll:          sub.member2Roll    || '',
-          branch:               sub.branch         || '',
-          section:              sub.section        || '',
-          participationType:    sub.participationType,
-          amount,
-          transactionId:        sub.transactionId  || '',
-          // Don't re-send large base64 blobs for existing records — just note it exists
-          paymentScreenshotUrl: sub.paymentScreenshotUrl
-            ? '[Already stored in DB]'
-            : 'Not provided',
-          aiFlags:              sub.aiFlags        || 'None',
-          status:               sub.status         || 'pending',
-        };
+    if (!res.ok) {
+      const text = await res.text();
+      return NextResponse.json(
+        { error: `Google Sheets webhook returned HTTP ${res.status}`, details: text.substring(0, 200) },
+        { status: res.status }
+      );
+    }
 
-        const res = await fetch(webhookUrl, {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify(payload),
-        });
-
-        if (res.ok) {
-          exported++;
-        } else {
-          failed++;
-          errors.push(`${sub.id}: HTTP ${res.status}`);
-        }
-
-        // Small delay to avoid Apps Script rate limits (100ms between requests)
-        await new Promise(r => setTimeout(r, 100));
-      } catch (err: any) {
-        failed++;
-        errors.push(`${sub.id}: ${err.message}`);
-      }
+    const result = await res.json();
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Google Sheets script execution failed', details: result.error },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
       success: true,
       total:    submissions.length,
-      exported,
-      failed,
-      errors: errors.length > 0 ? errors : undefined,
+      exported: result.count || submissions.length,
+      failed:   0,
     });
   } catch (error: any) {
     console.error('Export to sheet failed:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch registrations', details: error.message },
+      { error: 'Failed to sync registrations', details: error.message },
       { status: 500 }
     );
   }

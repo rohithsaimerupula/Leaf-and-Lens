@@ -42,7 +42,7 @@ const HEADERS = [
 // ── Main POST handler ─────────────────────────────────────────
 function doPost(e) {
   try {
-    const data = JSON.parse(e.postData.contents);
+    const rawData = JSON.parse(e.postData.contents);
 
     const ss    = SpreadsheetApp.openById(SHEET_ID);
     let sheet   = ss.getSheetByName(SHEET_TAB_NAME);
@@ -58,56 +58,73 @@ function doPost(e) {
       sheet.setFrozenRows(1);
     }
 
-    // Amount based on category
-    const amount = data.participationType === 'Both' ? 50 : 30;
+    // Convert single object to array for unified handling
+    const dataList = Array.isArray(rawData) ? rawData : [rawData];
+    const newRows = [];
 
-    // Upload payment screenshot to Drive (if provided + folder configured)
-    let screenshotLink = 'N/A';
-    if (data.paymentScreenshotUrl && DRIVE_FOLDER_ID !== 'YOUR_DRIVE_FOLDER_ID_HERE') {
-      try {
-        const b64 = data.paymentScreenshotUrl.replace(/^data:image\/\w+;base64,/, '');
-        const blob = Utilities.newBlob(
-          Utilities.base64Decode(b64),
-          'image/jpeg',
-          `screenshot_${data.id || Date.now()}.jpg`
-        );
-        const folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
-        const file   = folder.createFile(blob);
-        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        screenshotLink = file.getUrl();
-      } catch (err) {
-        screenshotLink = 'Upload failed: ' + err.message;
+    for (var i = 0; i < dataList.length; i++) {
+      const data = dataList[i];
+      // Amount based on category
+      const amount = data.participationType === 'Both' ? 50 : 30;
+
+      // Upload payment screenshot to Drive (if provided + folder configured)
+      let screenshotLink = 'N/A';
+      if (data.paymentScreenshotUrl && DRIVE_FOLDER_ID !== 'YOUR_DRIVE_FOLDER_ID_HERE') {
+        try {
+          if (data.paymentScreenshotUrl.indexOf('data:image') === 0) {
+            const b64 = data.paymentScreenshotUrl.replace(/^data:image\/\w+;base64,/, '');
+            const blob = Utilities.newBlob(
+              Utilities.base64Decode(b64),
+              'image/jpeg',
+              `screenshot_${data.id || Date.now()}_${i}.jpg`
+            );
+            const folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+            const file   = folder.createFile(blob);
+            file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+            screenshotLink = file.getUrl();
+          } else {
+            screenshotLink = data.paymentScreenshotUrl;
+          }
+        } catch (err) {
+          screenshotLink = 'Upload failed: ' + err.message;
+        }
+      } else if (data.paymentScreenshotUrl) {
+        screenshotLink = data.paymentScreenshotUrl.indexOf('data:image') === 0 ? 'Uploaded (no Drive folder set)' : data.paymentScreenshotUrl;
       }
-    } else if (data.paymentScreenshotUrl) {
-      screenshotLink = 'Uploaded (no Drive folder set)';
+
+      newRows.push([
+        data.id                  || '',
+        data.submittedAt         || new Date().toISOString(),
+        data.member1Name         || '',
+        data.member1Roll         || '',
+        data.member1Phone        || '',
+        data.member1Email        || '',
+        data.teamName            || '',
+        data.branch              || '',
+        data.section             || '',
+        data.member2Name         || '',
+        data.member2Roll         || '',
+        data.participationType   || '',
+        `₹${amount}`,
+        data.transactionId       || '',
+        screenshotLink,
+        data.aiFlags             || 'None',
+        data.status              || 'pending',
+      ]);
     }
 
-    // Append the row
-    sheet.appendRow([
-      data.id                  || '',
-      data.submittedAt         || new Date().toISOString(),
-      data.member1Name         || '',
-      data.member1Roll         || '',
-      data.member1Phone        || '',
-      data.member1Email        || '',
-      data.teamName            || '',
-      data.branch              || '',
-      data.section             || '',
-      data.member2Name         || '',
-      data.member2Roll         || '',
-      data.participationType   || '',
-      `₹${amount}`,
-      data.transactionId       || '',
-      screenshotLink,
-      data.aiFlags             || 'None',
-      data.status              || 'pending',
-    ]);
+    // Append all rows at once
+    if (newRows.length > 0) {
+      const lastRow = sheet.getLastRow();
+      const range = sheet.getRange(lastRow + 1, 1, newRows.length, HEADERS.length);
+      range.setValues(newRows);
+    }
 
     // Auto-resize columns for readability
     sheet.autoResizeColumns(1, HEADERS.length);
 
     return ContentService
-      .createTextOutput(JSON.stringify({ success: true }))
+      .createTextOutput(JSON.stringify({ success: true, count: dataList.length }))
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {
