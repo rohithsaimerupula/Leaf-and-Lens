@@ -344,7 +344,9 @@ async function syncGoogleSheet(btn) {
     
     if (data.success) {
       if (data.exported > 0) {
-        alert(`Successfully synced ${data.exported} out of ${data.total} registrations to your Google Sheet!${data.failed > 0 ? `\\nFailed to sync ${data.failed} registrations.` : ''}`);
+        alert(`Successfully synced ${data.exported} out of ${data.total} registrations to your Google Sheet!${data.failed > 0 ? `\nFailed to sync ${data.failed} registrations.` : ''}`);
+      } else if (data.failed > 0) {
+        alert(`Sync failed! Out of ${data.total} registrations, all ${data.failed} failed to sync.\n\nErrors:\n${data.errors ? data.errors.slice(0, 5).join('\n') : 'Unknown error'}`);
       } else {
         alert(data.message || 'No registrations found or all were successfully synced previously.');
       }
