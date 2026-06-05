@@ -1,25 +1,23 @@
 // ═══════════════════════════════════════════════════════════════
-//  LEAF & LENS 2026 — Google Sheets Webhook (v3)
-//  HOW TO DEPLOY:
-//  1. Go to https://script.google.com → New Project
-//  2. Paste this entire file, replacing the default code
-//  3. Set SHEET_ID below to your Google Sheet ID
-//     (from the sheet URL: /spreadsheets/d/<SHEET_ID>/edit)
-//  4. Optionally set DRIVE_FOLDER_ID to a Google Drive folder ID
-//     where NEW real-time payment screenshots will be saved.
-//     Leave as 'YOUR_DRIVE_FOLDER_ID_HERE' to skip Drive uploads.
-//  5. Click Deploy → New Deployment → Web App
-//     - Execute as: Me
-//     - Who has access: Anyone  ← IMPORTANT: must be Anyone
-//  6. Authorise and copy the Web App URL
-//  7. Paste that URL as GOOGLE_SHEET_WEBHOOK_URL in your .env.local
+//  LEAF & LENS 2026 — Google Sheets Webhook  v3.1
+//
+//  DEPLOYMENT STEPS:
+//  1. In script.google.com: Select All (Ctrl+A) → Delete → Paste this file
+//  2. Save (Ctrl+S)
+//  3. Click "Deploy" → "Manage deployments"
+//  4. Click the pencil ✏ icon on your existing deployment
+//  5. Set Version = "New version"
+//  6. Click "Deploy"  (URL stays the same – no change needed in .env)
+//  7. Clear all data rows in the Google Sheet (keep the header row)
+//  8. Click "Sync to Google Sheet" in your admin panel
 // ═══════════════════════════════════════════════════════════════
 
+// ── CONFIG — already filled in for you ───────────────────────
 var SHEET_ID        = '1BdcG7zpTfmrm3uh12gSeoaHUDA_pbihbZfHwjWbzuQc';
-var SHEET_TAB_NAME  = 'Registrations';
 var DRIVE_FOLDER_ID = '1zXz7qrCe-tD7A-DkJjn_OnSsmN6RJfn3';
+var SHEET_TAB_NAME  = 'Registrations';
 
-// ── Headers ───────────────────────────────────────────────────
+// ── Column headers (order must match buildRow below) ──────────
 var HEADERS = [
   'Submission ID',
   'Timestamp',
@@ -33,141 +31,152 @@ var HEADERS = [
   'Member 2 Name',
   'Member 2 Reg No.',
   'Category',
-  'Amount (₹)',
-  'UTR Number',
+  'Amount (Rs.)',
+  'UTR / Transaction ID',
   'Payment Screenshot',
   'AI Flags',
-  'Status',
+  'Status'
 ];
 
-// ── Get or create the Registrations sheet ────────────────────
+// ── Get or create the sheet tab ───────────────────────────────
 function getSheet() {
   var ss    = SpreadsheetApp.openById(SHEET_ID);
   var sheet = ss.getSheetByName(SHEET_TAB_NAME);
+
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_TAB_NAME);
-    sheet.appendRow(HEADERS);
-    var headerRange = sheet.getRange(1, 1, 1, HEADERS.length);
-    headerRange.setBackground('#1a3a22');
-    headerRange.setFontColor('#c9a84c');
-    headerRange.setFontWeight('bold');
+    var hdr = sheet.getRange(1, 1, 1, HEADERS.length);
+    hdr.setValues([HEADERS]);
+    hdr.setBackground('#1a3a22');
+    hdr.setFontColor('#c9a84c');
+    hdr.setFontWeight('bold');
     sheet.setFrozenRows(1);
   }
   return sheet;
 }
 
-// ── Safely upload a base64 image to Google Drive ──────────────
-// Returns Drive URL on success, or a descriptive fallback string.
-function uploadToDrive(base64DataUri, submissionId) {
-  // Only attempt if Drive folder is configured
-  if (!DRIVE_FOLDER_ID || DRIVE_FOLDER_ID === 'YOUR_DRIVE_FOLDER_ID_HERE') {
-    return 'Screenshot stored in DB (no Drive folder configured)';
+// ── Convert one data record to a row array ────────────────────
+// isBulk = true  →  bulk export from Next.js (base64 already stripped)
+// isBulk = false →  real-time single registration (may have base64)
+function buildRow(data, isBulk) {
+  var amount        = data.participationType === 'Both' ? 50 : 30;
+  var screenshot    = data.paymentScreenshotUrl || 'N/A';
+
+  // For real-time single entries: try uploading base64 screenshot to Drive
+  if (!isBulk && screenshot.indexOf('data:image') === 0) {
+    screenshot = uploadToDrive(screenshot, data.id);
   }
 
-  // Only attempt if we actually have a base64 data URI
-  if (!base64DataUri || base64DataUri.indexOf('data:image') !== 0) {
-    return base64DataUri || 'N/A';
-  }
+  return [
+    String(data.id                || ''),
+    String(data.submittedAt       || ''),
+    String(data.member1Name       || ''),
+    String(data.member1Roll       || ''),
+    String(data.member1Phone      || ''),
+    String(data.member1Email      || ''),
+    String(data.teamName          || ''),
+    String(data.branch            || ''),
+    String(data.section           || ''),
+    String(data.member2Name       || ''),
+    String(data.member2Roll       || ''),
+    String(data.participationType || ''),
+    'Rs.' + amount,
+    String(data.transactionId     || ''),
+    screenshot,
+    String(data.aiFlags           || 'None'),
+    String(data.status            || 'pending')
+  ];
+}
 
+// ── Safely upload a base64 image to Drive ─────────────────────
+function uploadToDrive(dataUri, submissionId) {
   try {
-    // Detect MIME type (jpeg or png)
-    var mimeMatch = base64DataUri.match(/^data:(image\/\w+);base64,/);
-    var mimeType  = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+    var mimeMatch = dataUri.match(/^data:(image\/\w+);base64,/);
+    if (!mimeMatch) return 'Invalid image format';
+    var mimeType  = mimeMatch[1];
     var ext       = mimeType === 'image/png' ? '.png' : '.jpg';
+    var b64       = dataUri.replace(/^data:image\/\w+;base64,/, '');
 
-    // Strip the data URI prefix to get raw base64
-    var b64 = base64DataUri.replace(/^data:image\/\w+;base64,/, '');
+    // Ensure valid base64 padding
+    while (b64.length % 4 !== 0) b64 += '=';
 
-    // Pad to a valid base64 length (multiple of 4)
-    while (b64.length % 4 !== 0) { b64 += '='; }
-
-    var bytes  = Utilities.base64Decode(b64, Utilities.Charset.UTF_8);
+    var bytes  = Utilities.base64Decode(b64);
     var blob   = Utilities.newBlob(bytes, mimeType, 'payment_' + submissionId + ext);
     var folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
     var file   = folder.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     return file.getUrl();
-  } catch (e) {
-    return 'Drive upload failed: ' + e.message;
+  } catch (err) {
+    return '[Drive upload failed: ' + err.message + ']';
   }
 }
 
-// ── Convert one data object to a row array ────────────────────
-function buildRow(data, isBulkSync) {
-  var amount = data.participationType === 'Both' ? 50 : 30;
-
-  // For bulk sync, screenshots were already stripped server-side.
-  // For real-time (single record), try Drive upload.
-  var screenshotCell;
-  if (isBulkSync) {
-    // paymentScreenshotUrl arrives as a descriptive string, not raw base64
-    screenshotCell = data.paymentScreenshotUrl || 'N/A';
-  } else {
-    screenshotCell = uploadToDrive(data.paymentScreenshotUrl, data.id);
-  }
-
-  return [
-    data.id                || '',
-    data.submittedAt       || new Date().toISOString(),
-    data.member1Name       || '',
-    data.member1Roll       || '',
-    data.member1Phone      || '',
-    data.member1Email      || '',
-    data.teamName          || '',
-    data.branch            || '',
-    data.section           || '',
-    data.member2Name       || '',
-    data.member2Roll       || '',
-    data.participationType || '',
-    '\u20b9' + amount,       // ₹ symbol
-    data.transactionId     || '',
-    screenshotCell,
-    data.aiFlags           || 'None',
-    data.status            || 'pending',
-  ];
-}
-
-// ── Main POST handler ─────────────────────────────────────────
+// ── Main request handler ──────────────────────────────────────
 function doPost(e) {
   try {
-    var rawData   = JSON.parse(e.postData.contents);
-    var isBulk    = Array.isArray(rawData);
-    var dataList  = isBulk ? rawData : [rawData];
-    var sheet     = getSheet();
+    var parsed  = JSON.parse(e.postData.contents);
+    var isBulk  = Array.isArray(parsed);
+    var records = isBulk ? parsed : [parsed];
 
-    // Build all row arrays first (no Drive uploads in bulk mode)
-    var newRows = [];
-    for (var i = 0; i < dataList.length; i++) {
-      newRows.push(buildRow(dataList[i], isBulk));
+    Logger.log('doPost received ' + records.length + ' records, isBulk=' + isBulk);
+
+    var sheet   = getSheet();
+    var rows    = [];
+
+    for (var i = 0; i < records.length; i++) {
+      rows.push(buildRow(records[i], isBulk));
     }
 
-    // Write all rows in one API call (much faster than appendRow in a loop)
-    if (newRows.length > 0) {
+    if (rows.length > 0) {
       var startRow = sheet.getLastRow() + 1;
-      sheet
-        .getRange(startRow, 1, newRows.length, HEADERS.length)
-        .setValues(newRows);
-    }
-
-    // Only auto-resize for small batches (single entries) to avoid timeouts
-    if (!isBulk) {
-      sheet.autoResizeColumns(1, HEADERS.length);
+      sheet.getRange(startRow, 1, rows.length, HEADERS.length).setValues(rows);
+      Logger.log('Wrote ' + rows.length + ' rows starting at row ' + startRow);
     }
 
     return ContentService
-      .createTextOutput(JSON.stringify({ success: true, count: newRows.length }))
+      .createTextOutput(JSON.stringify({ success: true, count: rows.length }))
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {
+    Logger.log('doPost ERROR: ' + err.message);
     return ContentService
       .createTextOutput(JSON.stringify({ success: false, error: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
-// ── GET handler (health check) ────────────────────────────────
+// ── Health check (open the Web App URL in a browser to verify) ─
 function doGet() {
   return ContentService
-    .createTextOutput(JSON.stringify({ status: 'Leaf & Lens webhook v3 active' }))
+    .createTextOutput(JSON.stringify({ status: 'OK', version: 'v3.1' }))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ── TEST FUNCTION — run this manually inside the editor ────────
+// Click the function dropdown → select "testWrite" → press ▶ Run
+// Then check your sheet — if a row appears the script is working.
+function testWrite() {
+  var sheet = getSheet();
+  var testRow = buildRow({
+    id: 'TEST-001',
+    submittedAt: new Date().toISOString(),
+    member1Name: 'Test User',
+    member1Roll: '22A91A0000',
+    member1Phone: '9999999999',
+    member1Email: 'test@test.com',
+    teamName: 'Test Team',
+    branch: 'CSE',
+    section: 'A',
+    member2Name: '',
+    member2Roll: '',
+    participationType: 'Photo',
+    transactionId: 'TXN123',
+    paymentScreenshotUrl: '[Test - no image]',
+    aiFlags: 'None',
+    status: 'approved'
+  }, true);
+
+  var startRow = sheet.getLastRow() + 1;
+  sheet.getRange(startRow, 1, 1, HEADERS.length).setValues([testRow]);
+  Logger.log('testWrite: wrote test row at row ' + startRow);
 }
