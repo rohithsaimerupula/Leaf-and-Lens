@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Participants — Leaf & Lens Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <link rel="stylesheet" href="../assets/css/admin.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="../assets/js/turso.js?v=1.0.3"></script>
+</head>
+<body class="admin-body">
+
+<aside class="admin-sidebar">
+  <div class="sidebar-logo">
+    <span style="font-size:1.6rem;">🌿</span>
+    <div><div class="sidebar-logo-text">Leaf &amp; Lens</div><span class="sidebar-admin-badge">Admin Panel</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Main</div>
+    <a href="dashboard.html" class="sidebar-link"><i data-lucide="layout-dashboard" style="width:16px;height:16px;"></i> Dashboard</a>
+    <a href="submissions.html" class="sidebar-link"><i data-lucide="image" style="width:16px;height:16px;"></i> Submissions</a>
+    <a href="participants.html" class="sidebar-link active"><i data-lucide="users" style="width:16px;height:16px;"></i> Participants</a>
+    <a href="results.html" class="sidebar-link"><i data-lucide="trophy" style="width:16px;height:16px;"></i> Results</a>
+    <a href="registrations.html" class="sidebar-link"><i data-lucide="settings" style="width:16px;height:16px;"></i> Registrations</a>
+    <div class="sidebar-section-label">Site</div>
+    <a href="../home.html" class="sidebar-link" target="_blank"><i data-lucide="external-link" style="width:16px;height:16px;"></i> View Site</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <button class="sidebar-logout" id="logoutBtn"><i data-lucide="log-out" style="width:15px;height:15px;"></i> Sign Out</button>
+  </div>
+</aside>
+
+<main class="admin-main">
+  <div class="admin-topbar">
+    <h1 class="topbar-title">Participants</h1>
+    <div class="topbar-right">
+      <span id="partCountLabel" style="font-size:0.82rem;color:var(--text-muted);"></span>
+    </div>
+  </div>
+  <div class="admin-content">
+
+    <!-- FILTER BAR -->
+    <div class="admin-table-wrap" style="margin-bottom:1.25rem;padding:1rem 1.5rem;">
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
+        <div class="search-wrap">
+          <i data-lucide="search" class="search-icon" style="width:14px;height:14px;"></i>
+          <input type="text" class="table-search" id="searchInput" placeholder="Search name, email, ID, roll no..." oninput="renderTable()" />
+        </div>
+        <select class="table-filter" id="filterCat" onchange="renderTable()">
+          <option value="all">All Categories</option>
+          <option value="Photo">Photo</option>
+          <option value="Reel">Reel</option>
+          <option value="Both">Both</option>
+        </select>
+        <select class="table-filter" id="filterStatus" onchange="renderTable()">
+          <option value="all">All Status</option>
+          <option value="pending">⏳ Pending</option>
+          <option value="approved">✅ Approved</option>
+          <option value="rejected">❌ Rejected</option>
+        </select>
+        <select class="table-filter" id="filterYear">
+          <option value="all">1st Year</option>
+        </select>
+        <select class="table-filter" id="filterBranch" onchange="renderTable()">
+          <option value="all">All Branches</option>
+          <option value="CSE">CSE</option><option value="IT">IT</option><option value="CS">CS</option>
+          <option value="CSD">CSD</option><option value="CAI">CAI</option><option value="AIDS">AIDS</option>
+          <option value="ECE">ECE</option><option value="ECM">ECM</option><option value="CIVIL">CIVIL</option>
+          <option value="MECH">MECH</option><option value="EEE">EEE</option>
+        </select>
+        <button id="downloadZipBtn" class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;margin-left:auto;" onclick="downloadScreenshotsZip()">
+          <i data-lucide="archive" style="width:14px;height:14px;"></i> ZIP Participants (Payments)
+        </button>
+        <button class="btn btn-outline" style="font-size:0.82rem;padding:0.45rem 1rem;" onclick="downloadPaymentsExcel()">
+          <i data-lucide="table" style="width:14px;height:14px;"></i> Excel Export
+        </button>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="admin-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>ID</th><th>Name</th><th>Contact</th>
+            <th>Roll No</th><th>Branch &amp; Sec</th><th>Year</th><th>Category</th><th>Pledge</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="participantsTable"></tbody>
+      </table>
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+  </div>
+</main>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="detailTitle">Participant Detail</span>
+      <button class="modal-close" onclick="document.getElementById('detailModal').classList.remove('open')">
+        <i data-lucide="x" style="width:18px;height:18px;"></i>
+      </button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../assets/js/main.js"></script>
+<script>
+let _allSubs = [];
+let currentPage = 1;
+const PER_PAGE = 20;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!LL.isAdminLoggedIn()) { window.location.href = 'login.html'; return; }
+  if (window.lucide) lucide.createIcons();
+
+  _allSubs = await TURSO.getSubmissions();
+  renderTable();
+  document.getElementById('logoutBtn').addEventListener('click', () => { LL.adminLogout(); window.location.href = 'login.html'; });
+});
+
+function getBranchFromRoll(roll) {
+  if (!roll || typeof roll !== 'string') return '';
+  const r = roll.toUpperCase().trim();
+  if (r.length < 8) return '';
+  const code = r.substring(6, 8);
+  const branches = {
+    '05': 'CSE',
+    '12': 'IT',
+    '06': 'CS',
+    '42': 'CSD',
+    '43': 'CAI',
+    '54': 'AIDS',
+    '04': 'ECE',
+    '19': 'ECM',
+    '01': 'CIVIL',
+    '03': 'MECH',
+    '02': 'EEE'
+  };
+  return branches[code] || '';
+}
+
+
+
+function getFiltered() {
+  const q      = document.getElementById('searchInput').value.toLowerCase();
+  const cat    = document.getElementById('filterCat').value;
+  const branch = document.getElementById('filterBranch').value;
+  const status = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : 'all';
+
+  return _allSubs.filter(s => {
+    const name  = (s.member1Name || s.teamName || '').toLowerCase();
+    const email = (s.member1Email || '').toLowerCase();
+    const id    = (s.id || '').toLowerCase();
+    const phone = (s.member1Phone || '').toLowerCase();
+    const roll  = (s.member1Roll || '').toLowerCase();
+    const roll2 = (s.member2Roll || '').toLowerCase();
+    const matchQ = !q || name.includes(q) || email.includes(q) || id.includes(q) || phone.includes(q) || roll.includes(q) || roll2.includes(q);
+    const matchC = cat === 'all' || s.participationType === cat;
+    const activeBranch = s.branch || getBranchFromRoll(s.member1Roll);
+    const matchB = branch === 'all' || activeBranch === branch;
+    const matchS = status === 'all' || s.status === status;
+    return matchQ && matchC && matchB && matchS;
+  });
+}
+
+function renderTable() {
+  const filtered = getFiltered();
+  const total    = filtered.length;
+  const pages    = Math.max(1, Math.ceil(total / PER_PAGE));
+  currentPage    = Math.min(currentPage, pages);
+  const slice    = filtered.slice((currentPage-1)*PER_PAGE, currentPage*PER_PAGE);
+
+  document.getElementById('partCountLabel').textContent = `${total} participant${total !== 1 ? 's' : ''}`;
+
+  const tbody = document.getElementById('participantsTable');
+  if (!slice.length) {
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="empty-icon">👥</div><p>No participants found</p></div></td></tr>`;
+  } else {
+    tbody.innerHTML = slice.map((s, i) => `
+      <tr>
+        <td style="color:var(--text-muted);font-size:0.78rem;">${(currentPage-1)*PER_PAGE+i+1}</td>
+        <td class="td-id">${s.id}</td>
+        <td class="td-name">
+          <div><strong>${s.member1Name || s.teamName}</strong></div>
+          <div style="margin-top:0.25rem; display:flex; gap:0.25rem;">
+            ${(s.aiFlags && s.aiFlags.toLowerCase().includes('ai')) 
+              ? `<span class="badge" style="font-size:0.65rem;padding:2px 6px;background:rgba(230,57,70,0.15);color:#e63946;font-weight:700;">🤖 AI</span>`
+              : (s.aiFlags && s.aiFlags.toLowerCase().includes('edit'))
+                ? `<span class="badge" style="font-size:0.65rem;padding:2px 6px;background:rgba(244,162,97,0.15);color:#f4a261;font-weight:700;">✏️ Edited</span>`
+                : `<span class="badge" style="font-size:0.65rem;padding:2px 6px;background:rgba(82,183,136,0.15);color:#52b788;font-weight:700;">🟢 Natural</span>`
+            }
+          </div>
+        </td>
+        <td>
+          <div style="font-size:0.82rem;">${s.member1Email || '—'}</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);">${s.member1Phone || ''}</div>
+        </td>
+        <td style="font-size:0.82rem;font-family:'Outfit',sans-serif;color:var(--primary-light);font-weight:600;">${s.member1Roll || '—'}</td>
+        <td style="font-size:0.82rem;">
+          ${(() => {
+            const b = s.branch || getBranchFromRoll(s.member1Roll);
+            const sec = s.section;
+            return b ? (sec ? `${b}-${sec}`.toUpperCase() : b.toUpperCase()) : '—';
+          })()}
+        </td>
+        <td style="font-size:0.82rem;">1st Year</td>
+        <td><span class="badge badge-green" style="font-size:0.72rem;">${s.participationType}</span></td>
+        <td style="font-size:1rem;">🌿</td>
+        <td><span class="status-${s.status}">${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span></td>
+        <td class="td-actions">
+          <button class="action-btn action-view" onclick="viewParticipant('${s.id}')">
+            <i data-lucide="eye" style="width:12px;height:12px;"></i> View
+          </button>
+          ${s.status !== 'approved' ? `<button class="action-btn action-approve" onclick="setStatus('${s.id}','approved')">✓</button>` : ''}
+          ${s.status !== 'rejected' ? `<button class="action-btn action-reject"  onclick="setStatus('${s.id}','rejected')">✕</button>` : ''}
+          <button class="action-btn action-delete" onclick="deleteSub('${s.id}')">🗑</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  const pg = document.getElementById('pagination');
+  pg.innerHTML = '';
+  if (pages > 1) {
+    const prev = document.createElement('button');
+    prev.className='page-btn'; prev.textContent='‹'; prev.disabled=currentPage===1;
+    prev.onclick=()=>{currentPage--;renderTable();};
+    pg.appendChild(prev);
+    for(let i=1;i<=pages;i++){
+      const b=document.createElement('button');
+      b.className='page-btn'+(i===currentPage?' active':'');
+      b.textContent=i; b.onclick=()=>{currentPage=i;renderTable();};
+      pg.appendChild(b);
+    }
+    const next=document.createElement('button');
+    next.className='page-btn'; next.textContent='›'; next.disabled=currentPage===pages;
+    next.onclick=()=>{currentPage++;renderTable();};
+    pg.appendChild(next);
+  }
+  if (window.lucide) lucide.createIcons();
+}
+
+async function notifyParticipant(id, status, reason = '') {
+  const s = _allSubs.find(x => x.id === id);
+  if (s && s.member1Email) {
+    try {
+      await fetch('/api/send-status-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: s.member1Email, name: s.member1Name || s.teamName, status, reason, id })
+      });
+    } catch (e) {
+      console.error('Failed to notify participant', e);
+    }
+  }
+}
+
+async function setStatus(id, status) {
+  let reason = '';
+  if (status === 'rejected') {
+    reason = prompt("Reason for rejection (this will be emailed to the participant):");
+    if (reason === null) return; // Admin cancelled the prompt
+  }
+  
+  await TURSO.updateSubmissionStatus(id, status);
+  const idx = _allSubs.findIndex(s => s.id === id);
+  if (idx > -1) _allSubs[idx].status = status;
+  
+  showToast(status === 'approved' ? '✅ Approved!' : '❌ Rejected', status === 'approved' ? 'success' : 'error');
+  renderTable();
+  if (document.getElementById('detailModal').classList.contains('open')) viewParticipant(id);
+  
+  // Notify
+  await notifyParticipant(id, status, reason);
+}
+
+async function deleteSub(id) {
+  if (!confirm('Delete this registration permanently?')) return;
+  const reason = prompt("Reason for removal (this will be emailed to the participant):") || 'No specific reason provided by the admin.';
+  
+  await notifyParticipant(id, 'removed', reason);
+  
+  await TURSO.deleteSubmission(id);
+  _allSubs = _allSubs.filter(s => s.id !== id);
+  showToast('Registration removed', 'info');
+  renderTable();
+}
+
+async function viewParticipant(id) {
+  const s = _allSubs.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('detailTitle').textContent = s.member1Name || s.teamName;
+  document.getElementById('detailBody').innerHTML = `<div style="padding:2rem;text-align:center;color:var(--text-muted);">Loading details...</div>`;
+  document.getElementById('detailModal').classList.add('open');
+
+  if (s.paymentScreenshotUrl === undefined) {
+    const media = await TURSO.getSubmissionMedia(s.id);
+    if (media) {
+      s.photoUrl = media.photoUrl;
+      s.reelUrl = media.reelUrl;
+      s.paymentScreenshotUrl = media.paymentScreenshotUrl;
+    } else {
+      s.photoUrl = null;
+      s.reelUrl = null;
+      s.paymentScreenshotUrl = null;
+    }
+  }
+
+  document.getElementById('detailBody').innerHTML = `
+    <div style="text-align:center;margin-bottom:1rem;background:var(--bg-deep);padding:1rem;border-radius:var(--radius-md);">
+      <div style="margin-bottom:0.5rem;font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;">Payment Screenshot</div>
+      ${(s.paymentScreenshotUrl && s.paymentScreenshotUrl !== 'null' && s.paymentScreenshotUrl !== 'undefined' && s.paymentScreenshotUrl.length > 10)
+        ? `<a href="${s.paymentScreenshotUrl}" target="_blank" title="Click to open full size">
+             <img src="${s.paymentScreenshotUrl}" 
+               style="max-width:100%;max-height:240px;border-radius:6px;object-fit:contain;border:1px solid var(--border);cursor:zoom-in;" 
+               onerror="this.style.display='none';this.nextSibling.style.display='block';" />
+             <span style="display:none;color:var(--text-muted);font-size:0.8rem;">⚠️ Image could not be displayed (stored as external URL)</span>
+           </a>
+           <div style="margin-top:0.5rem; display:flex; gap:0.5rem; justify-content:center;">
+             <button onclick="openImage(this.dataset.img)" data-img="${s.paymentScreenshotUrl}" class="btn btn-outline" style="font-size:0.75rem;padding:0.3rem 0.8rem;">🔗 Open</button>
+             <button onclick="downloadSingleImage(this.dataset.img, '${(s.teamName || s.member1Name || 'Participant').replace(/'/g, "\\'")}')" data-img="${s.paymentScreenshotUrl}" class="btn btn-outline" style="font-size:0.75rem;padding:0.3rem 0.8rem;">📥 Download</button>
+           </div>`
+        : '<span style="color:var(--text-muted);font-size:0.85rem;">No payment screenshot attached</span>'}
+    </div>
+    <div class="detail-row"><span class="detail-label">PhonePe UTR</span><span class="detail-value" style="font-family:var(--font-mono);color:var(--gold-lt);font-weight:600;letter-spacing:1px;">${s.transactionId || 'Not provided'}</span></div>
+    <div class="detail-row"><span class="detail-label">Submission ID</span><span class="detail-value td-id">${s.id}</span></div>
+    <div class="detail-row"><span class="detail-label">Full Name</span><span class="detail-value">${s.member1Name || s.teamName}</span></div>
+    <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${s.member1Email || '—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">${s.member1Phone || '—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Roll / Reg. No</span><span class="detail-value" style="color:var(--primary-light);font-weight:600;">${s.member1Roll || '—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Branch & Section</span><span class="detail-value">
+      ${(() => {
+        const b = s.branch || getBranchFromRoll(s.member1Roll);
+        const sec = s.section;
+        return b ? (sec ? `${b}-${sec}`.toUpperCase() : b.toUpperCase()) : '—';
+      })()}
+    </span></div>
+    ${(() => {
+      if (s.member2Name && s.member2Name.trim() !== '') {
+        const m1Branch = s.branch || getBranchFromRoll(s.member1Roll);
+        const m1Sec = s.section || '';
+        const m2Branch = s.member2Branch || getBranchFromRoll(s.member2Roll);
+        const m2Sec = s.member2Section || '';
+        
+        let m2BranchText = '';
+        if (m1Branch === m2Branch && m1Sec === m2Sec) {
+          m2BranchText = ''; 
+        } else {
+          m2BranchText = m2Branch ? (m2Sec ? `${m2Branch}-${m2Sec}`.toUpperCase() : m2Branch.toUpperCase()) : '';
+        }
+        
+        return `
+          <div class="detail-row" style="margin-top:1rem;border-top:1px dashed var(--border);padding-top:1rem;">
+            <span class="detail-label" style="color:var(--primary-light);">Member 2</span>
+            <span class="detail-value">
+              <strong>${s.member2Name}</strong><br/>
+              <span style="font-size:0.8rem;color:var(--text-muted);">${s.member2Roll || ''}</span>
+              ${m2BranchText ? `<br/><span style="font-size:0.8rem;color:var(--text-muted);">${m2BranchText}</span>` : ''}
+            </span>
+          </div>
+        `;
+      }
+      return '';
+    })()}
+    <div class="detail-row"><span class="detail-label">Category</span><span class="detail-value">${s.participationType}</span></div>
+    <div class="detail-row">
+      <span class="detail-label">AI Analysis</span>
+      <span class="detail-value" style="font-weight:bold;">
+        ${(s.aiFlags && s.aiFlags.toLowerCase().includes('ai')) 
+          ? `<span style="color:#e63946;">🤖 AI Generated (${s.aiFlags})</span>`
+          : (s.aiFlags && s.aiFlags.toLowerCase().includes('edit'))
+            ? `<span style="color:#f4a261;">✏️ Edited (${s.aiFlags})</span>`
+            : `<span style="color:#52b788;">✓ Natural / Authentic</span>`
+        }
+      </span>
+    </div>
+    <div class="detail-row"><span class="detail-label">Status</span><span class="status-${s.status}">${s.status}</span></div>
+    <div class="detail-row"><span class="detail-label">Registered</span><span class="detail-value">${formatDate(s.submittedAt)}</span></div>
+    <div style="margin-top:1.25rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
+      ${s.status !== 'approved' ? `<button class="btn btn-primary" style="font-size:0.85rem;padding:0.6rem 1.2rem;" onclick="setStatus('${s.id}','approved')">✓ Approve</button>` : ''}
+      ${s.status !== 'rejected' ? `<button class="action-btn action-reject" style="font-size:0.85rem;padding:0.6rem 1.2rem;" onclick="setStatus('${s.id}','rejected')">✕ Reject</button>` : ''}
+      <a href="submissions.html" class="btn btn-outline" style="font-size:0.85rem;padding:0.6rem 1.2rem;">View Files</a>
+      <button class="btn btn-outline" style="font-size:0.85rem;padding:0.6rem 1.2rem;" onclick="document.getElementById('detailModal').classList.remove('open')">Close</button>
+    </div>`;
+  document.getElementById('detailModal').classList.add('open');
+  if (window.lucide) lucide.createIcons();
+}
+
+async function exportAllCSV() {
+  exportCSV(_allSubs, 'leaf_lens_participants.csv');
+}
+
+function downloadPaymentsGoogleSheets() {
+  const approved = _allSubs.filter(s => s.status === 'approved' && s.paymentScreenshotUrl && s.paymentScreenshotUrl.length > 20);
+  if (!approved.length) {
+    alert("No approved submissions with payment screenshots found.");
+    return;
+  }
+  let csv = "Team Name,Category (Photo/Reel/Both),Team Lead Name & Registration Number,Team Lead Phone Number,UTR Number,Payment Screenshot image\n";
+  const baseUrl = window.location.origin;
+  
+  approved.forEach(s => {
+    const tName = `"${(s.teamName || '').replace(/"/g, '""')}"`;
+    const cat = `"${s.participationType || ''}"`;
+    const leadDetails = `"${(s.member1Name || '').replace(/"/g, '""')} (${s.member1Roll || ''})"`;
+    const phone = `"${s.member1Phone || ''}"`;
+    const utr = `"${(s.transactionId || '').replace(/"/g, '""')}"`;
+    
+    const imageUrl = `${baseUrl}/api/image/${s.id}`;
+    const imgFormula = `"=IMAGE(""${imageUrl}"")"`;
+    
+    csv += `${tName},${cat},${leadDetails},${phone},${utr},${imgFormula}\n`;
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'google_sheets_payments.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadPaymentsExcel() {
+  TURSO.getAllApprovedMedia().then(allMedia => {
+    allMedia.forEach(m => {
+      const s = _allSubs.find(x => x.id === m.id);
+      if (s) {
+        s.photoUrl = m.photoUrl;
+        s.reelUrl = m.reelUrl;
+        s.paymentScreenshotUrl = m.paymentScreenshotUrl;
+      }
+    });
+
+    const approved = _allSubs.filter(s => s.status === 'approved' && s.paymentScreenshotUrl && s.paymentScreenshotUrl !== 'null' && s.paymentScreenshotUrl !== 'undefined');
+    if (!approved.length) {
+      alert("No approved submissions with payment screenshots found.");
+      return;
+    }
+    
+    const baseUrl = window.location.origin;
+    
+    let html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8" />
+        <style>
+          table { border-collapse: collapse; font-family: Arial, sans-serif; }
+          th { background-color: #f2f2f2; font-weight: bold; padding: 10px; border: 1px solid #ddd; text-align: left; }
+          td { padding: 10px; border: 1px solid #ddd; vertical-align: middle; }
+          img { max-height: 200px; max-width: 200px; object-fit: contain; }
+        </style>
+      </head>
+      <body>
+        <table>
+          <thead>
+            <tr>
+              <th>Team Name</th>
+              <th>Category (Photo/Reel/Both)</th>
+              <th>Team Lead Name & Registration Number</th>
+              <th>Team Lead Phone Number</th>
+              <th>UTR Number</th>
+              <th>Payment Screenshot image</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    
+    approved.forEach(s => {
+      const tName = s.teamName || '';
+      const cat = s.participationType || '';
+      const leadDetails = `${s.member1Name || ''} (${s.member1Roll || ''})`;
+      const phone = s.member1Phone || '';
+      const utr = s.transactionId || '';
+      
+      const imageUrl = s.paymentScreenshotUrl && s.paymentScreenshotUrl.length > 10 ? `${baseUrl}/api/image/${s.id}` : '';
+      const imgHtml = imageUrl ? `<img src="${imageUrl}" />` : 'No Image';
+      
+      html += `
+            <tr>
+              <td>${tName}</td>
+              <td>${cat}</td>
+              <td>${leadDetails}</td>
+              <td>${phone}</td>
+              <td style="mso-number-format:'\\@';">${utr}</td>
+              <td style="height:210px; text-align:center;">${imgHtml}</td>
+            </tr>
+      `;
+    });
+    
+    html += `
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+    
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'approved_payments.xls';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+
+document.getElementById('detailModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+});
+
+function openImage(dataUri) {
+  const w = window.open("");
+  w.document.write(`<title>Payment Screenshot</title><body style="margin:0;display:flex;justify-content:center;align-items:center;background:#111;"><img src="${dataUri}" style="max-width:100%;max-height:100vh;object-fit:contain;" /></body>`);
+}
+
+function downloadSingleImage(dataUri, teamName) {
+  const matches = dataUri.match(/^data:(image\/[a-zA-Z]+);base64,(.+)$/);
+  if (!matches) { alert("Invalid image data"); return; }
+  const ext = matches[1] === 'image/png' ? '.png' : '.jpg';
+  const fileName = (teamName.replace(/[^a-zA-Z0-9 -]/g, "").trim() || "Participant") + "_Payment" + ext;
+  
+  const a = document.createElement('a');
+  a.href = dataUri;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+async function downloadScreenshotsZip() {
+  if (typeof JSZip === 'undefined' || typeof saveAs === 'undefined') {
+    alert("ZIP libraries are still loading. Please try again in a few seconds.");
+    return;
+  }
+  const btn = document.getElementById('downloadZipBtn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = `<i data-lucide="loader" class="spin" style="width:14px;height:14px;"></i> Fetching data...`;
+  btn.disabled = true;
+
+  const allMedia = await TURSO.getAllApprovedMedia();
+  allMedia.forEach(m => {
+    const s = _allSubs.find(x => x.id === m.id);
+    if (s) {
+      s.photoUrl = m.photoUrl;
+      s.reelUrl = m.reelUrl;
+      s.paymentScreenshotUrl = m.paymentScreenshotUrl;
+    }
+  });
+
+  const approved = _allSubs.filter(s => s.status === 'approved' && s.paymentScreenshotUrl && s.paymentScreenshotUrl.length > 20);
+  if (!approved.length) {
+    alert("No approved submissions with payment screenshots found.");
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    lucide.createIcons();
+    return;
+  }
+  
+  btn.innerHTML = `<i data-lucide="loader" class="spin" style="width:14px;height:14px;"></i> Zipping...`;
+
+  try {
+    const zip = new JSZip();
+    
+    // Add CSV of Participant Details
+    const headers = 'Team Name,Team Lead Name,Team Lead Registration Number,Phone Number,Category,UTR Number\n';
+    const rows = approved.map(s => {
+      const teamName = `"${(s.teamName||'').replace(/"/g, '""')}"`;
+      const leadName = `"${(s.member1Name||'').replace(/"/g, '""')}"`;
+      const leadReg = `"${s.member1Roll||''}"`;
+      const phone = `"${s.member1Phone||''}"`;
+      const category = `"${s.participationType||''}"`;
+      const utr = `"${(s.transactionId || '').replace(/"/g, '""')}"`;
+      return `${teamName},${leadName},${leadReg},${phone},${category},${utr}`;
+    }).join('\n');
+    zip.file("participants_details.csv", headers + rows);
+
+    approved.forEach((s, index) => {
+      let tName = s.teamName || s.member1Name || `Team_${index}`;
+      tName = tName.replace(/[^a-zA-Z0-9 -]/g, "").trim(); 
+      const utrStr = (s.transactionId || 'NO_UTR').replace(/[^a-zA-Z0-9]/g, "");
+      const dataUri = s.paymentScreenshotUrl;
+      const matches = dataUri.match(/^data:(image\/[a-zA-Z]+);base64,(.+)$/);
+      if (matches && matches.length === 3) {
+        const ext = matches[1] === 'image/png' ? '.png' : '.jpg';
+        const base64Data = matches[2];
+        zip.file(`${utrStr}_${tName}${ext}`, base64Data, { base64: true });
+      }
+    });
+    const content = await zip.generateAsync({ type: "blob" });
+    saveAs(content, "participant_payments.zip");
+  } catch(e) {
+    console.error(e);
+    alert("Failed to create ZIP.");
+  }
+  btn.innerHTML = originalText;
+  btn.disabled = false;
+  lucide.createIcons();
+}
+</script>
+</body>
+</html>
