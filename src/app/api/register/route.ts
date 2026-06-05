@@ -18,6 +18,16 @@ export async function POST(req: Request) {
     if (webhookUrl) {
       const amount = submission.participationType === 'Both' ? 50 : 30;
 
+      // Determine a safe screenshot value — never send raw base64 to Apps Script
+      // (base64 images can be 100–250KB which causes Drive decode errors and slowdowns).
+      // The new Apps Script (v3) handles Drive uploads itself for real-time entries.
+      const screenshotForSheet = (() => {
+        const url = submission.paymentScreenshotUrl;
+        if (!url) return 'Not provided';
+        if (url.startsWith('data:image')) return url; // Let Apps Script v3 handle Drive upload
+        return url; // Already a URL (Firebase Storage etc.)
+      })();
+
       const sheetPayload = {
         id:                   submission.id,
         submittedAt:          submission.submittedAt,
@@ -33,7 +43,7 @@ export async function POST(req: Request) {
         participationType:    submission.participationType,
         amount,
         transactionId:        submission.transactionId,
-        paymentScreenshotUrl: submission.paymentScreenshotUrl || null,
+        paymentScreenshotUrl: screenshotForSheet,
         aiFlags:              submission.aiFlags || null,
         status:               submission.status || 'pending',
       };
