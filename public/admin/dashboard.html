@@ -327,35 +327,92 @@ async function changeAdminPassword() {
 }
 
 async function syncGoogleSheet(btn) {
-  if (!confirm('This will send all existing registrations to your Google Sheet. It may take a minute or two depending on the number of registrations. Continue?')) {
-    return;
-  }
-  
-  const originalText = btn.innerHTML;
-  btn.innerHTML = `<i data-lucide="refresh-cw" style="width:16px;height:16px;animation:spin 1s linear infinite;margin-right:6px;"></i> Syncing...`;
+  if (!confirm('This will sync all registrations to your Google Sheet, including uploading payment screenshots to Google Drive. Continue?')) return;
+
+  const BATCH_SIZE = 10;
+  const originalHTML = btn.innerHTML;
   btn.disabled = true;
-  if (window.lucide) lucide.createIcons();
+
+  const setLabel = (txt) => {
+    btn.innerHTML = `<i data-lucide="refresh-cw" style="width:16px;height:16px;animation:spin 1s linear infinite;margin-right:6px;"></i> ${txt}`;
+    if (window.lucide) lucide.createIcons();
+  };
 
   try {
-    const res = await fetch('/api/export-to-sheet', { method: 'POST' });
-    const data = await res.json();
-    
-    if (!res.ok) throw new Error(data.error || 'Failed to export to Google Sheet');
-    
-    if (data.success) {
-      if (data.exported > 0) {
-        alert(`Successfully synced ${data.exported} out of ${data.total} registrations to your Google Sheet!${data.failed > 0 ? `\nFailed to sync ${data.failed} registrations.` : ''}`);
-      } else if (data.failed > 0) {
-        alert(`Sync failed! Out of ${data.total} registrations, all ${data.failed} failed to sync.\n\nErrors:\n${data.errors ? data.errors.slice(0, 5).join('\n') : 'Unknown error'}`);
-      } else {
-        alert(data.message || 'No registrations found or all were successfully synced previously.');
+    // 1. Get Apps Script webhook URL
+    setLabel('Loading config...');
+    const cfgRes = await fetch('/api/sheet-config');
+    if (!cfgRes.ok) throw new Error('Sheet webhook not configured. Check GOOGLE_SHEET_WEBHOOK_URL in Vercel.');
+    const { webhookUrl } = await cfgRes.json();
+
+    // 2. Fetch ALL submissions with full base64 data from Turso
+    setLabel('Fetching submissions...');
+    const allSubs = await TURSO.getSubmissions(true); // includeMedia=true → gets real base64
+    if (!allSubs || allSubs.length === 0) {
+      alert('No registrations found in the database.');
+      return;
+    }
+
+    // 3. Build payloads (keep real base64 so Apps Script can upload to Drive)
+    const payloads = allSubs.map(sub => ({
+      id:                   sub.id,
+      submittedAt:          sub.submittedAt,
+      teamName:             sub.teamName          || '',
+      member1Name:          sub.member1Name       || '',
+      member1Roll:          sub.member1Roll       || '',
+      member1Phone:         sub.member1Phone      || '',
+      member1Email:         sub.member1Email      || '',
+      member2Name:          sub.member2Name       || '',
+      member2Roll:          sub.member2Roll       || '',
+      branch:               sub.branch            || '',
+      section:              sub.section           || '',
+      participationType:    sub.participationType || '',
+      transactionId:        sub.transactionId     || '',
+      paymentScreenshotUrl: sub.paymentScreenshotUrl || 'N/A',
+      aiFlags:              sub.aiFlags           || 'None',
+      status:               sub.status            || 'pending',
+    }));
+
+    // 4. Send in batches of 10 directly to Apps Script (bypasses Vercel timeout)
+    const total   = payloads.length;
+    const batches = Math.ceil(total / BATCH_SIZE);
+    let synced = 0;
+    const errors = [];
+
+    for (let b = 0; b < batches; b++) {
+      const batch = payloads.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
+      setLabel(`Uploading batch ${b + 1} of ${batches} (${synced}/${total} done)...`);
+
+      try {
+        // Use text/plain to avoid CORS preflight — Apps Script accepts any content-type
+        const res = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(batch),
+        });
+        const result = await res.json();
+        if (result.success) {
+          synced += result.count || batch.length;
+        } else {
+          errors.push(`Batch ${b + 1}: ${result.error || 'Unknown error'}`);
+        }
+      } catch (batchErr) {
+        errors.push(`Batch ${b + 1}: ${batchErr.message}`);
       }
     }
+
+    // 5. Report results
+    if (errors.length === 0) {
+      alert(`✅ Successfully synced all ${synced} registrations to Google Sheet!\nPayment screenshots have been uploaded to Google Drive.`);
+    } else {
+      alert(`⚠️ Synced ${synced} of ${total} registrations.\n\nFailed batches:\n${errors.join('\n')}`);
+    }
+
   } catch (error) {
-    console.error(error);
-    alert(error.message || 'An error occurred during sync.');
+    console.error('Sync error:', error);
+    alert('❌ Sync failed: ' + (error.message || 'Unknown error'));
   } finally {
-    btn.innerHTML = originalText;
+    btn.innerHTML = originalHTML;
     btn.disabled = false;
     if (window.lucide) lucide.createIcons();
   }
